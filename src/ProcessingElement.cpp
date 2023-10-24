@@ -48,10 +48,11 @@ void ProcessingElement::txProcess()
 
 	if (ack_tx.read() == current_level_tx) {
 	    if (!packet_queue.empty()) {
-		Flit flit = nextFlit();	// Generate a new flit
-		flit_tx->write(flit);	// Send the generated flit
-		current_level_tx = 1 - current_level_tx;	// Negate the old value for Alternating Bit Protocol (ABP)
-		req_tx.write(current_level_tx);
+            flits_sent++;
+            Flit flit = nextFlit();	// Generate a new flit
+            flit_tx->write(flit);	// Send the generated flit
+            current_level_tx = 1 - current_level_tx;	// Negate the old value for Alternating Bit Protocol (ABP)
+            req_tx.write(current_level_tx);
 	    }
 	}
     }
@@ -87,10 +88,26 @@ Flit ProcessingElement::nextFlit()
     return flit;
 }
 
+bool ProcessingElement::is_memory_pe(int id)
+{    
+
+    // GlobalParams::mesh_dim_x
+    if (id < GlobalParams::mesh_dim_x) return false;
+    if (id >= GlobalParams::mesh_dim_x * (GlobalParams::mesh_dim_y - 1)) return false;
+    if (id % GlobalParams::mesh_dim_x == 0) return false;
+    if ((id + 1) % GlobalParams::mesh_dim_x == 0) return false;
+
+    return true;
+
+}
+
 bool ProcessingElement::canShot(Packet & packet)
 {
    // assert(false);
     if(never_transmit) return false;
+
+    // Central tiles should not send packets
+    if (is_memory_pe(local_id)) return false;
    
     //if(local_id!=16) return false;
     /* DEADLOCK TEST 
@@ -309,7 +326,7 @@ Packet ProcessingElement::trafficRandom()
 	}
 #endif
 
-    } while (p.dst_id == p.src_id);
+    } while (!is_memory_pe(p.dst_id));
 
     p.timestamp = sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
     p.size = p.flit_left = getRandomSize();

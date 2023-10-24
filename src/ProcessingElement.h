@@ -46,9 +46,13 @@ SC_MODULE(ProcessingElement)
     queue < Packet > packet_queue;	// Local queue of packets
     bool transmittedAtPreviousCycle;	// Used for distributions with memory
 
+    // Metrics
+    unsigned long flits_sent = 0;
+
     // Functions
     void rxProcess();		// The receiving process
     void txProcess();		// The transmitting process
+    bool is_memory_pe(int id);
     bool canShot(Packet & packet);	// True when the packet must be shot
     Flit nextFlit();	// Take the next flit of the current packet
     Packet trafficTest();	// used for testing traffic
@@ -71,6 +75,10 @@ SC_MODULE(ProcessingElement)
     void setBit(int &x, int w, int v);
     int getBit(int x, int w);
     double log2ceil(double x);
+
+    unsigned long getSentFlits() {
+        return flits_sent;
+    }
 
     int roulett();
     int findRandomDestination(int local_id,int hops);

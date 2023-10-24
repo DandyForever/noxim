@@ -325,6 +325,25 @@ vector < vector < unsigned long > > GlobalStats::getRoutedFlitsMtx()
     return mtx;
 }
 
+vector < vector < unsigned long > > GlobalStats::getSentFlits()
+{
+
+    vector < vector < unsigned long > > mtx;
+    assert (GlobalParams::topology == TOPOLOGY_MESH); 
+
+    mtx.resize(GlobalParams::mesh_dim_y);
+    for (int y = 0; y < GlobalParams::mesh_dim_y; y++)
+	mtx[y].resize(GlobalParams::mesh_dim_x);
+
+    for (int y = 0; y < GlobalParams::mesh_dim_y; y++)
+	for (int x = 0; x < GlobalParams::mesh_dim_x; x++)
+	    mtx[y][x] = noc->t[x][y]->pe->getSentFlits();
+
+    return mtx;
+}
+
+
+
 unsigned int GlobalStats::getWirelessPackets()
 {
     unsigned int packets = 0;
@@ -466,7 +485,20 @@ void GlobalStats::showStats(std::ostream & out, bool detailed)
 		out << setw(10) << rf_mtx[y][x];
 	    out << endl;
 	}
-	out << "];" << endl;
+	out << "]" << endl;
+
+	// show SentFlits matrix
+	vector < vector < unsigned long > > sp_mtx = getSentFlits();
+
+	out << endl << "sent_flits = [" << endl;
+	for (unsigned int y = 0; y < sp_mtx.size(); y++) {
+		out << "  ";
+		for (unsigned int x = 0; x < sp_mtx[y].size(); x++) {
+			out << setw(10) << sp_mtx[y][x] << ',';
+		}
+		out << endl;
+	}
+	out << "]" << endl;
 
 	showPowerBreakDown(out);
 	showPowerManagerStats(out);
