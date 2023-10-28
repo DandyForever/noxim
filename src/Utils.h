@@ -63,17 +63,17 @@ inline ostream & operator <<(ostream & os, const Flit & flit)
 	os << "### FLIT ###" << endl;
 	os << "Source Tile[" << flit.src_id << "]" << endl;
 	os << "Destination Tile[" << flit.dst_id << "]" << endl;
-	switch (flit.flit_type) {
-	case FLIT_TYPE_HEAD:
-	    os << "Flit Type is HEAD" << endl;
-	    break;
-	case FLIT_TYPE_BODY:
-	    os << "Flit Type is BODY" << endl;
-	    break;
-	case FLIT_TYPE_TAIL:
-	    os << "Flit Type is TAIL" << endl;
-	    break;
-	}
+	// switch (flit.flit_type) {
+	// case FLIT_TYPE_HEAD:
+	//     os << "Flit Type is HEAD" << endl;
+	//     break;
+	// case FLIT_TYPE_BODY:
+	//     os << "Flit Type is BODY" << endl;
+	//     break;
+	// case FLIT_TYPE_TAIL:
+	//     os << "Flit Type is TAIL" << endl;
+	//     break;
+	// }
 	os << "Sequence no. " << flit.sequence_no << endl;
 	os << "Payload printing not implemented (yet)." << endl;
 	os << "Unix timestamp at packet generation " << flit.
@@ -82,17 +82,17 @@ inline ostream & operator <<(ostream & os, const Flit & flit)
 	    flit.hop_no << endl;
     } else {
 	os << "(";
-	switch (flit.flit_type) {
-	case FLIT_TYPE_HEAD:
-	    os << "H";
-	    break;
-	case FLIT_TYPE_BODY:
-	    os << "B";
-	    break;
-	case FLIT_TYPE_TAIL:
-	    os << "T";
-	    break;
-	}
+	// switch (flit.flit_type) {
+	// case FLIT_TYPE_HEAD:
+	//     os << "H";
+	//     break;
+	// case FLIT_TYPE_BODY:
+	//     os << "B";
+	//     break;
+	// case FLIT_TYPE_TAIL:
+	//     os << "T";
+	//     break;
+	// }
 
 	os <<  flit.sequence_no << ", " << flit.src_id << "->" << flit.dst_id << " VC " << flit.vc_id << ")";
     }

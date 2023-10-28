@@ -31,7 +31,8 @@ void Initiator::thread_process()
 
 		// hub relay management  ////////////////////////////////////////////////////////////////
 		// if explicitly set in the header flit, trasmission target should reach a relay hub
-		if (flit_payload.flit_type == FLIT_TYPE_HEAD)
+		// if (flit_payload.flit_type == FLIT_TYPE_HEAD)
+		if (flit_payload.flit_type(FLIT_TYPE_HEAD))
 		{
 			if (flit_payload.hub_relay_node!=NOT_VALID) {
 				current_hub_relay = flit_payload.hub_relay_node;
@@ -78,10 +79,12 @@ void Initiator::thread_process()
 			buffer_tx.Pop();
 			hub->power.antennaBufferPop();
 
-			if (flit_payload.flit_type == FLIT_TYPE_HEAD)
+			// if (flit_payload.flit_type == FLIT_TYPE_HEAD)
+			if (flit_payload.flit_type(FLIT_TYPE_HEAD))
 				hub->transmission_in_progress.at(_channel_id) = true;
 
-			if (flit_payload.flit_type == FLIT_TYPE_TAIL)
+			// if (flit_payload.flit_type == FLIT_TYPE_TAIL)
+			if (flit_payload.flit_type(FLIT_TYPE_TAIL))
 			{
 				LOG << "*** [Ch"<< _channel_id <<"] tail flit sent " << flit_payload << ", releasing token" << endl;
 				hub->flag[_channel_id]->write(RELEASE_CHANNEL);

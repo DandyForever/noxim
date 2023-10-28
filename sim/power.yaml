@@ -1,6 +1,10 @@
 Energy:
     Buffer: #Energy consumed by a single flit in Joule
     #   - [Depth ItemSize Leakage Push Front Pop]
+        - [1, 16, 2.05e-4, 3.13e-13, 0,  1.86e-13]
+        - [1, 32, 1.35e-3, 6.12e-13, 0,  3.65e-13]
+        - [1, 64, 2.68e-3, 1.21e-12, 0,  7.23e-13]
+        - [1, 128, 5.0e-3, 2.25e-12, 0,  1.25e-12] # interpolated
         - [2, 16, 2.05e-4, 3.13e-13, 0,  1.86e-13]
         - [2, 32, 1.35e-3, 6.12e-13, 0,  3.65e-13]
         - [2, 64, 2.68e-3, 1.21e-12, 0,  7.23e-13]

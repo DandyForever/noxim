@@ -120,9 +120,9 @@ clock_period_ps: 1000
 # duration of reset signal assertion, expressed in cycles
 reset_time: 10
 # overal simulation lenght, expressed in cycles
-simulation_time: 10000
+simulation_time: 100
 # collect stats after a given number of cycles
-stats_warm_up_time: 100
+stats_warm_up_time: 10
 # power breakdown, nodes communication details
 detailed: false
 # stop after a given amount of load has been processed
@@ -147,8 +147,8 @@ verbose_mode: VERBOSE_HIGH
 trace_mode: false
 trace_filename: ""
 
-min_packet_size: 2
-max_packet_size: 2
+min_packet_size: 1
+max_packet_size: 1
 packet_injection_rate: 1
 probability_of_retransmission: 0.01
 

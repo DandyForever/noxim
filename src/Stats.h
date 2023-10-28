@@ -78,12 +78,30 @@ class Stats {
     void showStats(int curr_node, std::ostream & out =
 		   std::cout, bool header = false);
 
+    int getFlitsSrcCount(int src) {
+      if (searchCommHistory(src) == -1) return 0;
+      return chist[searchCommHistory(src)].total_received_flits;
+      
+      // vector <int> flits_src_count(GlobalParams::mesh_dim_x*GlobalParams::mesh_dim_y);
+
+      // for (auto item : chist) {
+      //   std::cout << "For router " << id << " was src " << item.src_id << " with " << item.total_received_flits << std::endl;
+      //   flits_src_count[item.src_id] = item.total_received_flits;
+        
+      // }
+      // std::cout << "\t" << chist.size() << std::endl;
+
+      // return flits_src_count;
+    }
+
 
   private:
 
     int id;
     vector < CommHistory > chist;
     double warm_up_time;
+
+    // vector < int > flits_src_count(GlobalParams::mesh_dim_x*GlobalParams::mesh_dim_y);
 
     int searchCommHistory(int src_id);
 };

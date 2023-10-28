@@ -65,7 +65,8 @@ void Channel::powerManager(unsigned int hub_dst_index, tlm::tlm_generic_payload&
 
     struct Flit* f = (struct Flit*)trans.get_data_ptr();
 
-    if (f->flit_type==FLIT_TYPE_HEAD)
+    // if (f->flit_type==FLIT_TYPE_HEAD)
+    if (f->flit_type(FLIT_TYPE_HEAD))
     {
 	int sleep_cycles = flit_transmission_cycles * f->sequence_length;
 

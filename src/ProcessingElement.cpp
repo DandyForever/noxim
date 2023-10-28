@@ -16,6 +16,8 @@ int ProcessingElement::randInt(int min, int max)
 	(int) ((double) (max - min + 1) * rand() / (RAND_MAX + 1.0));
 }
 
+// ABP protocol (Alternating Bit Protocol)
+/*
 void ProcessingElement::rxProcess()
 {
     if (reset.read()) {
@@ -29,6 +31,7 @@ void ProcessingElement::rxProcess()
 	ack_rx.write(current_level_rx);
     }
 }
+
 
 void ProcessingElement::txProcess()
 {
@@ -57,6 +60,79 @@ void ProcessingElement::txProcess()
 	}
     }
 }
+*/
+
+
+// AXI4-Stream protocol
+// ack_rx <-> s_axis_tready
+// req_tx <-> m_axis_tvalid
+void ProcessingElement::rxProcess()
+{
+    if (reset.read()) {
+	ack_rx.write(1);
+	current_level_rx = 0;
+    } else {
+    // Slave AXIS valid & ready handshake
+	if (req_rx.read() && ack_rx.read()) {
+	    Flit flit_tmp = flit_rx.read();
+	    current_level_rx = 1 - current_level_rx;	// Negate the old value for Alternating Bit Protocol (ABP)
+	}
+    // PE is always ready to recieve packets
+	ack_rx.write(1);
+    }
+}
+
+
+void ProcessingElement::txProcess()
+{
+    if (reset.read()) {
+    // Not valid on reset
+	req_tx.write(0);
+	current_level_tx = 0;
+	transmittedAtPreviousCycle = false;
+    } else {
+	Packet packet;
+
+	if (canShot(packet)) {
+	    packet_queue.push(packet);
+	    transmittedAtPreviousCycle = true;
+	} else
+	    transmittedAtPreviousCycle = false;
+
+    // Master AXIS valid & ready handshake
+	if (ack_tx.read() && req_tx.read()) {
+	    if (!packet_queue.empty()) {
+            flits_sent++;
+            Flit flit = nextFlit();	// Generate a new flit
+            flit_tx->write(flit);	// Send the generated flit
+            current_level_tx = 1 - current_level_tx;	// Negate the old value for Alternating Bit Protocol (ABP)
+            // Valid if packets to send exist
+            req_tx.write(1);
+	    } else {
+            // Not valid if no packets to send
+            req_tx.write(0);
+        }
+	}
+    if (req_tx.read() && !ack_tx.read())
+    {
+        req_tx.write(1);
+    }
+    if (!req_tx.read())
+    {
+        if (!packet_queue.empty())
+        {
+            flits_sent++;
+            Flit flit = nextFlit();
+            flit_tx->write(flit);
+            req_tx.write(1);
+        }
+        else
+        {
+            req_tx.write(0);
+        }
+    }
+    }
+}
 
 Flit ProcessingElement::nextFlit()
 {
@@ -74,12 +150,17 @@ Flit ProcessingElement::nextFlit()
 
     flit.hub_relay_node = NOT_VALID;
 
+    // if (packet.size == packet.flit_left)
+	// flit.flit_type = FLIT_TYPE_HEAD;
+    // else if (packet.flit_left == 1)
+	// flit.flit_type = FLIT_TYPE_TAIL;
+    // else
+	// flit.flit_type = FLIT_TYPE_BODY;
+
     if (packet.size == packet.flit_left)
-	flit.flit_type = FLIT_TYPE_HEAD;
-    else if (packet.flit_left == 1)
-	flit.flit_type = FLIT_TYPE_TAIL;
-    else
-	flit.flit_type = FLIT_TYPE_BODY;
+	    flit.is_head = true;
+    if (packet.flit_left == 1)
+	    flit.is_tail = true;
 
     packet_queue.front().flit_left--;
     if (packet_queue.front().flit_left == 0)
@@ -91,7 +172,6 @@ Flit ProcessingElement::nextFlit()
 bool ProcessingElement::is_memory_pe(int id)
 {    
 
-    // GlobalParams::mesh_dim_x
     if (id < GlobalParams::mesh_dim_x) return false;
     if (id >= GlobalParams::mesh_dim_x * (GlobalParams::mesh_dim_y - 1)) return false;
     if (id % GlobalParams::mesh_dim_x == 0) return false;
@@ -108,6 +188,12 @@ bool ProcessingElement::canShot(Packet & packet)
 
     // Central tiles should not send packets
     if (is_memory_pe(local_id)) return false;
+
+    //-----------------------------------------------------
+    // For debug only
+    //-----------------------------------------------------
+    // if (local_id != 0 && local_id != GlobalParams::mesh_dim_x) return false;
+    //-----------------------------------------------------
    
     //if(local_id!=16) return false;
     /* DEADLOCK TEST 

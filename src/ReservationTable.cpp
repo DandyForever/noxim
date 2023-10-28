@@ -43,7 +43,9 @@ vector<pair<int,int> > ReservationTable::getReservations(const int port_in)
     {
 	if (rtable[o].reservations.size()>0)
 	{
+
 	    int current_index = rtable[o].index;
+		// std::cout << "For output port " << o << " current candidate for routing is " << rtable[o].reservations[current_index].input << " while checking " << port_in << std::endl;
 	    if (rtable[o].reservations[current_index].input == port_in)
 		reservations.push_back(pair<int,int>(o,rtable[o].reservations[current_index].vc));
 	}

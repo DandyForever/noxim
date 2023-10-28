@@ -1,4 +1,4 @@
 bin/noxim
 bin/build
-sim/results
+sim/results*
 sim/python

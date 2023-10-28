@@ -331,7 +331,8 @@ void Hub::antennaToTileProcess()
 			power.antennaBufferFront();
 
 			// Check antenna buffer_rx making appropriate reservations
-			if (received_flit.flit_type==FLIT_TYPE_HEAD)
+			// if (received_flit.flit_type==FLIT_TYPE_HEAD)
+			if (received_flit.flit_type(FLIT_TYPE_HEAD))
 			{
 				int dst_port;
 
@@ -398,7 +399,8 @@ void Hub::antennaToTileProcess()
 					buffer_to_tile[port][vc].Push(received_flit);
 					power.bufferToTilePush();
 
-					if (received_flit.flit_type == FLIT_TYPE_TAIL)
+					// if (received_flit.flit_type == FLIT_TYPE_TAIL)
+					if (received_flit.flit_type(FLIT_TYPE_TAIL))
 					{
 						LOG << "Releasing reservation for output port " << port << ", flit " << received_flit << endl;
 						TReservation r;
@@ -498,7 +500,8 @@ void Hub::tileToAntennaProcess()
 				power.bufferFromTileFront();
 				r_from_tile[i][vc] = route(flit);
 
-				if (flit.flit_type == FLIT_TYPE_HEAD)
+				// if (flit.flit_type == FLIT_TYPE_HEAD)
+				if (flit.flit_type(FLIT_TYPE_HEAD))
 				{
 					TReservation r;
 					r.input = i;
@@ -575,7 +578,8 @@ void Hub::tileToAntennaProcess()
 						power.bufferFromTilePop();
 						init[channel]->buffer_tx.Push(flit);
 						power.antennaBufferPush();
-						if (flit.flit_type == FLIT_TYPE_TAIL)
+						// if (flit.flit_type == FLIT_TYPE_TAIL)
+						if (flit.flit_type(FLIT_TYPE_TAIL))
 						{
 							TReservation r;
 							r.input = i;

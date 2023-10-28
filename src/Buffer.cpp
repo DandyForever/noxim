@@ -53,7 +53,7 @@ void Buffer::Print()
     {
 	Flit f = m.front();
 	m.pop();
-	cout << bstr << t[f.flit_type] << f.sequence_no <<  "(" << f.dst_id << ") | ";
+	// cout << bstr << t[f.flit_type] << f.sequence_no <<  "(" << f.dst_id << ") | ";
     }
     cout << "]*" << endl;
     cout << endl;

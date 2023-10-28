@@ -335,9 +335,20 @@ vector < vector < unsigned long > > GlobalStats::getSentFlits()
     for (int y = 0; y < GlobalParams::mesh_dim_y; y++)
 	mtx[y].resize(GlobalParams::mesh_dim_x);
 
+    // for (int y = 0; y < GlobalParams::mesh_dim_y; y++)
+	// for (int x = 0; x < GlobalParams::mesh_dim_x; x++)
+	//     mtx[y][x] = noc->t[x][y]->pe->getSentFlits();
+
     for (int y = 0; y < GlobalParams::mesh_dim_y; y++)
 	for (int x = 0; x < GlobalParams::mesh_dim_x; x++)
-	    mtx[y][x] = noc->t[x][y]->pe->getSentFlits();
+	    for (int y_ = 0; y_ < GlobalParams::mesh_dim_y; y_++)
+		for (int x_ = 0; x_ < GlobalParams::mesh_dim_x; x_++)
+			{
+			// for (int idx = 0; idx < GlobalParams::mesh_dim_x*GlobalParams::mesh_dim_y; idx++)
+			// std::cout << noc->t[x_][y_]->r->stats.getFlitsSrcCount()[idx] << " ";
+			// std::cout << std::endl;
+			mtx[y][x] += noc->t[x_][y_]->r->stats.getFlitsSrcCount(y*GlobalParams::mesh_dim_x+x);
+			}
 
     return mtx;
 }
