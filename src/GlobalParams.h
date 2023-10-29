@@ -28,8 +28,11 @@ using namespace std;
 #define DIRECTION_EAST          1
 #define DIRECTION_SOUTH         2
 #define DIRECTION_WEST          3
-#define DIRECTION_LOCAL         4
-#define DIRECTION_HUB           5
+#define DIRECTION_LOCAL_NORTH   4
+#define DIRECTION_LOCAL_EAST    5
+#define DIRECTION_LOCAL_SOUTH   6
+#define DIRECTION_LOCAL_WEST    7
+#define DIRECTION_HUB           8
 #define DIRECTION_HUB_RELAY     5000
 #define DIRECTION_WIRELESS    747
 

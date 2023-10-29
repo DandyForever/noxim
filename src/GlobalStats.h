@@ -73,6 +73,9 @@ class GlobalStats {
     // Returns the number of sent flits for each PE
     vector < vector <unsigned long> > getSentFlits();
 
+    // Returns the number of received flits for each PE
+    vector < vector <unsigned long> > getRecvFlits(int pe_id);
+
     // Returns the total dyamic power
     double getDynamicPower();
     // Returns the total static power

@@ -18,7 +18,7 @@
 # ../bin/noxim -config ../config_examples/default_config.yaml -pir 0.85 poisson -detailed > ./results/sim_0_85.log
 # ../bin/noxim -config ../config_examples/default_config.yaml -pir 0.90 poisson -detailed > ./results/sim_0_90.log
 # ../bin/noxim -config ../config_examples/default_config.yaml -pir 0.95 poisson -detailed > ./results/sim_0_95.log
-../bin/noxim -config ../config_examples/default_config.yaml -pir 1.00 poisson -routing XY -detailed > ./results/sim_1_00_xy.log
+# ../bin/noxim -config ../config_examples/default_config.yaml -pir 1.00 poisson -routing XY -detailed > ./results/sim_1_00_xy.log
 ../bin/noxim -config ../config_examples/default_config.yaml -pir 1.00 poisson -routing DOR -detailed > ./results/sim_1_00_dor.log
 # ../bin/noxim -config ../config_examples/default_config.yaml -pir 1.00 poisson -routing WEST_FIRST -detailed > ./results/sim_1_00_west_first.log
 # ../bin/noxim -config ../config_examples/default_config.yaml -pir 1.00 poisson -routing NORTH_LAST -detailed > ./results/sim_1_00_northlast.log

@@ -63,6 +63,7 @@ inline ostream & operator <<(ostream & os, const Flit & flit)
 	os << "### FLIT ###" << endl;
 	os << "Source Tile[" << flit.src_id << "]" << endl;
 	os << "Destination Tile[" << flit.dst_id << "]" << endl;
+    os << "Local Direction ID[" << flit.local_direction_id << "]" << endl;
 	// switch (flit.flit_type) {
 	// case FLIT_TYPE_HEAD:
 	//     os << "Flit Type is HEAD" << endl;

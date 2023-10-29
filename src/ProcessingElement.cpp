@@ -74,11 +74,17 @@ void ProcessingElement::rxProcess()
     } else {
     // Slave AXIS valid & ready handshake
 	if (req_rx.read() && ack_rx.read()) {
+        flits_recv++;
 	    Flit flit_tmp = flit_rx.read();
+        swap(flit_tmp.src_id, flit_tmp.dst_id);
+        // in_flit_queue.push(flit_tmp);
 	    current_level_rx = 1 - current_level_rx;	// Negate the old value for Alternating Bit Protocol (ABP)
 	}
     // PE is always ready to recieve packets
-	ack_rx.write(1);
+	if (is_memory_pe(local_id))
+        ack_rx.write(in_flit_queue.empty());
+    else
+        ack_rx.write(1);
     }
 }
 
@@ -131,7 +137,48 @@ void ProcessingElement::txProcess()
             req_tx.write(0);
         }
     }
+
+    // Memory tiles
+    if (is_memory_pe(local_id))
+    {
+        if (!in_flit_queue.empty())
+        {
+            if (req_tx.read() && ack_tx.read())
+            {
+                flits_sent++;
+                flit_tx->write(in_flit_queue.front());
+                req_tx.write(1);
+                in_flit_queue.pop();
+            }
+            if (req_tx.read() && !ack_tx.read())
+            {
+                req_tx.write(1);
+            }
+            if (!req_tx.read())
+            {
+                flit_tx->write(in_flit_queue.front());
+                req_tx.write(1);
+                in_flit_queue.pop();
+            }
+        }
+        else
+        {
+            if (req_tx.read() && ack_tx.read())
+            {
+                flits_sent++;
+                req_tx.write(0);
+            }
+            if (req_tx.read() && !ack_tx.read())
+            {
+                req_tx.write(1);
+            }
+            if (!req_tx.read())
+            {
+                req_tx.write(0);
+            }
+        }
     }
+}
 }
 
 Flit ProcessingElement::nextFlit()
@@ -141,6 +188,7 @@ Flit ProcessingElement::nextFlit()
 
     flit.src_id = packet.src_id;
     flit.dst_id = packet.dst_id;
+    flit.local_direction_id = packet.local_direction_id;
     flit.vc_id = packet.vc_id;
     flit.timestamp = packet.timestamp;
     flit.sequence_no = packet.size - packet.flit_left;
@@ -188,6 +236,13 @@ bool ProcessingElement::canShot(Packet & packet)
 
     // Central tiles should not send packets
     if (is_memory_pe(local_id)) return false;
+
+    // Switching off some local directions
+    //-----------------------------------------------------
+    // if (local_direction_id == DIRECTION_LOCAL_WEST) return false;
+    // if (local_direction_id == DIRECTION_LOCAL_SOUTH) return false;
+    // if (local_direction_id == DIRECTION_LOCAL_EAST) return false;
+    //-----------------------------------------------------
 
     //-----------------------------------------------------
     // For debug only
@@ -260,7 +315,7 @@ bool ProcessingElement::canShot(Packet & packet)
 	    for (unsigned int i = 0; i < dst_prob.size(); i++) {
 		if (prob < dst_prob[i].second) {
                     int vc = randInt(0,GlobalParams::n_virtual_channels-1);
-		    packet.make(local_id, dst_prob[i].first, vc, now, getRandomSize());
+		    packet.make(local_id, dst_prob[i].first, vc, now, getRandomSize(), local_direction_id);
 		    break;
 		}
 	    }
@@ -380,6 +435,7 @@ Packet ProcessingElement::trafficRandom()
 {
     Packet p;
     p.src_id = local_id;
+    p.local_direction_id = local_direction_id;
     double rnd = rand() / (double) RAND_MAX;
     double range_start = 0.0;
     int max_id;

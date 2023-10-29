@@ -32,7 +32,19 @@ LinkId direction2ILinkId(const int node_id, const int dir)
 	node_src = node_id - 1;
 	break;
 
-    case DIRECTION_LOCAL:
+    case DIRECTION_LOCAL_NORTH:
+	node_src = node_id;
+	break;
+
+	case DIRECTION_LOCAL_EAST:
+	node_src = node_id;
+	break;
+
+	case DIRECTION_LOCAL_SOUTH:
+	node_src = node_id;
+	break;
+
+	case DIRECTION_LOCAL_WEST:
 	node_src = node_id;
 	break;
 
@@ -50,7 +62,7 @@ int oLinkId2Direction(const LinkId & out_link)
     int dst = out_link.second;
 
     if (dst == src)
-	return DIRECTION_LOCAL;
+	return DIRECTION_LOCAL_NORTH; // It's broken here
     else if (dst == src + 1)
 	return DIRECTION_EAST;
     else if (dst == src - 1)

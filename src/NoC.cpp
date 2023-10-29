@@ -202,9 +202,13 @@ void NoC::buildButterfly()
 
 
 			// Tell to the PE its coordinates
-			t[i][j]->pe->local_id = tile_id;
-			t[i][j]->pe->traffic_table = &gttable;	// Needed to choose destination
-			t[i][j]->pe->never_transmit = true;
+			for (int pe_id = 0; pe_id < DIRECTIONS; pe_id++)
+			{
+				t[i][j]->pe[pe_id]->local_id = tile_id;
+				t[i][j]->pe[pe_id]->local_direction_id = DIRECTIONS+pe_id;
+				t[i][j]->pe[pe_id]->traffic_table = &gttable;	// Needed to choose destination
+				t[i][j]->pe[pe_id]->never_transmit = true;
+			}
 
 			// Map clock and reset
 			t[i][j]->clock(clock);
@@ -529,15 +533,19 @@ void NoC::buildButterfly()
 
 
 		// Tell to the PE its coordinates
-		core[i]->pe->local_id = core_id;
-		// Check for traffic table availability
-		if (GlobalParams::traffic_distribution == TRAFFIC_TABLE_BASED)
+		for (int pe_id = 0; pe_id < DIRECTIONS; pe_id++)
 		{
-			core[i]->pe->traffic_table = &gttable;	// Needed to choose destination
-			core[i]->pe->never_transmit = (gttable.occurrencesAsSource(core[i]->pe->local_id) == 0);
+			core[i]->pe[pe_id]->local_id = core_id;
+			core[i]->pe[pe_id]->local_direction_id = DIRECTIONS+pe_id;
+			// Check for traffic table availability
+			if (GlobalParams::traffic_distribution == TRAFFIC_TABLE_BASED)
+			{
+				core[i]->pe[pe_id]->traffic_table = &gttable;	// Needed to choose destination
+				core[i]->pe[pe_id]->never_transmit = (gttable.occurrencesAsSource(core[i]->pe[pe_id]->local_id) == 0);
+			}
+			else
+				core[i]->pe[pe_id]->never_transmit = false;
 		}
-		else
-			core[i]->pe->never_transmit = false;
 
 		// Map clock and reset
 		core[i]->clock(clock);
@@ -848,19 +856,18 @@ void NoC::buildBaseline()
 		    string(GlobalParams::routing_algorithm),
 		    "default");
 
-
-
 	    // Tell to the PE its coordinates
-	    t[i][j]->pe->local_id = tile_id;
-	    t[i][j]->pe->traffic_table = &gttable;	// Needed to choose destination
-	    t[i][j]->pe->never_transmit = true;
+		for (int pe_id = 0; pe_id < DIRECTIONS; pe_id++)
+		{
+			t[i][j]->pe[pe_id]->local_id = tile_id;
+			t[i][j]->pe[pe_id]->local_direction_id = DIRECTIONS+pe_id;
+			t[i][j]->pe[pe_id]->traffic_table = &gttable;	// Needed to choose destination
+			t[i][j]->pe[pe_id]->never_transmit = true;
+		}
 
 	    // Map clock and reset
 	    t[i][j]->clock(clock);
 	    t[i][j]->reset(reset);
-
-	    
-
 
 	    // BASELINE: hub connections work as usual
 	    t[i][j]->hub_req_rx(req[i][j].from_hub);
@@ -1292,15 +1299,19 @@ void NoC::buildBaseline()
 
 
 	// Tell to the PE its coordinates
-	core[i]->pe->local_id = core_id;
-	// Check for traffic table availability
-	if (GlobalParams::traffic_distribution == TRAFFIC_TABLE_BASED)
+	for (int pe_id = 0; pe_id < DIRECTIONS; pe_id++)
 	{
-	    core[i]->pe->traffic_table = &gttable;	// Needed to choose destination
-	    core[i]->pe->never_transmit = (gttable.occurrencesAsSource(core[i]->pe->local_id) == 0);
+		core[i]->pe[pe_id]->local_id = core_id;
+		core[i]->pe[pe_id]->local_direction_id = DIRECTIONS+pe_id;
+		// Check for traffic table availability
+		if (GlobalParams::traffic_distribution == TRAFFIC_TABLE_BASED)
+		{
+			core[i]->pe[pe_id]->traffic_table = &gttable;	// Needed to choose destination
+			core[i]->pe[pe_id]->never_transmit = (gttable.occurrencesAsSource(core[i]->pe[pe_id]->local_id) == 0);
+		}
+		else
+			core[i]->pe[pe_id]->never_transmit = false;
 	}
-	else
-	    core[i]->pe->never_transmit = false;
 
 	// Map clock and reset
 	core[i]->clock(clock);
@@ -1583,9 +1594,13 @@ void NoC::buildOmega()
 
 
 			// Tell to the PE its coordinates
-			t[i][j]->pe->local_id = tile_id;
-			t[i][j]->pe->traffic_table = &gttable;	// Needed to choose destination
-			t[i][j]->pe->never_transmit = true;
+			for (int pe_id = 0; pe_id < DIRECTIONS; pe_id++)
+			{
+				t[i][j]->pe[pe_id]->local_id = tile_id;
+				t[i][j]->pe[pe_id]->local_direction_id = DIRECTIONS+pe_id;
+				t[i][j]->pe[pe_id]->traffic_table = &gttable;	// Needed to choose destination
+				t[i][j]->pe[pe_id]->never_transmit = true;
+			}
 
 			// Map clock and reset
 			t[i][j]->clock(clock);
@@ -1922,15 +1937,19 @@ void NoC::buildOmega()
 
 
 		// Tell to the PE its coordinates
-		core[i]->pe->local_id = core_id;
-		// Check for traffic table availability
-		if (GlobalParams::traffic_distribution == TRAFFIC_TABLE_BASED)
+		for (int pe_id = 0; pe_id < DIRECTIONS; pe_id++)
 		{
-			core[i]->pe->traffic_table = &gttable;	// Needed to choose destination
-			core[i]->pe->never_transmit = (gttable.occurrencesAsSource(core[i]->pe->local_id) == 0);
+			core[i]->pe[pe_id]->local_id = core_id;
+			core[i]->pe[pe_id]->local_direction_id = DIRECTIONS+pe_id;
+			// Check for traffic table availability
+			if (GlobalParams::traffic_distribution == TRAFFIC_TABLE_BASED)
+			{
+				core[i]->pe[pe_id]->traffic_table = &gttable;	// Needed to choose destination
+				core[i]->pe[pe_id]->never_transmit = (gttable.occurrencesAsSource(core[i]->pe[pe_id]->local_id) == 0);
+			}
+			else
+				core[i]->pe[pe_id]->never_transmit = false;
 		}
-		else
-			core[i]->pe->never_transmit = false;
 
 		// Map clock and reset
 		core[i]->clock(clock);
@@ -2199,16 +2218,18 @@ void NoC::buildMesh()
 
 
 	    // Tell to the PE its coordinates
-	    t[i][j]->pe->local_id = j * GlobalParams::mesh_dim_x + i;
-
-	    // Check for traffic table availability
-   		if (GlobalParams::traffic_distribution == TRAFFIC_TABLE_BASED)
-		{
-			 t[i][j]->pe->traffic_table = &gttable;	// Needed to choose destination
-	   		 t[i][j]->pe->never_transmit = (gttable.occurrencesAsSource(t[i][j]->pe->local_id) == 0);
+		for (int pe_id = 0; pe_id < DIRECTIONS; pe_id++) {
+			t[i][j]->pe[pe_id]->local_id = j * GlobalParams::mesh_dim_x + i;
+			t[i][j]->pe[pe_id]->local_direction_id = DIRECTIONS+pe_id;
+			// Check for traffic table availability
+			if (GlobalParams::traffic_distribution == TRAFFIC_TABLE_BASED)
+			{
+				t[i][j]->pe[pe_id]->traffic_table = &gttable;	// Needed to choose destination
+				t[i][j]->pe[pe_id]->never_transmit = (gttable.occurrencesAsSource(t[i][j]->pe[pe_id]->local_id) == 0);
+			}
+			else
+				t[i][j]->pe[pe_id]->never_transmit = false;
 		}
-		else
-			t[i][j]->pe->never_transmit = false;
 
 	    // Map clock and reset
 	    t[i][j]->clock(clock);

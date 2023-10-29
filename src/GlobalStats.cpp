@@ -335,25 +335,31 @@ vector < vector < unsigned long > > GlobalStats::getSentFlits()
     for (int y = 0; y < GlobalParams::mesh_dim_y; y++)
 	mtx[y].resize(GlobalParams::mesh_dim_x);
 
-    // for (int y = 0; y < GlobalParams::mesh_dim_y; y++)
-	// for (int x = 0; x < GlobalParams::mesh_dim_x; x++)
-	//     mtx[y][x] = noc->t[x][y]->pe->getSentFlits();
-
     for (int y = 0; y < GlobalParams::mesh_dim_y; y++)
 	for (int x = 0; x < GlobalParams::mesh_dim_x; x++)
 	    for (int y_ = 0; y_ < GlobalParams::mesh_dim_y; y_++)
 		for (int x_ = 0; x_ < GlobalParams::mesh_dim_x; x_++)
-			{
-			// for (int idx = 0; idx < GlobalParams::mesh_dim_x*GlobalParams::mesh_dim_y; idx++)
-			// std::cout << noc->t[x_][y_]->r->stats.getFlitsSrcCount()[idx] << " ";
-			// std::cout << std::endl;
 			mtx[y][x] += noc->t[x_][y_]->r->stats.getFlitsSrcCount(y*GlobalParams::mesh_dim_x+x);
-			}
 
     return mtx;
 }
 
+vector < vector < unsigned long > > GlobalStats::getRecvFlits(int pe_id)
+{
+	vector < vector < unsigned long > > mtx;
+    assert (GlobalParams::topology == TOPOLOGY_MESH); 
 
+    mtx.resize(GlobalParams::mesh_dim_y);
+    for (int y = 0; y < GlobalParams::mesh_dim_y; y++)
+	mtx[y].resize(GlobalParams::mesh_dim_x);
+
+    for (int y = 0; y < GlobalParams::mesh_dim_y; y++)
+	for (int x = 0; x < GlobalParams::mesh_dim_x; x++)
+	// for (int pe_id = 0; pe_id < DIRECTIONS; pe_id++)
+			mtx[y][x] += noc->t[x][y]->pe[pe_id]->flits_recv;
+
+    return mtx;
+}
 
 unsigned int GlobalStats::getWirelessPackets()
 {
@@ -506,6 +512,62 @@ void GlobalStats::showStats(std::ostream & out, bool detailed)
 		out << "  ";
 		for (unsigned int x = 0; x < sp_mtx[y].size(); x++) {
 			out << setw(10) << sp_mtx[y][x] << ',';
+		}
+		out << endl;
+	}
+	out << "]" << endl;
+
+	// show RecvFlits matrix
+	vector < vector < unsigned long > > recvf_mtx_pe0 = getRecvFlits(0);
+	vector < vector < unsigned long > > recvf_mtx_pe1 = getRecvFlits(1);
+	vector < vector < unsigned long > > recvf_mtx_pe2 = getRecvFlits(2);
+	vector < vector < unsigned long > > recvf_mtx_pe3 = getRecvFlits(3);
+
+	out << endl << "received_flits_pe0 = [" << endl;
+	for (unsigned int y = 0; y < recvf_mtx_pe0.size(); y++) {
+		out << "  ";
+		for (unsigned int x = 0; x < recvf_mtx_pe0[y].size(); x++) {
+			out << setw(10) << recvf_mtx_pe0[y][x] << ',';
+		}
+		out << endl;
+	}
+	out << "]" << endl;
+
+	out << endl << "received_flits_pe1 = [" << endl;
+	for (unsigned int y = 0; y < recvf_mtx_pe1.size(); y++) {
+		out << "  ";
+		for (unsigned int x = 0; x < recvf_mtx_pe1[y].size(); x++) {
+			out << setw(10) << recvf_mtx_pe1[y][x] << ',';
+		}
+		out << endl;
+	}
+	out << "]" << endl;
+
+	out << endl << "received_flits_pe2 = [" << endl;
+	for (unsigned int y = 0; y < recvf_mtx_pe2.size(); y++) {
+		out << "  ";
+		for (unsigned int x = 0; x < recvf_mtx_pe2[y].size(); x++) {
+			out << setw(10) << recvf_mtx_pe2[y][x] << ',';
+		}
+		out << endl;
+	}
+	out << "]" << endl;
+
+	out << endl << "received_flits_pe3 = [" << endl;
+	for (unsigned int y = 0; y < recvf_mtx_pe3.size(); y++) {
+		out << "  ";
+		for (unsigned int x = 0; x < recvf_mtx_pe3[y].size(); x++) {
+			out << setw(10) << recvf_mtx_pe3[y][x] << ',';
+		}
+		out << endl;
+	}
+	out << "]" << endl;
+
+	out << endl << "received_flits = [" << endl;
+	for (unsigned int y = 0; y < recvf_mtx_pe3.size(); y++) {
+		out << "  ";
+		for (unsigned int x = 0; x < recvf_mtx_pe3[y].size(); x++) {
+			out << setw(10) << recvf_mtx_pe0[y][x] + recvf_mtx_pe1[y][x] + recvf_mtx_pe2[y][x] + recvf_mtx_pe3[y][x] << ',';
 		}
 		out << endl;
 	}

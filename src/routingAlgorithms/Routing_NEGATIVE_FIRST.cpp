@@ -38,7 +38,7 @@ vector<int> Routing_NEGATIVE_FIRST::route(Router * router, const RouteData & rou
 	    if (destination.y < current.y) directions.push_back(DIRECTION_NORTH);
 	} 
 	else // both x and y were already reached
-	    directions.push_back(DIRECTION_LOCAL);
+	    directions.push_back(routeData.local_direction_id);
 
     return directions;
 }

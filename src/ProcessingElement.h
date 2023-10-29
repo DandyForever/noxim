@@ -41,13 +41,16 @@ SC_MODULE(ProcessingElement)
 
     // Registers
     int local_id;		// Unique identification number
+    int local_direction_id;
     bool current_level_rx;	// Current level for Alternating Bit Protocol (ABP)
     bool current_level_tx;	// Current level for Alternating Bit Protocol (ABP)
     queue < Packet > packet_queue;	// Local queue of packets
+    queue < Flit > in_flit_queue;
     bool transmittedAtPreviousCycle;	// Used for distributions with memory
 
     // Metrics
     unsigned long flits_sent = 0;
+    unsigned long flits_recv = 0;
 
     // Functions
     void rxProcess();		// The receiving process
