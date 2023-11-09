@@ -132,6 +132,8 @@ SC_MODULE(Router)
    
     vector<int> getNextHops(int src, int dst);
     int start_from_port;	     // Port from which to start the reservation cycle
+    bool reservation_status[2*DIRECTIONS+1];
+		vector < int > reservation_queue;
     int start_from_vc[2*DIRECTIONS+1]; // VC from which to start the reservation cycle for the specific port
 
     vector<int> nextDeltaHops(RouteData rd);

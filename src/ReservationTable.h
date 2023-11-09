@@ -54,6 +54,8 @@ class ReservationTable {
     // Returns the pairs of output port and virtual channel reserved by port_in
     vector<pair<int,int> > getReservations(const int port_int);
 
+    vector<TReservation> getOutReservations(const int port_out);
+
     // update the index of the reservation having highest priority in the current cycle
     void updateIndex();
 

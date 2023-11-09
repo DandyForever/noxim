@@ -53,6 +53,13 @@ vector<pair<int,int> > ReservationTable::getReservations(const int port_in)
     return reservations;
 }
 
+vector<TReservation> ReservationTable::getOutReservations(const int port_out)
+{
+	assert (port_out < n_outputs);
+
+	return rtable[port_out].reservations;
+}
+
 int ReservationTable::checkReservation(const TReservation r, const int port_out)
 {
     /* Sanity Check for forbidden table status:

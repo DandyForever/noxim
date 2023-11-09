@@ -371,12 +371,49 @@ void Router::txProcess()
 		}
     } 
   	else 
-    { 
+    {
+
+		// for (int i = 0; i < 2*DIRECTIONS; i++) {
+		// 	cout << i << " Inbuf empty " << buffer[i][0].IsEmpty() << " full " << buffer[i][0].IsFull() << endl;
+		// 	cout << i << " Outbuf empty " << buffer_out[i][0].IsEmpty() << " full " << buffer_out[i][0].IsFull() << endl;
+		// }
+		// 0 phase: Checking
+		for (int i = 0; i < 2*DIRECTIONS+1; i++)
+		{
+			if (!buffer[i][0].IsEmpty())
+			{
+				if (!reservation_status[i])
+				{
+					reservation_queue.push_back(i);
+					reservation_status[i] = true;
+				}
+			} else
+			reservation_status[i] = false;
+			// assert (!reservation_status[i]);
+		}
+
+		// cout << " Router " << local_id << endl;
+		// for (int i = 0; i < 2*DIRECTIONS+1; i++)
+		// {
+		// 	cout << i << ": " << reservation_status[i] << endl;
+		// }
+		// cout << "reserved" << endl;
+		// for (auto i : reservation_queue) {
+		// 	cout << i << " ";
+		// }
+		// cout << endl << endl;
+
+		// reservation_table.print();
+		// cout << endl;
+
 		// 1st phase: Reservation
-		for (int j = 0; j < 2*DIRECTIONS+1; j++) 
+		vector < int > reservation_queue_cpy;
+		// for (int j = 0; j < 2*DIRECTIONS+1; j++) 
+		for (auto i : reservation_queue)
 		{
 			// Kind of Round Robin
-			int i = (start_from_port + j) % (2*DIRECTIONS+1);
+			// int i = (start_from_port + j) % (2*DIRECTIONS+1);
+			// int i = reservation_queue.front();
 
 			for (int k = 0;k < GlobalParams::n_virtual_channels; k++)
 			{
@@ -423,17 +460,22 @@ void Router::txProcess()
 						{
 							LOG << " reserving direction " << o << " for flit " << flit << endl;
 							reservation_table.reserve(r, o);
+							reservation_status[i] = false;
 						}
 						else if (rt_status == RT_ALREADY_SAME)
 						{
+							reservation_queue_cpy.push_back(i);
+							// cout << i << " already reserved direction " << o << endl;
 							LOG << " RT_ALREADY_SAME reserved direction " << o << " for flit " << flit << endl;
 						}
 						else if (rt_status == RT_OUTVC_BUSY)
 						{
+							reservation_queue_cpy.push_back(i);
 							LOG << " RT_OUTVC_BUSY reservation direction " << o << " for flit " << flit << endl;
 						}
 						else if (rt_status == RT_ALREADY_OTHER_OUT)
 						{
+							reservation_queue_cpy.push_back(i);
 							LOG  << "RT_ALREADY_OTHER_OUT: another output previously reserved for the same flit " << endl;
 						}
 							else assert(false); // no meaningful status here
@@ -444,20 +486,24 @@ void Router::txProcess()
 		}
 
 		start_from_port = (start_from_port + 1) % (2*DIRECTIONS+1);
+		reservation_queue = reservation_queue_cpy;
 
 		// 2nd phase: Forwarding
 		
-		for (int i = 0; i < 2*DIRECTIONS+1; i++) 
+		for (int o = 0; o < 2*DIRECTIONS+1; o++) 
 		{ 
-			vector<pair<int,int> > reservations = reservation_table.getReservations(i);
+			// vector<pair<int,int> > reservations = reservation_table.getReservations(i);
+			vector <TReservation> reservations = reservation_table.getOutReservations(o);
 		
 			if (reservations.size()!=0)
 			{
 
 				int rnd_idx = 0;
 
-				int o = reservations[rnd_idx].first;
-				int vc = reservations[rnd_idx].second;
+				// int o = reservations[rnd_idx].first;
+				// int vc = reservations[rnd_idx].second;
+				int i = reservations[rnd_idx].input;
+				int vc = reservations[rnd_idx].vc;
 
 				// can happen
 				if (!buffer[i][vc].IsEmpty())  
@@ -465,6 +511,7 @@ void Router::txProcess()
 					// power contribution already computed in 1st phase
 					Flit flit = buffer[i][vc].Front();
 					
+					// cout << "Before buffer out push " << endl;
 					if (!buffer_out[o][vc].IsFull())
 					{
 						LOG << "Input[" << i << "][" << vc << "] forwarded to Output[" << o << "], flit: " << flit << endl;
@@ -479,6 +526,7 @@ void Router::txProcess()
 							r.vc = vc;
 							reservation_table.release(r,o);
 						}
+						// else assert (false);
 
 						// Power & Stats -------------------------------------------------
 						if (o == DIRECTION_HUB) power.r2hLink();
@@ -809,6 +857,8 @@ void Router::configure(const int _id,
     stats.configure(_id, _warm_up_time);
 
     start_from_port = DIRECTION_LOCAL_NORTH;
+	for (int i = 0; i < 2*DIRECTIONS+1; i++)
+	reservation_status[i] = false;
   
 
     if (grt.isValid())

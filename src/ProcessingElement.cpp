@@ -81,9 +81,9 @@ void ProcessingElement::rxProcess()
 	    current_level_rx = 1 - current_level_rx;	// Negate the old value for Alternating Bit Protocol (ABP)
 	}
     // PE is always ready to recieve packets
-	if (is_memory_pe(local_id))
-        ack_rx.write(in_flit_queue.empty());
-    else
+	// if (is_memory_pe(local_id))
+    //     ack_rx.write(in_flit_queue.empty());
+    // else
         ack_rx.write(1);
     }
 }
@@ -229,6 +229,24 @@ bool ProcessingElement::is_memory_pe(int id)
 
 }
 
+bool ProcessingElement::is_angle_pe(int id)
+{
+    if (id == 0) return true;
+    if (id == GlobalParams::mesh_dim_x - 1) return true;
+    if (id == GlobalParams::mesh_dim_x * (GlobalParams::mesh_dim_y - 1)) return true;
+    if (id == GlobalParams::mesh_dim_x * GlobalParams::mesh_dim_y - 1) return true;
+
+    return false;
+}
+
+bool ProcessingElement::is_vertical_pe(int id)
+{
+    if (id % GlobalParams::mesh_dim_x == 0) return true;
+    if ((id + 1) % GlobalParams::mesh_dim_x == 0) return true;
+
+    return false;
+}
+
 bool ProcessingElement::canShot(Packet & packet)
 {
    // assert(false);
@@ -236,6 +254,12 @@ bool ProcessingElement::canShot(Packet & packet)
 
     // Central tiles should not send packets
     if (is_memory_pe(local_id)) return false;
+
+    // Switching off some PEs
+    //-----------------------------------------------------
+    if (is_angle_pe(local_id)) return false;
+    // if (is_vertical_pe(local_id)) return false;
+    //-----------------------------------------------------
 
     // Switching off some local directions
     //-----------------------------------------------------
