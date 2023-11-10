@@ -257,7 +257,7 @@ bool ProcessingElement::canShot(Packet & packet)
 
     // Switching off some PEs
     //-----------------------------------------------------
-    if (is_angle_pe(local_id)) return false;
+    // if (is_angle_pe(local_id)) return false;
     // if (is_vertical_pe(local_id)) return false;
     //-----------------------------------------------------
 

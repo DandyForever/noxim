@@ -19,22 +19,27 @@
 # ../bin/noxim -config ../config_examples/default_config.yaml -pir 0.90 poisson -detailed > ./results/sim_0_90.log
 # ../bin/noxim -config ../config_examples/default_config.yaml -pir 0.95 poisson -detailed > ./results/sim_0_95.log
 # ../bin/noxim -config ../config_examples/default_config.yaml -pir 1.00 poisson -routing XY -detailed > ./results/sim_1_00_xy.log
-../bin/noxim -config ../config_examples/default_config.yaml -pir 0.01 poisson -routing DOR -detailed > ./results/sim_0_04_dor.log
-../bin/noxim -config ../config_examples/default_config.yaml -pir 0.02 poisson -routing DOR -detailed > ./results/sim_0_08_dor.log
-../bin/noxim -config ../config_examples/default_config.yaml -pir 0.03 poisson -routing DOR -detailed > ./results/sim_0_12_dor.log
-../bin/noxim -config ../config_examples/default_config.yaml -pir 0.04 poisson -routing DOR -detailed > ./results/sim_0_16_dor.log
-../bin/noxim -config ../config_examples/default_config.yaml -pir 0.05 poisson -routing DOR -detailed > ./results/sim_0_20_dor.log
-../bin/noxim -config ../config_examples/default_config.yaml -pir 0.06 poisson -routing DOR -detailed > ./results/sim_0_24_dor.log
-../bin/noxim -config ../config_examples/default_config.yaml -pir 0.07 poisson -routing DOR -detailed > ./results/sim_0_28_dor.log
-../bin/noxim -config ../config_examples/default_config.yaml -pir 0.08 poisson -routing DOR -detailed > ./results/sim_0_32_dor.log
-../bin/noxim -config ../config_examples/default_config.yaml -pir 0.09 poisson -routing DOR -detailed > ./results/sim_0_36_dor.log
-../bin/noxim -config ../config_examples/default_config.yaml -pir 0.10 poisson -routing DOR -detailed > ./results/sim_0_40_dor.log
-../bin/noxim -config ../config_examples/default_config.yaml -pir 0.15 poisson -routing DOR -detailed > ./results/sim_0_60_dor.log
-../bin/noxim -config ../config_examples/default_config.yaml -pir 0.20 poisson -routing DOR -detailed > ./results/sim_0_80_dor.log
-../bin/noxim -config ../config_examples/default_config.yaml -pir 0.25 poisson -routing DOR -detailed > ./results/sim_1_00_dor.log
+
+# DOR algorithm estimation
+# ../bin/noxim -config ../config_examples/default_config.yaml -pir 0.01 poisson -routing DOR -detailed > ./results/sim_0_04_dor.log
+# ../bin/noxim -config ../config_examples/default_config.yaml -pir 0.02 poisson -routing DOR -detailed > ./results/sim_0_08_dor.log
+# ../bin/noxim -config ../config_examples/default_config.yaml -pir 0.03 poisson -routing DOR -detailed > ./results/sim_0_12_dor.log
+# ../bin/noxim -config ../config_examples/default_config.yaml -pir 0.04 poisson -routing DOR -detailed > ./results/sim_0_16_dor.log
+# ../bin/noxim -config ../config_examples/default_config.yaml -pir 0.05 poisson -routing DOR -detailed > ./results/sim_0_20_dor.log
+# ../bin/noxim -config ../config_examples/default_config.yaml -pir 0.06 poisson -routing DOR -detailed > ./results/sim_0_24_dor.log
+# ../bin/noxim -config ../config_examples/default_config.yaml -pir 0.07 poisson -routing DOR -detailed > ./results/sim_0_28_dor.log
+# ../bin/noxim -config ../config_examples/default_config.yaml -pir 0.08 poisson -routing DOR -detailed > ./results/sim_0_32_dor.log
+# ../bin/noxim -config ../config_examples/default_config.yaml -pir 0.09 poisson -routing DOR -detailed > ./results/sim_0_36_dor.log
+# ../bin/noxim -config ../config_examples/default_config.yaml -pir 0.10 poisson -routing DOR -detailed > ./results/sim_0_40_dor.log
+# ../bin/noxim -config ../config_examples/default_config.yaml -pir 0.15 poisson -routing DOR -detailed > ./results/sim_0_60_dor.log
+# ../bin/noxim -config ../config_examples/default_config.yaml -pir 0.20 poisson -routing DOR -detailed > ./results/sim_0_80_dor.log
+# ../bin/noxim -config ../config_examples/default_config.yaml -pir 0.25 poisson -routing DOR -detailed > ./results/sim_1_00_dor.log
+
 # ../bin/noxim -config ../config_examples/default_config.yaml -pir 1.00 poisson -routing WEST_FIRST -detailed > ./results/sim_1_00_west_first.log
 # ../bin/noxim -config ../config_examples/default_config.yaml -pir 1.00 poisson -routing NORTH_LAST -detailed > ./results/sim_1_00_northlast.log
 # ../bin/noxim -config ../config_examples/default_config.yaml -pir 1.00 poisson -routing NEGATIVE_FIRST -detailed > ./results/sim_1_00_negativefirst.log
 # ../bin/noxim -config ../config_examples/default_config.yaml -pir 1.00 poisson -routing ODD_EVEN -detailed > ./results/sim_1_00_oddeven.log
 # ../bin/noxim -config ../config_examples/default_config.yaml -pir 1.00 poisson -routing DYAD 10 -detailed > ./results/sim_1_00_dyad.log
 # ../bin/noxim -config ../config_examples/default_config.yaml -pir 1.00 poisson -routing fullyadaptive -detailed > ./results/sim_1_00_fullyadaptive.log
+
+../bin/noxim -config ../config_examples/default_config.yaml -pir 1.00 poisson -routing DOR -sim 100 -detailed > ./results/debug_1_00_dor.log
