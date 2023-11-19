@@ -14,7 +14,7 @@
 # topology: MESH
 # X and Y mesh sizes
 mesh_dim_x: 10
-mesh_dim_y: 6
+mesh_dim_y: 10
 # number of flits for each router buffer
 buffer_depth: 2
 # size of flits, in bits
@@ -37,7 +37,7 @@ n_virtual_channels: 2
 #   TABLE_BASED
 # Each of the above labels should match a corresponding
 # implementation in the routingAlgorithms source code directory
-routing_algorithm: XY
+routing_algorithm: DOR
 routing_table_filename: ""
 
 # Routing specific parameters

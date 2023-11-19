@@ -77,13 +77,14 @@ void ProcessingElement::rxProcess()
         flits_recv++;
 	    Flit flit_tmp = flit_rx.read();
         swap(flit_tmp.src_id, flit_tmp.dst_id);
+        flit_tmp.vc_id = 1 - flit_tmp.vc_id;
         // in_flit_queue.push(flit_tmp);
 	    current_level_rx = 1 - current_level_rx;	// Negate the old value for Alternating Bit Protocol (ABP)
 	}
     // PE is always ready to recieve packets
-	// if (is_memory_pe(local_id))
-    //     ack_rx.write(in_flit_queue.empty());
-    // else
+	if (is_memory_pe(local_id))
+        ack_rx.write(in_flit_queue.size() < 2);
+    else
         ack_rx.write(1);
     }
 }
@@ -239,6 +240,20 @@ bool ProcessingElement::is_angle_pe(int id)
     return false;
 }
 
+bool ProcessingElement::is_angle_special_pe(int id, int num)
+{
+    assert (GlobalParams::mesh_dim_y >= 2*num);
+    for (int i = 0; i < num; i++)
+    {
+        if (i * GlobalParams::mesh_dim_x == id) return true;
+        if (GlobalParams::mesh_dim_x-1 + i * GlobalParams::mesh_dim_x == id) return true;
+        if (GlobalParams::mesh_dim_x * (GlobalParams::mesh_dim_y-1) - i * GlobalParams::mesh_dim_x == id) return true;
+        if (GlobalParams::mesh_dim_x * GlobalParams::mesh_dim_y - 1 - i * GlobalParams::mesh_dim_x == id) return true;
+    }
+
+    return false;
+}
+
 bool ProcessingElement::is_vertical_pe(int id)
 {
     if (id % GlobalParams::mesh_dim_x == 0) return true;
@@ -257,7 +272,7 @@ bool ProcessingElement::canShot(Packet & packet)
 
     // Switching off some PEs
     //-----------------------------------------------------
-    // if (is_angle_pe(local_id)) return false;
+    if (is_angle_special_pe(local_id, 3)) return false;
     // if (is_vertical_pe(local_id)) return false;
     //-----------------------------------------------------
 
@@ -496,7 +511,7 @@ Packet ProcessingElement::trafficRandom()
 
     p.timestamp = sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
     p.size = p.flit_left = getRandomSize();
-    p.vc_id = randInt(0,GlobalParams::n_virtual_channels-1);
+    p.vc_id = 0;//randInt(0,GlobalParams::n_virtual_channels-1);
 
     return p;
 }

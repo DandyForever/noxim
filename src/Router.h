@@ -132,8 +132,18 @@ SC_MODULE(Router)
    
     vector<int> getNextHops(int src, int dst);
     int start_from_port;	     // Port from which to start the reservation cycle
-    bool reservation_status[2*DIRECTIONS+1];
-		vector < int > reservation_queue;
+    
+    bool reservation_status[2*DIRECTIONS+1][2];
+		vector < pair<int, int> > reservation_queue;
+
+    bool out_reservation_status[2*DIRECTIONS+1][2];
+    vector < vector < int > > out_reservation_queue;
+    bool both_out_vc_reserved[2*DIRECTIONS+1];
+    bool none_out_vc_reserved[2*DIRECTIONS+1];
+    bool prev_out_vc[2*DIRECTIONS+1];
+    bool cur_out_vc[2*DIRECTIONS+1];
+    bool next_out_vc[2*DIRECTIONS+1];
+    
     int start_from_vc[2*DIRECTIONS+1]; // VC from which to start the reservation cycle for the specific port
 
     vector<int> nextDeltaHops(RouteData rd);
@@ -144,6 +154,8 @@ SC_MODULE(Router)
     void ShowBuffersStats(std::ostream & out);
 
     bool connectedHubs(int src_hub, int dst_hub);
+
+    bool is_memory_pe(int id);
 };
 
 #endif
