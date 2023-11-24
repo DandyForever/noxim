@@ -48,6 +48,11 @@ SC_MODULE(ProcessingElement)
     queue < Flit > in_flit_queue;
     bool transmittedAtPreviousCycle;	// Used for distributions with memory
 
+    // Interlivin feature parameters
+    int interliving_prev_dst;
+    int interliving_prev_reps;
+    int interliving_local_dst;
+
     // Metrics
     unsigned long flits_sent = 0;
     unsigned long flits_recv = 0;

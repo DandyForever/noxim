@@ -60,3 +60,5 @@ PowerConfig GlobalParams::power_configuration;
 // out of yaml configuration
 bool GlobalParams::ascii_monitor;
 int GlobalParams::channel_selection;
+int GlobalParams::interliving_reps;
+string GlobalParams::log_file_name;

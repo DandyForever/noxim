@@ -967,7 +967,8 @@ void Router::configure(const int _id,
 	for (int vc = 0; vc < GlobalParams::n_virtual_channels; vc++)
 	{
 	    buffer[i][vc].SetMaxBufferSize(_max_buffer_size);
-		buffer_out[i][vc].SetMaxBufferSize(_max_buffer_size);
+		// buffer_out[i][vc].SetMaxBufferSize(_max_buffer_size);
+		buffer_out[i][vc].SetMaxBufferSize(1);
 	    buffer[i][vc].setLabel(string(name())+"->buffer["+i_to_string(i)+"]");
 		buffer_out[i][vc].setLabel(string(name())+"->buffer["+i_to_string(i)+"]");
 	}

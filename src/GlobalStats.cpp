@@ -517,6 +517,15 @@ void GlobalStats::showStats(std::ostream & out, bool detailed)
 	}
 	out << "]" << endl;
 
+	std::ofstream f_sent_flits (GlobalParams::log_file_name, std::ofstream::out);
+	for (unsigned int y = 0; y < sp_mtx.size(); y++) {
+		for (unsigned int x = 0; x < sp_mtx[y].size(); x++) {
+			f_sent_flits << sp_mtx[y][x] << ';';
+		}
+		f_sent_flits << endl;
+	}
+	f_sent_flits.close();
+
 	// show RecvFlits matrix
 	vector < vector < unsigned long > > recvf_mtx_pe0 = getRecvFlits(0);
 	vector < vector < unsigned long > > recvf_mtx_pe1 = getRecvFlits(1);

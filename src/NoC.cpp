@@ -2220,6 +2220,9 @@ void NoC::buildMesh()
 	    // Tell to the PE its coordinates
 		for (int pe_id = 0; pe_id < DIRECTIONS; pe_id++) {
 			t[i][j]->pe[pe_id]->local_id = j * GlobalParams::mesh_dim_x + i;
+			t[i][j]->pe[pe_id]->interliving_prev_dst = t[i][j]->pe[pe_id]->local_id;
+			t[i][j]->pe[pe_id]->interliving_prev_reps = GlobalParams::interliving_reps;
+			t[i][j]->pe[pe_id]->interliving_local_dst = 0;
 			t[i][j]->pe[pe_id]->local_direction_id = DIRECTIONS+pe_id;
 			// Check for traffic table availability
 			if (GlobalParams::traffic_distribution == TRAFFIC_TABLE_BASED)

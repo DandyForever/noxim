@@ -521,7 +521,13 @@ void parseCmdLine(int arg_num, char *arg_vet[])
 	    } 
 	    else if (!strcmp(arg_vet[i], "-sel")) {
 		GlobalParams::selection_strategy = arg_vet[++i];
-	    } 
+	    }
+        else if (!strcmp(arg_vet[i], "-log_file_name")) {
+            GlobalParams::log_file_name = arg_vet[++i];
+        }
+        else if (!strcmp(arg_vet[i], "-interliving_reps")) {
+            GlobalParams::interliving_reps = atoi(arg_vet[++i]);
+        } 
 	    else if (!strcmp(arg_vet[i], "-pir")) 
 	    {
 		

@@ -188,6 +188,8 @@ struct GlobalParams {
     // out of yaml configuration
     static bool ascii_monitor;
     static int channel_selection;
+    static int interliving_reps;
+    static string log_file_name;
 };
 
 #endif
