@@ -272,27 +272,27 @@ bool ProcessingElement::canShot(Packet & packet)
 
     // Switching off some PEs
     //-----------------------------------------------------
-    // if (is_angle_special_pe(local_id, 3)) return false;
-    // if (is_vertical_pe(local_id)) return false;
+    if (GlobalParams::switch_angle_masters && is_angle_special_pe(local_id, GlobalParams::switch_angle_masters)) return false;
+    if (GlobalParams::switch_vertical_masters &&  is_vertical_pe(local_id)) return false;
     //-----------------------------------------------------
 
     // Switching off some local directions
     //-----------------------------------------------------
-    if (local_direction_id == DIRECTION_LOCAL_WEST) return false;
-    if (local_direction_id == DIRECTION_LOCAL_SOUTH) return false;
-    if (local_direction_id == DIRECTION_LOCAL_EAST) return false;
+    if (GlobalParams::eu_ports < 2 && local_direction_id == DIRECTION_LOCAL_WEST) return false;
+    if (GlobalParams::eu_ports < 3 && local_direction_id == DIRECTION_LOCAL_SOUTH) return false;
+    if (GlobalParams::eu_ports < 4 && local_direction_id == DIRECTION_LOCAL_EAST) return false;
     //-----------------------------------------------------
 
     //-----------------------------------------------------
     // For debug only
     //-----------------------------------------------------
-    if (local_id != 0 && local_id != GlobalParams::mesh_dim_x && local_id + 1 != 2 * GlobalParams::mesh_dim_x) return false;
+    if (GlobalParams::switch_debug && local_id != 0 && local_id != GlobalParams::mesh_dim_x && local_id + 1 != 2 * GlobalParams::mesh_dim_x) return false;
     //-----------------------------------------------------
 
     //-----------------------------------------------------
     // For validation only
     //-----------------------------------------------------
-    // if (local_id < GlobalParams::mesh_dim_x || local_id >= GlobalParams::mesh_dim_x * (GlobalParams::mesh_dim_y - 1)) return false;
+    if (GlobalParams::switch_interliving_validation && (local_id < GlobalParams::mesh_dim_x || local_id >= GlobalParams::mesh_dim_x * (GlobalParams::mesh_dim_y - 1))) return false;
     //-----------------------------------------------------
    
     //if(local_id!=16) return false;
@@ -481,7 +481,7 @@ Packet ProcessingElement::trafficRandom()
     Packet p;
     p.src_id = local_id;
     // p.local_direction_id = local_direction_id;
-    p.local_direction_id = randInt(DIRECTION_LOCAL_NORTH, DIRECTION_LOCAL_WEST);
+    p.local_direction_id = randInt(DIRECTION_LOCAL_NORTH, DIRECTION_LOCAL_NORTH - 1 + GlobalParams::mem_ports);
     double rnd = rand() / (double) RAND_MAX;
     double range_start = 0.0;
     int max_id;
@@ -528,11 +528,23 @@ Packet ProcessingElement::trafficRandom()
                 if (interliving_prev_reps == GlobalParams::interliving_reps)
                 {
                     interliving_prev_reps = 0;
-                    interliving_prev_dst++;
-                    if (interliving_prev_dst + 1 == GlobalParams::mesh_dim_x + local_id)
+                    if (GlobalParams::interliving_direction)
                     {
-                        interliving_prev_dst = local_id + 1;
-                        interliving_local_dst = (interliving_local_dst + 1) % 4;
+                        interliving_prev_dst--;
+                        if (interliving_prev_dst == local_id)
+                        {
+                            interliving_prev_dst = local_id + GlobalParams::mesh_dim_x - 2;
+                            interliving_local_dst = (interliving_local_dst + 1) % GlobalParams::mem_ports;
+                        }
+                    }
+                    else
+                    {
+                        interliving_prev_dst++;
+                        if (interliving_prev_dst + 1 == GlobalParams::mesh_dim_x + local_id)
+                        {
+                            interliving_prev_dst = local_id + 1;
+                            interliving_local_dst = (interliving_local_dst + 1) % GlobalParams::mem_ports;
+                        } 
                     }
                 }
                 p.dst_id = interliving_prev_dst;
@@ -544,18 +556,29 @@ Packet ProcessingElement::trafficRandom()
                 if (interliving_prev_reps == GlobalParams::interliving_reps)
                 {
                     interliving_prev_reps = 0;
-                    interliving_prev_dst--;
-                    if (interliving_prev_dst == local_id + 1 - GlobalParams::mesh_dim_x)
+                    if (GlobalParams::interliving_direction)
                     {
-                        interliving_prev_dst = local_id - 1;
-                        interliving_local_dst = (interliving_local_dst + 1) % 4;
+                        interliving_prev_dst++;
+                        if (interliving_prev_dst == local_id)
+                        {
+                            interliving_prev_dst = local_id - GlobalParams::mesh_dim_x + 2;
+                            interliving_local_dst = (interliving_local_dst + 1) % GlobalParams::mem_ports;
+                        }
+                    }
+                    else
+                    {
+                        interliving_prev_dst--;
+                        if (interliving_prev_dst == local_id + 1 - GlobalParams::mesh_dim_x)
+                        {
+                            interliving_prev_dst = local_id - 1;
+                            interliving_local_dst = (interliving_local_dst + 1) % GlobalParams::mem_ports;
+                        }
                     }
                 }
                 p.dst_id = interliving_prev_dst;
                 p.local_direction_id = DIRECTION_LOCAL_NORTH + interliving_local_dst;
                 interliving_prev_reps++;
             }
-            // cout << "For " << local_id << " dst " << p.dst_id << " ldid " << p.local_direction_id << endl; 
         }
     }
     //-----------------------------------
@@ -563,7 +586,8 @@ Packet ProcessingElement::trafficRandom()
     p.timestamp = sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
     p.size = p.flit_left = getRandomSize();
     p.vc_id = 0;//randInt(0,GlobalParams::n_virtual_channels-1);
-
+    if (GlobalParams::switch_debug)
+        cout << "For " << local_id << " dst " << p.dst_id << " ldid " << p.local_direction_id << endl; 
     return p;
 }
 // TODO: for testing only

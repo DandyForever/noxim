@@ -769,7 +769,7 @@ void NoC::buildButterfly()
 	}
 
 	//--- ---------------------------------- ---
-
+/*
 	// dummy NoP_data structure
 	NoP_data tmp_NoP;
 
@@ -779,6 +779,7 @@ void NoC::buildButterfly()
 		tmp_NoP.channel_status_neighbor[i].free_slots = NOT_VALID;
 		tmp_NoP.channel_status_neighbor[i].available = false;
 	}
+*/
 
 }
 
@@ -1505,7 +1506,7 @@ void NoC::buildBaseline()
 
 
     //--- ---------------------------------- ---
-
+/*
     // dummy NoP_data structure
     NoP_data tmp_NoP;
 
@@ -1515,7 +1516,7 @@ void NoC::buildBaseline()
 	tmp_NoP.channel_status_neighbor[i].free_slots = NOT_VALID;
 	tmp_NoP.channel_status_neighbor[i].available = false;
     }
-
+*/
 }
 
 void NoC::buildOmega()
@@ -2146,7 +2147,7 @@ void NoC::buildOmega()
 	}
 
 	//--- ---------------------------------- ---
-
+/*
 	// dummy NoP_data structure
 	NoP_data tmp_NoP;
 
@@ -2156,7 +2157,7 @@ void NoC::buildOmega()
 		tmp_NoP.channel_status_neighbor[i].free_slots = NOT_VALID;
 		tmp_NoP.channel_status_neighbor[i].available = false;
 	}
-
+*/
 }
 
 void NoC::buildMesh()
@@ -2221,6 +2222,12 @@ void NoC::buildMesh()
 		for (int pe_id = 0; pe_id < DIRECTIONS; pe_id++) {
 			t[i][j]->pe[pe_id]->local_id = j * GlobalParams::mesh_dim_x + i;
 			t[i][j]->pe[pe_id]->interliving_prev_dst = t[i][j]->pe[pe_id]->local_id;
+			if (GlobalParams::interliving_direction) {
+				if (t[i][j]->pe[pe_id]->local_id % GlobalParams::mesh_dim_x == 0)
+					t[i][j]->pe[pe_id]->interliving_prev_dst = t[i][j]->pe[pe_id]->local_id + GlobalParams::mesh_dim_x - 1;
+				else
+					t[i][j]->pe[pe_id]->interliving_prev_dst = t[i][j]->pe[pe_id]->local_id - GlobalParams::mesh_dim_x + 1;
+			}
 			t[i][j]->pe[pe_id]->interliving_prev_reps = GlobalParams::interliving_reps;
 			t[i][j]->pe[pe_id]->interliving_local_dst = 0;
 			t[i][j]->pe[pe_id]->local_direction_id = DIRECTIONS+pe_id;
@@ -2401,7 +2408,7 @@ Tile *NoC::searchNode(const int id) const
 void NoC::asciiMonitor()
 {
 	//cout << sc_time_stamp().to_double()/GlobalParams::clock_period_ps << endl;
-	system("clear");
+	cout << system("clear");
 	//
 	// asciishow proof-of-concept #1 free slots
 

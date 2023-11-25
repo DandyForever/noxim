@@ -189,6 +189,13 @@ struct GlobalParams {
     static bool ascii_monitor;
     static int channel_selection;
     static int interliving_reps;
+    static int interliving_direction;
+    static int mem_ports;
+    static int eu_ports;
+    static bool switch_vertical_masters;
+    static int switch_angle_masters;
+    static bool switch_interliving_validation;
+    static bool switch_debug;
     static string log_file_name;
 };
 

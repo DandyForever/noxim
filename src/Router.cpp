@@ -749,9 +749,9 @@ vector<int> Router::nextDeltaHops(RouteData rd) {
 	vector<int> direction; // initially is empty
 	vector<int> next_hops;
 
-	int sw = GlobalParams::n_delta_tiles/2; //sw: switch number in each stage
+	// int sw = GlobalParams::n_delta_tiles/2; //sw: switch number in each stage
 	int stg = log2(GlobalParams::n_delta_tiles);
-	int c;
+	int c = 0;
 	//---From Source to stage 0 (return the sw attached to the source)---
 	//Topology omega 
 	if (GlobalParams::topology == TOPOLOGY_OMEGA) 	
@@ -967,8 +967,8 @@ void Router::configure(const int _id,
 	for (int vc = 0; vc < GlobalParams::n_virtual_channels; vc++)
 	{
 	    buffer[i][vc].SetMaxBufferSize(_max_buffer_size);
-		// buffer_out[i][vc].SetMaxBufferSize(_max_buffer_size);
-		buffer_out[i][vc].SetMaxBufferSize(1);
+		buffer_out[i][vc].SetMaxBufferSize(_max_buffer_size);
+		// buffer_out[i][vc].SetMaxBufferSize(1);
 	    buffer[i][vc].setLabel(string(name())+"->buffer["+i_to_string(i)+"]");
 		buffer_out[i][vc].setLabel(string(name())+"->buffer["+i_to_string(i)+"]");
 	}

@@ -92,8 +92,17 @@ void loadConfiguration() {
     GlobalParams::use_winoc = readParam<bool>(config, "use_winoc");
     GlobalParams::winoc_dst_hops = readParam<int>(config, "winoc_dst_hops",0);
     GlobalParams::use_powermanager = readParam<bool>(config, "use_wirxsleep");
-    
 
+    GlobalParams::interliving_reps = readParam<int>(config, "interliving_reps");
+    GlobalParams::interliving_direction = readParam<int>(config, "interliving_direction");
+    GlobalParams::mem_ports = readParam<int>(config, "mem_ports");
+    GlobalParams::eu_ports = readParam<int>(config, "eu_ports");
+    GlobalParams::switch_vertical_masters = readParam<bool>(config, "switch_vertical_masters");
+    GlobalParams::switch_angle_masters = readParam<int>(config, "switch_angle_masters");
+    GlobalParams::switch_interliving_validation = readParam<bool>(config, "switch_interliving_validation");
+    GlobalParams::switch_debug = readParam<bool>(config, "switch_debug");
+    GlobalParams::log_file_name = readParam<string>(config, "log_file_name");
+    
     set<int> channelSet;
 
     GlobalParams::default_hub_configuration = config["Hubs"]["defaults"].as<HubConfig>();
@@ -527,7 +536,28 @@ void parseCmdLine(int arg_num, char *arg_vet[])
         }
         else if (!strcmp(arg_vet[i], "-interliving_reps")) {
             GlobalParams::interliving_reps = atoi(arg_vet[++i]);
-        } 
+        }
+        else if (!strcmp(arg_vet[i], "-interliving_direction")) {
+            GlobalParams::interliving_direction = atoi(arg_vet[++i]);
+        }
+        else if (!strcmp(arg_vet[i], "-mem_ports")) {
+            GlobalParams::mem_ports = atoi(arg_vet[++i]);
+        }
+        else if (!strcmp(arg_vet[i], "-eu_ports")) {
+            GlobalParams::eu_ports = atoi(arg_vet[++i]);
+        }
+        else if (!strcmp(arg_vet[i], "-switch_vertical_masters")) {
+            GlobalParams::switch_vertical_masters = atoi(arg_vet[++i]);
+        }
+        else if (!strcmp(arg_vet[i], "-switch_angle_masters")) {
+            GlobalParams::switch_angle_masters = atoi(arg_vet[++i]);
+        }
+        else if (!strcmp(arg_vet[i], "-switch_interliving_validation")) {
+            GlobalParams::switch_interliving_validation = atoi(arg_vet[++i]);
+        }
+        else if (!strcmp(arg_vet[i], "-switch_debug")) {
+            GlobalParams::switch_debug = atoi(arg_vet[++i]);
+        }
 	    else if (!strcmp(arg_vet[i], "-pir")) 
 	    {
 		

@@ -34,7 +34,10 @@ void signalHandler( int signum )
 
 int sc_main(int arg_num, char *arg_vet[])
 {
-    signal(SIGQUIT, signalHandler);  
+    signal(SIGQUIT, signalHandler); 
+
+    std::srand(1);
+    std::cout << rand() << endl;
 
     // TEMP
     drained_volume = 0;
