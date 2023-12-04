@@ -325,7 +325,12 @@ void Router::rxProcess()
 
 				// cout << "Recv at " << i << " vc " << received_flit.vc_id << " at clock cycle " << sc_time_stamp().to_double() / GlobalParams::clock_period_ps << endl;
 
-				int vc = received_flit.vc_id;
+				int vc = 0;
+				if ((GlobalParams::routing_algorithm == "MOD_DOR") && ((received_flit.src_id % GlobalParams::mesh_dim_x == 0) || ((received_flit.src_id + 1) % GlobalParams::mesh_dim_x == 0)))
+				{
+					vc = 1;
+				}
+				// int vc = received_flit.vc_id;
 
 				if (!buffer[i][vc].IsFull()) 
 				{
