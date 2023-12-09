@@ -173,6 +173,7 @@ mem_ports: 1
 eu_ports: 1
 switch_vertical_masters: false
 switch_angle_masters: 0
+switch_horizontal_masters: 0
 switch_interliving_validation: false
 switch_debug: false
 log_file_name: "./results/results.csv"

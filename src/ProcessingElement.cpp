@@ -254,6 +254,17 @@ bool ProcessingElement::is_angle_special_pe(int id, int num)
     return false;
 }
 
+bool ProcessingElement::is_horizontal_special_pe(int id, int num)
+{
+    assert (GlobalParams::mesh_dim_x >= 2*num);
+    if (id < num) return true;
+    if ((id < GlobalParams::mesh_dim_x) && (id >= GlobalParams::mesh_dim_x - num)) return true;
+    if ((id >= GlobalParams::mesh_dim_x * (GlobalParams::mesh_dim_y - 1)) && (id < GlobalParams::mesh_dim_x * (GlobalParams::mesh_dim_y - 1) + num)) return true;
+    if (id >= GlobalParams::mesh_dim_x * GlobalParams::mesh_dim_y - num) return true;
+
+    return false;
+}
+
 bool ProcessingElement::is_vertical_pe(int id)
 {
     if (id % GlobalParams::mesh_dim_x == 0) return true;
@@ -273,6 +284,7 @@ bool ProcessingElement::canShot(Packet & packet)
     // Switching off some PEs
     //-----------------------------------------------------
     if (GlobalParams::switch_angle_masters && is_angle_special_pe(local_id, GlobalParams::switch_angle_masters)) return false;
+    if (GlobalParams::switch_horizontal_masters && is_horizontal_special_pe(local_id, GlobalParams::switch_horizontal_masters)) return false;
     if (GlobalParams::switch_vertical_masters &&  is_vertical_pe(local_id)) return false;
     //-----------------------------------------------------
 

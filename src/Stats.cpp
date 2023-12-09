@@ -29,7 +29,7 @@ void Stats::receivedFlit(const double arrival_time,
     if (i == -1) {
 	// first flit received from a given source
 	// initialize CommHist structure
-	CommHistory ch;
+	CommHistory ch = {};
 
 	ch.src_id = flit.src_id;
 	ch.total_received_flits = 0;

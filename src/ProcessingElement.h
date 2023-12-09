@@ -64,6 +64,7 @@ SC_MODULE(ProcessingElement)
     bool is_angle_pe(int id);
     bool is_vertical_pe(int id);
     bool is_angle_special_pe(int id, int num);
+    bool is_horizontal_special_pe(int id, int num);
     bool canShot(Packet & packet);	// True when the packet must be shot
     Flit nextFlit();	// Take the next flit of the current packet
     Packet trafficTest();	// used for testing traffic

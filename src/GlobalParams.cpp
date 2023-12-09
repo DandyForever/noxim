@@ -66,6 +66,7 @@ int GlobalParams::mem_ports;
 int GlobalParams::eu_ports;
 bool GlobalParams::switch_vertical_masters;
 int GlobalParams::switch_angle_masters;
+int GlobalParams::switch_horizontal_masters;
 bool GlobalParams::switch_interliving_validation;
 bool GlobalParams::switch_debug;
 string GlobalParams::log_file_name;

@@ -43,9 +43,6 @@ void Buffer::Print()
     queue<Flit> m = buffer;
 
     string bstr = "";
-   
-
-    char  t[] = "HBT";
 
     cout << sc_time_stamp().to_double() / GlobalParams::clock_period_ps << "\t";
     cout << label << " QUEUE *[";

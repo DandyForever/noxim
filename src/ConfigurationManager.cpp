@@ -99,6 +99,7 @@ void loadConfiguration() {
     GlobalParams::eu_ports = readParam<int>(config, "eu_ports");
     GlobalParams::switch_vertical_masters = readParam<bool>(config, "switch_vertical_masters");
     GlobalParams::switch_angle_masters = readParam<int>(config, "switch_angle_masters");
+    GlobalParams::switch_horizontal_masters = readParam<int>(config, "switch_horizontal_masters");
     GlobalParams::switch_interliving_validation = readParam<bool>(config, "switch_interliving_validation");
     GlobalParams::switch_debug = readParam<bool>(config, "switch_debug");
     GlobalParams::log_file_name = readParam<string>(config, "log_file_name");
@@ -551,6 +552,9 @@ void parseCmdLine(int arg_num, char *arg_vet[])
         }
         else if (!strcmp(arg_vet[i], "-switch_angle_masters")) {
             GlobalParams::switch_angle_masters = atoi(arg_vet[++i]);
+        }
+        else if (!strcmp(arg_vet[i], "-switch_horizontal_masters")) {
+            GlobalParams::switch_horizontal_masters = atoi(arg_vet[++i]);
         }
         else if (!strcmp(arg_vet[i], "-switch_interliving_validation")) {
             GlobalParams::switch_interliving_validation = atoi(arg_vet[++i]);
