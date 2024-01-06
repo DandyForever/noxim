@@ -306,6 +306,19 @@ bool ProcessingElement::canShot(Packet & packet)
     //-----------------------------------------------------
     if (GlobalParams::switch_interliving_validation && (local_id < GlobalParams::mesh_dim_x || local_id >= GlobalParams::mesh_dim_x * (GlobalParams::mesh_dim_y - 1))) return false;
     //-----------------------------------------------------
+
+    //-----------------------------------------------------
+    // Temporary for thinning
+    //-----------------------------------------------------
+    // if (
+    //     is_vertical_pe(local_id) &&
+    //     (local_id != 3 * GlobalParams::mesh_dim_x) && (local_id != 5 * GlobalParams::mesh_dim_x - 1) &&
+    //     (local_id != 5 * GlobalParams::mesh_dim_x) && (local_id != 7 * GlobalParams::mesh_dim_x - 1) &&
+    //     (local_id != 7 * GlobalParams::mesh_dim_x) && (local_id != 9 * GlobalParams::mesh_dim_x - 1) &&
+    //     (local_id != 9 * GlobalParams::mesh_dim_x) && (local_id != 11 * GlobalParams::mesh_dim_x - 1)
+    // ) return false;
+    //-----------------------------------------------------
+    
    
     //if(local_id!=16) return false;
     /* DEADLOCK TEST 
@@ -526,7 +539,17 @@ Packet ProcessingElement::trafficRandom()
 	}
 #endif
 
-    } while (!is_memory_pe(p.dst_id));
+    } while (
+        !is_memory_pe(p.dst_id)
+        //------------------------------
+        // Temporary for empty columns
+        //------------------------------
+        || ((p.dst_id - 1) % GlobalParams::mesh_dim_x == 0)
+        || ((p.dst_id + 2) % GlobalParams::mesh_dim_x == 0)
+        || ((p.dst_id - 2) % GlobalParams::mesh_dim_x == 0)
+        || ((p.dst_id + 3) % GlobalParams::mesh_dim_x == 0)
+        //------------------------------
+        );
 
     //-----------------------------------
     // Interliving feature traffic

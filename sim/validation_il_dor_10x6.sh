@@ -1,6 +1,6 @@
 # Interliving feature pipeline valildation
 ../bin/noxim \
-    -config ../config_examples/mesh_10x6.yaml \
+    -config ../config_examples/mesh_14x10_interliving.yaml \
     -pir 1.00 poisson \
     -routing DOR \
     -interliving_reps 0 \
