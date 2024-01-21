@@ -27,6 +27,8 @@ SC_MODULE(ProcessingElement)
     sc_in_clk clock;		// The input clock for the PE
     sc_in < bool > reset;	// The reset signal for the PE
 
+    //-------------------------------------------------------------------------
+    // X channel
     sc_in < Flit > flit_rx;	// The input channel
     sc_in < bool > req_rx;	// The request associated with the input channel
     sc_out < bool > ack_rx;	// The outgoing ack signal associated with the input channel
@@ -38,6 +40,24 @@ SC_MODULE(ProcessingElement)
     sc_in < TBufferFullStatus > buffer_full_status_tx;
 
     sc_in < int >free_slots_neighbor;
+    sc_out < int >free_slots;
+    //-------------------------------------------------------------------------
+
+    //-------------------------------------------------------------------------
+    // Y channel
+    sc_in < Flit > flit_ry;	// The input channel
+    sc_in < bool > req_ry;	// The request associated with the input channel
+    sc_out < bool > ack_ry;	// The outgoing ack signal associated with the input channel
+    sc_out < TBufferFullStatus > buffer_full_status_ry;	
+
+    sc_out < Flit > flit_ty;	// The output channel
+    sc_out < bool > req_ty;	// The request associated with the output channel
+    sc_in < bool > ack_ty;	// The outgoing ack signal associated with the output channel
+    sc_in < TBufferFullStatus > buffer_full_status_ty;
+
+    sc_in < int >free_slots_neighbor_y;
+    sc_out < int >free_slots_y;
+    //-------------------------------------------------------------------------
 
     // Registers
     int local_id;		// Unique identification number
@@ -46,6 +66,7 @@ SC_MODULE(ProcessingElement)
     bool current_level_tx;	// Current level for Alternating Bit Protocol (ABP)
     queue < Packet > packet_queue;	// Local queue of packets
     queue < Flit > in_flit_queue;
+    queue < int > free_slots_queue;
     bool transmittedAtPreviousCycle;	// Used for distributions with memory
 
     // Interlivin feature parameters
@@ -60,6 +81,8 @@ SC_MODULE(ProcessingElement)
     // Functions
     void rxProcess();		// The receiving process
     void txProcess();		// The transmitting process
+    void ryProcess();
+    void tyProcess();
     bool is_memory_pe(int id);
     bool is_angle_pe(int id);
     bool is_vertical_pe(int id);
@@ -105,6 +128,14 @@ SC_MODULE(ProcessingElement)
 	SC_METHOD(txProcess);
 	sensitive << reset;
 	sensitive << clock.pos();
+
+    SC_METHOD(ryProcess);
+    sensitive << reset;
+    sensitive << clock.pos();
+
+    SC_METHOD(tyProcess);
+    sensitive << reset;
+    sensitive << clock.pos();
     }
 
 };

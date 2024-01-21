@@ -17,14 +17,25 @@ vector<int> Routing_DOR::route(Router * router, const RouteData & routeData)
     Coord destination = id2Coord(routeData.dst_id);
     vector <int> directions;
     
-    if (destination.y > current.y)
-        directions.push_back(DIRECTION_SOUTH);
-    else if (destination.y < current.y)
-        directions.push_back(DIRECTION_NORTH);
-    else if (destination.x > current.x)
-       directions.push_back(DIRECTION_EAST);
-    else
-        directions.push_back(DIRECTION_WEST);
+    if (routeData.phys_channel_id == 0 || GlobalParams::routing_algorithm == "MOD_DOR") {
+        if (destination.y > current.y)
+            directions.push_back(DIRECTION_SOUTH);
+        else if (destination.y < current.y)
+            directions.push_back(DIRECTION_NORTH);
+        else if (destination.x > current.x)
+            directions.push_back(DIRECTION_EAST);
+        else
+            directions.push_back(DIRECTION_WEST);
+    } else {
+        if (destination.x > current.x)
+            directions.push_back(DIRECTION_EAST);
+        else if (destination.x < current.x)
+            directions.push_back(DIRECTION_WEST);
+        else if (destination.y > current.y)
+            directions.push_back(DIRECTION_SOUTH);
+        else
+            directions.push_back(DIRECTION_NORTH);
+    }
 
     return directions;
 

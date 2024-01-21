@@ -21,7 +21,7 @@ int Selection_BUFFER_LEVEL::apply(Router * router, const vector < int >&directio
 	int free_slots = router->free_slots_neighbor[directions[i]].read();
 
 	try {
-	    available = router->reservation_table.isNotReserved(directions[i]);
+	    available = router->reservation_table.isNotReserved(directions[i], route_data.vc_id);
 	}
 	catch (int error)
 	{

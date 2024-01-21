@@ -103,6 +103,8 @@ void loadConfiguration() {
     GlobalParams::switch_interliving_validation = readParam<bool>(config, "switch_interliving_validation");
     GlobalParams::switch_debug = readParam<bool>(config, "switch_debug");
     GlobalParams::log_file_name = readParam<string>(config, "log_file_name");
+    GlobalParams::buffer_verbose = readParam<bool>(config, "buffer_verbose");
+    GlobalParams::flit_dump = readParam<bool>(config, "flit_dump");
     
     set<int> channelSet;
 
@@ -561,6 +563,15 @@ void parseCmdLine(int arg_num, char *arg_vet[])
         }
         else if (!strcmp(arg_vet[i], "-switch_debug")) {
             GlobalParams::switch_debug = atoi(arg_vet[++i]);
+        }
+        else if (!strcmp(arg_vet[i], "-req_ack_mode")) {
+            GlobalParams::req_ack_mode = atoi(arg_vet[++i]);
+        }
+        else if (!strcmp(arg_vet[i], "-buffer_verbose")) {
+            GlobalParams::buffer_verbose = atoi(arg_vet[++i]);
+        }
+        else if (!strcmp(arg_vet[i], "-flit_dump")) {
+            GlobalParams::flit_dump = atoi(arg_vet[++i]);
         }
 	    else if (!strcmp(arg_vet[i], "-pir")) 
 	    {

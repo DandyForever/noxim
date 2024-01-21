@@ -16,76 +16,50 @@ int ProcessingElement::randInt(int min, int max)
 	(int) ((double) (max - min + 1) * rand() / (RAND_MAX + 1.0));
 }
 
-// ABP protocol (Alternating Bit Protocol)
-/*
-void ProcessingElement::rxProcess()
-{
-    if (reset.read()) {
-	ack_rx.write(0);
-	current_level_rx = 0;
-    } else {
-	if (req_rx.read() == 1 - current_level_rx) {
-	    Flit flit_tmp = flit_rx.read();
-	    current_level_rx = 1 - current_level_rx;	// Negate the old value for Alternating Bit Protocol (ABP)
-	}
-	ack_rx.write(current_level_rx);
-    }
-}
-
-
-void ProcessingElement::txProcess()
-{
-    if (reset.read()) {
-	req_tx.write(0);
-	current_level_tx = 0;
-	transmittedAtPreviousCycle = false;
-    } else {
-	Packet packet;
-
-	if (canShot(packet)) {
-	    packet_queue.push(packet);
-	    transmittedAtPreviousCycle = true;
-	} else
-	    transmittedAtPreviousCycle = false;
-
-
-	if (ack_tx.read() == current_level_tx) {
-	    if (!packet_queue.empty()) {
-            flits_sent++;
-            Flit flit = nextFlit();	// Generate a new flit
-            flit_tx->write(flit);	// Send the generated flit
-            current_level_tx = 1 - current_level_tx;	// Negate the old value for Alternating Bit Protocol (ABP)
-            req_tx.write(current_level_tx);
-	    }
-	}
-    }
-}
-*/
-
-
 // AXI4-Stream protocol
 // ack_rx <-> s_axis_tready
 // req_tx <-> m_axis_tvalid
 void ProcessingElement::rxProcess()
 {
     if (reset.read()) {
-	ack_rx.write(1);
-	current_level_rx = 0;
+	    ack_rx.write(1);
     } else {
-    // Slave AXIS valid & ready handshake
-	if (req_rx.read() && ack_rx.read()) {
-        flits_recv++;
-	    Flit flit_tmp = flit_rx.read();
-        swap(flit_tmp.src_id, flit_tmp.dst_id);
-        flit_tmp.vc_id = 1 - flit_tmp.vc_id;
-        // in_flit_queue.push(flit_tmp);
-	    current_level_rx = 1 - current_level_rx;	// Negate the old value for Alternating Bit Protocol (ABP)
-	}
-    // PE is always ready to recieve packets
-	if (is_memory_pe(local_id))
-        ack_rx.write(in_flit_queue.size() < 2);
-    else
-        ack_rx.write(1);
+        // Slave AXIS valid & ready handshake
+        if (!is_memory_pe(local_id)) {
+            assert(!req_rx.read());
+        }
+        if (req_rx.read() && ack_rx.read()) {
+            if (GlobalParams::flit_dump) {
+                cout << "To Recv Info: Cycle[" << sc_time_stamp().to_double() / GlobalParams::clock_period_ps << "] sent flit " << flit_rx.read().src_id << " -> " << flit_rx.read().dst_id << endl;
+            }
+            flits_recv++;
+            Flit flit_tmp = flit_rx.read();
+            if (GlobalParams::routing_algorithm == "MOD_DOR") {
+                Coord coord = id2Coord(flit_tmp.src_id);
+                if (((coord.x == 0) || (coord.x == GlobalParams::mesh_dim_x - 1))) {
+                    free_slots_queue.push(0);
+                } else {
+                    free_slots_queue.push(1);
+                }
+            } else {
+                free_slots_queue.push(0);
+            }
+            if (free_slots_queue.size() == 1) {
+                free_slots_y.write(free_slots_queue.front());
+            }
+            swap(flit_tmp.src_id, flit_tmp.dst_id);
+            // flit_tmp.vc_id = 1 - flit_tmp.vc_id;
+            flit_tmp.local_direction_id = DIRECTION_LOCAL_NORTH;
+            flit_tmp.phys_channel_id = 1 - flit_tmp.phys_channel_id;
+            if (GlobalParams::req_ack_mode) {
+                in_flit_queue.push(flit_tmp);
+            }
+        }
+        // PE is always ready to recieve packets
+        if (is_memory_pe(local_id))
+            ack_rx.write(in_flit_queue.size() < 2);
+        else
+            ack_rx.write(1);
     }
 }
 
@@ -93,93 +67,178 @@ void ProcessingElement::rxProcess()
 void ProcessingElement::txProcess()
 {
     if (reset.read()) {
-    // Not valid on reset
-	req_tx.write(0);
-	current_level_tx = 0;
-	transmittedAtPreviousCycle = false;
+        // Not valid on reset
+        req_tx.write(0);
+        transmittedAtPreviousCycle = false;
     } else {
-	Packet packet;
+        Packet packet;
 
-	if (canShot(packet)) {
-	    packet_queue.push(packet);
-	    transmittedAtPreviousCycle = true;
-	} else
-	    transmittedAtPreviousCycle = false;
+        if ((packet_queue.size() < 2) && canShot(packet)) {
+            packet_queue.push(packet);
+            transmittedAtPreviousCycle = true;
+        } else
+            transmittedAtPreviousCycle = false;
 
-    // Master AXIS valid & ready handshake
-	if (ack_tx.read() && req_tx.read()) {
-	    if (!packet_queue.empty()) {
-            flits_sent++;
-            Flit flit = nextFlit();	// Generate a new flit
-            flit_tx->write(flit);	// Send the generated flit
-            current_level_tx = 1 - current_level_tx;	// Negate the old value for Alternating Bit Protocol (ABP)
-            // Valid if packets to send exist
-            req_tx.write(1);
-	    } else {
-            // Not valid if no packets to send
-            req_tx.write(0);
-        }
-	}
-    if (req_tx.read() && !ack_tx.read())
-    {
-        req_tx.write(1);
-    }
-    if (!req_tx.read())
-    {
-        if (!packet_queue.empty())
-        {
-            flits_sent++;
-            Flit flit = nextFlit();
-            flit_tx->write(flit);
-            req_tx.write(1);
-        }
-        else
-        {
-            req_tx.write(0);
-        }
-    }
-
-    // Memory tiles
-    if (is_memory_pe(local_id))
-    {
-        if (!in_flit_queue.empty())
-        {
-            if (req_tx.read() && ack_tx.read())
-            {
+        // Master AXIS valid & ready handshake
+        if (ack_tx.read() && req_tx.read()) {
+            if (GlobalParams::flit_dump) {
+                cout << "To Send Info: Cycle[" << sc_time_stamp().to_double() / GlobalParams::clock_period_ps << "] sent flit " << flit_tx.read().src_id << " -> " << flit_tx.read().dst_id << endl;
+            }
+            if (!packet_queue.empty()) {
                 flits_sent++;
-                flit_tx->write(in_flit_queue.front());
+                Flit flit = nextFlit();	// Generate a new flit
+                flit_tx->write(flit);	// Send the generated flit
+                current_level_tx = 1 - current_level_tx;	// Negate the old value for Alternating Bit Protocol (ABP)
+                // Valid if packets to send exist
                 req_tx.write(1);
-                in_flit_queue.pop();
-            }
-            if (req_tx.read() && !ack_tx.read())
-            {
-                req_tx.write(1);
-            }
-            if (!req_tx.read())
-            {
-                flit_tx->write(in_flit_queue.front());
-                req_tx.write(1);
-                in_flit_queue.pop();
-            }
-        }
-        else
-        {
-            if (req_tx.read() && ack_tx.read())
-            {
-                flits_sent++;
+            } else {
+                // Not valid if no packets to send
                 req_tx.write(0);
             }
-            if (req_tx.read() && !ack_tx.read())
+        }
+        if (req_tx.read() && !ack_tx.read())
+        {
+            req_tx.write(1);
+        }
+        if (!req_tx.read())
+        {
+            if (!packet_queue.empty())
             {
+                flits_sent++;
+                Flit flit = nextFlit();
+                flit_tx->write(flit);
                 req_tx.write(1);
             }
-            if (!req_tx.read())
+            else
             {
                 req_tx.write(0);
             }
+        }
+
+        // Memory tiles
+        if (is_memory_pe(local_id))
+        {
+            assert (!req_tx.read());
+            // req_tx.write(0);
+            /*
+            if (!in_flit_queue.empty())
+            {
+                if (req_tx.read() && ack_tx.read())
+                {
+                    flits_sent++;
+                    flit_tx->write(in_flit_queue.front());
+                    req_tx.write(1);
+                    in_flit_queue.pop();
+                }
+                if (req_tx.read() && !ack_tx.read())
+                {
+                    req_tx.write(1);
+                }
+                if (!req_tx.read())
+                {
+                    flit_tx->write(in_flit_queue.front());
+                    req_tx.write(1);
+                    in_flit_queue.pop();
+                }
+            }
+            else
+            {
+                if (req_tx.read() && ack_tx.read())
+                {
+                    flits_sent++;
+                    req_tx.write(0);
+                }
+                if (req_tx.read() && !ack_tx.read())
+                {
+                    req_tx.write(1);
+                }
+                if (!req_tx.read())
+                {
+                    req_tx.write(0);
+                }
+            }
+            */
         }
     }
 }
+
+void ProcessingElement::ryProcess()
+{
+    if (reset.read()) {
+        ack_ry.write(1);
+    } else {
+        if (is_memory_pe(local_id)) {
+            assert(!req_ry.read());
+        }
+        if (req_ry.read() && ack_ry.read()) {
+            if (GlobalParams::flit_dump) {
+                cout << "Re Recv Info: Cycle[" << sc_time_stamp().to_double() / GlobalParams::clock_period_ps << "] sent flit " << flit_ry.read().src_id << " -> " << flit_ry.read().dst_id << endl;
+            }
+            flits_recv++;
+        }
+
+        if (is_memory_pe(local_id))
+            ack_ry.write(1);
+        else
+            ack_ry.write(1);
+    }
+}
+
+void ProcessingElement::tyProcess()
+{
+    if (reset.read()) {
+        req_ty.write(0);
+    } else {
+        if (req_ty.read() && ack_ty.read()) {
+            if (GlobalParams::flit_dump) {
+                cout << "Re Send Info: Cycle[" << sc_time_stamp().to_double() / GlobalParams::clock_period_ps << "] sent flit " << flit_ty.read().src_id << " -> " << flit_ty.read().dst_id << endl;
+            }
+            int trans_sent_slot = free_slots_queue.front();
+            free_slots_queue.pop();
+            assert (free_slots_queue.size() == in_flit_queue.size());
+            if (free_slots_queue.size() > 0) {
+                free_slots_y.write(free_slots_queue.front());
+            }
+            if (in_flit_queue.empty()) {
+                req_ty.write(0);
+            } else {
+                if (
+                    ((trans_sent_slot == free_slots_queue.front()) && (buffer_full_status_ty.read().fullness[free_slots_queue.front()] < GlobalParams::buffer_depth)) ||
+                    ((trans_sent_slot != free_slots_queue.front()) && (!buffer_full_status_ty.read().mask[free_slots_queue.front()]))
+                ) {
+                    flits_sent++;
+                    req_ty.write(1);
+                    flit_ty->write(in_flit_queue.front());
+                    in_flit_queue.pop();
+                } else {
+                    req_ty.write(0);
+                }
+            }
+        }
+        else if (req_ty.read() && !ack_ty.read()) {
+            req_ty.write(1);
+        }
+        else if (!req_ty.read()) {
+            if (in_flit_queue.empty()) {
+                req_ty.write(0);
+            } else {
+                if (GlobalParams::routing_algorithm == "MOD_DOR")
+                    assert (free_slots_queue.size());
+                if (!buffer_full_status_ty.read().mask[free_slots_queue.front()]) {
+                    flits_sent++;
+                    req_ty.write(1);
+                    flit_ty->write(in_flit_queue.front());
+                    in_flit_queue.pop();
+                } else {
+                    req_ty.write(0);
+                }
+            }
+        }
+
+        if (!is_memory_pe(local_id)) {
+            assert(!req_ty.read());
+        }
+    }
 }
 
 Flit ProcessingElement::nextFlit()
@@ -190,21 +249,14 @@ Flit ProcessingElement::nextFlit()
     flit.src_id = packet.src_id;
     flit.dst_id = packet.dst_id;
     flit.local_direction_id = packet.local_direction_id;
+    flit.phys_channel_id = packet.phys_channel_id;
     flit.vc_id = packet.vc_id;
     flit.timestamp = packet.timestamp;
     flit.sequence_no = packet.size - packet.flit_left;
     flit.sequence_length = packet.size;
     flit.hop_no = 0;
-    //  flit.payload     = DEFAULT_PAYLOAD;
 
     flit.hub_relay_node = NOT_VALID;
-
-    // if (packet.size == packet.flit_left)
-	// flit.flit_type = FLIT_TYPE_HEAD;
-    // else if (packet.flit_left == 1)
-	// flit.flit_type = FLIT_TYPE_TAIL;
-    // else
-	// flit.flit_type = FLIT_TYPE_BODY;
 
     if (packet.size == packet.flit_left)
 	    flit.is_head = true;
@@ -219,23 +271,25 @@ Flit ProcessingElement::nextFlit()
 }
 
 bool ProcessingElement::is_memory_pe(int id)
-{    
+{
+    Coord coord = id2Coord(id);
 
-    if (id < GlobalParams::mesh_dim_x) return false;
-    if (id >= GlobalParams::mesh_dim_x * (GlobalParams::mesh_dim_y - 1)) return false;
-    if (id % GlobalParams::mesh_dim_x == 0) return false;
-    if ((id + 1) % GlobalParams::mesh_dim_x == 0) return false;
+    if (coord.x == 0) return false;
+    if (coord.y == 0) return false;
+    if (coord.x == GlobalParams::mesh_dim_x - 1) return false;
+    if (coord.y == GlobalParams::mesh_dim_y - 1) return false;
 
     return true;
-
 }
 
 bool ProcessingElement::is_angle_pe(int id)
 {
-    if (id == 0) return true;
-    if (id == GlobalParams::mesh_dim_x - 1) return true;
-    if (id == GlobalParams::mesh_dim_x * (GlobalParams::mesh_dim_y - 1)) return true;
-    if (id == GlobalParams::mesh_dim_x * GlobalParams::mesh_dim_y - 1) return true;
+    Coord coord = id2Coord(id);
+
+    if (coord.x == 0 && coord.y == 0) return true;
+    if (coord.x == 0 && coord.y == GlobalParams::mesh_dim_y - 1) return true;
+    if (coord.x == GlobalParams::mesh_dim_x - 1 && coord.y == 0) return true;
+    if (coord.x == GlobalParams::mesh_dim_x - 1 && coord.y == GlobalParams::mesh_dim_y - 1) return true;
 
     return false;
 }
@@ -243,13 +297,11 @@ bool ProcessingElement::is_angle_pe(int id)
 bool ProcessingElement::is_angle_special_pe(int id, int num)
 {
     assert (GlobalParams::mesh_dim_y >= 2*num);
-    for (int i = 0; i < num; i++)
-    {
-        if (i * GlobalParams::mesh_dim_x == id) return true;
-        if (GlobalParams::mesh_dim_x-1 + i * GlobalParams::mesh_dim_x == id) return true;
-        if (GlobalParams::mesh_dim_x * (GlobalParams::mesh_dim_y-1) - i * GlobalParams::mesh_dim_x == id) return true;
-        if (GlobalParams::mesh_dim_x * GlobalParams::mesh_dim_y - 1 - i * GlobalParams::mesh_dim_x == id) return true;
-    }
+
+    Coord coord = id2Coord(id);
+
+    if (coord.x == 0 || coord.x == GlobalParams::mesh_dim_x - 1)
+        return (coord.y < num) || (coord.y + num > GlobalParams::mesh_dim_y - 1);
 
     return false;
 }
@@ -257,25 +309,24 @@ bool ProcessingElement::is_angle_special_pe(int id, int num)
 bool ProcessingElement::is_horizontal_special_pe(int id, int num)
 {
     assert (GlobalParams::mesh_dim_x >= 2*num);
-    if (id < num) return true;
-    if ((id < GlobalParams::mesh_dim_x) && (id >= GlobalParams::mesh_dim_x - num)) return true;
-    if ((id >= GlobalParams::mesh_dim_x * (GlobalParams::mesh_dim_y - 1)) && (id < GlobalParams::mesh_dim_x * (GlobalParams::mesh_dim_y - 1) + num)) return true;
-    if (id >= GlobalParams::mesh_dim_x * GlobalParams::mesh_dim_y - num) return true;
+    
+    Coord coord = id2Coord(id);
+
+    if (coord.y == 0 || coord.y == GlobalParams::mesh_dim_y - 1)
+        return (coord.x < num) || (coord.x + num > GlobalParams::mesh_dim_x - 1);
 
     return false;
 }
 
 bool ProcessingElement::is_vertical_pe(int id)
 {
-    if (id % GlobalParams::mesh_dim_x == 0) return true;
-    if ((id + 1) % GlobalParams::mesh_dim_x == 0) return true;
+    Coord coord = id2Coord(id);
 
-    return false;
+    return (coord.x == 0) || (coord.x == GlobalParams::mesh_dim_x - 1);
 }
 
 bool ProcessingElement::canShot(Packet & packet)
 {
-   // assert(false);
     if(never_transmit) return false;
 
     // Central tiles should not send packets
@@ -298,7 +349,14 @@ bool ProcessingElement::canShot(Packet & packet)
     //-----------------------------------------------------
     // For debug only
     //-----------------------------------------------------
-    if (GlobalParams::switch_debug && local_id != 0 && local_id != GlobalParams::mesh_dim_x && local_id + 1 != 2 * GlobalParams::mesh_dim_x) return false;
+    if (
+        GlobalParams::switch_debug
+            && local_id != 0
+            // && local_id != 1
+            && local_id != GlobalParams::mesh_dim_x
+            && local_id != 2 * GlobalParams::mesh_dim_x
+            && local_id + 1 != 2 * GlobalParams::mesh_dim_x
+    ) return false;
     //-----------------------------------------------------
 
     //-----------------------------------------------------
@@ -318,19 +376,6 @@ bool ProcessingElement::canShot(Packet & packet)
     //     (local_id != 9 * GlobalParams::mesh_dim_x) && (local_id != 11 * GlobalParams::mesh_dim_x - 1)
     // ) return false;
     //-----------------------------------------------------
-    
-   
-    //if(local_id!=16) return false;
-    /* DEADLOCK TEST 
-	double current_time = sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
-
-	if (current_time >= 4100) 
-	{
-	    //if (current_time==3500)
-	         //cout << name() << " IN CODA " << packet_queue.size() << endl;
-	    return false;
-	}
-	//*/
 
 #ifdef DEADLOCK_AVOIDANCE
     if (local_id%2==0)
@@ -371,25 +416,25 @@ bool ProcessingElement::canShot(Packet & packet)
         }
 	}
     } else {			// Table based communication traffic
-	if (never_transmit)
-	    return false;
+        if (never_transmit)
+            return false;
 
-	bool use_pir = (transmittedAtPreviousCycle == false);
-	vector < pair < int, double > > dst_prob;
-	double threshold =
-	    traffic_table->getCumulativePirPor(local_id, (int) now, use_pir, dst_prob);
+        bool use_pir = (transmittedAtPreviousCycle == false);
+        vector < pair < int, double > > dst_prob;
+        double threshold =
+            traffic_table->getCumulativePirPor(local_id, (int) now, use_pir, dst_prob);
 
-	double prob = (double) rand() / RAND_MAX;
-	shot = (prob < threshold);
-	if (shot) {
-	    for (unsigned int i = 0; i < dst_prob.size(); i++) {
-		if (prob < dst_prob[i].second) {
+        double prob = (double) rand() / RAND_MAX;
+        shot = (prob < threshold);
+        if (shot) {
+            for (unsigned int i = 0; i < dst_prob.size(); i++) {
+                if (prob < dst_prob[i].second) {
                     int vc = randInt(0,GlobalParams::n_virtual_channels-1);
-		    packet.make(local_id, dst_prob[i].first, vc, now, getRandomSize(), local_direction_id);
-		    break;
-		}
-	    }
-	}
+                    packet.make(local_id, dst_prob[i].first, vc, now, getRandomSize(), local_direction_id, 0);
+                    break;
+                }
+            }
+        }
     }
 
     return shot;
@@ -406,16 +451,16 @@ Packet ProcessingElement::trafficLocal()
 
     int max_id = (GlobalParams::mesh_dim_x * GlobalParams::mesh_dim_y);
 
-    for (int i=0;i<max_id;i++)
-    {
-	if (rnd<=GlobalParams::locality)
-	{
-	    if (local_id!=i && sameRadioHub(local_id,i))
-		dst_set.push_back(i);
-	}
-	else
-	    if (!sameRadioHub(local_id,i))
-		dst_set.push_back(i);
+    for (int i=0;i<max_id;i++) {
+        if (rnd<=GlobalParams::locality) {
+            if (local_id!=i && sameRadioHub(local_id,i))
+            dst_set.push_back(i);
+        }
+        else {
+            if (!sameRadioHub(local_id,i)) {
+                dst_set.push_back(i);
+            }
+        }
     }
 
 
@@ -438,8 +483,6 @@ int ProcessingElement::findRandomDestination(int id, int hops)
     int inc_x = rand()%2?-1:1;
     
     Coord current =  id2Coord(id);
-    
-
 
     for (int h = 0; h<hops; h++)
     {
@@ -505,7 +548,7 @@ Packet ProcessingElement::trafficRandom()
 {
     Packet p;
     p.src_id = local_id;
-    // p.local_direction_id = local_direction_id;
+    p.phys_channel_id = 0;
     p.local_direction_id = randInt(DIRECTION_LOCAL_NORTH, DIRECTION_LOCAL_NORTH - 1 + GlobalParams::mem_ports);
     double rnd = rand() / (double) RAND_MAX;
     double range_start = 0.0;
@@ -544,10 +587,10 @@ Packet ProcessingElement::trafficRandom()
         //------------------------------
         // Temporary for empty columns
         //------------------------------
-        || ((p.dst_id - 1) % GlobalParams::mesh_dim_x == 0)
-        || ((p.dst_id + 2) % GlobalParams::mesh_dim_x == 0)
-        || ((p.dst_id - 2) % GlobalParams::mesh_dim_x == 0)
-        || ((p.dst_id + 3) % GlobalParams::mesh_dim_x == 0)
+        // || ((p.dst_id - 1) % GlobalParams::mesh_dim_x == 0)
+        // || ((p.dst_id + 2) % GlobalParams::mesh_dim_x == 0)
+        // || ((p.dst_id - 2) % GlobalParams::mesh_dim_x == 0)
+        // || ((p.dst_id + 3) % GlobalParams::mesh_dim_x == 0)
         //------------------------------
         );
 
@@ -799,4 +842,3 @@ unsigned int ProcessingElement::getQueueSize() const
 {
     return packet_queue.size();
 }
-

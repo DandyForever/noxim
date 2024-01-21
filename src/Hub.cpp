@@ -52,7 +52,7 @@ void Hub::rxPowerManager()
 	for (int port=0;port<num_ports;port++)
 	{
 		if (!buffer_to_tile[port][DEFAULT_VC].IsEmpty() ||
-			antenna2tile_reservation_table.isNotReserved(port))
+			antenna2tile_reservation_table.isNotReserved(port, 0))
 			power.leakageBufferToTile();
 
 		else
@@ -114,7 +114,7 @@ void Hub::txPowerManager()
 	{
 		// check if not empty or reserved
 		if (!init[i]->buffer_tx.IsEmpty() ||
-			tile2antenna_reservation_table.isNotReserved(i) )
+			tile2antenna_reservation_table.isNotReserved(i, 0) )
 		{
 			power.leakageAntennaBuffer();
 			// check the second condition for turning off analog tx
@@ -347,12 +347,12 @@ void Hub::antennaToTileProcess()
 
 				LOG << " Checking reservation availability of output port " << dst_port << " by channel " << channel << " for flit " << received_flit << endl;
 
-				int rt_status = antenna2tile_reservation_table.checkReservation(r,dst_port);
+				int rt_status = antenna2tile_reservation_table.checkReservation(r,dst_port,0);
 
 				if (rt_status == RT_AVAILABLE)
 				{
 					LOG << "Reserving output port " << dst_port << " by channel " << channel << " for flit " << received_flit << endl;
-					antenna2tile_reservation_table.reserve(r, dst_port);
+					antenna2tile_reservation_table.reserve(r, dst_port, 0);
 
 					// The number of commucation using the wireless network, accounting also
 					// partial wired path
@@ -406,7 +406,7 @@ void Hub::antennaToTileProcess()
 						TReservation r;
 						r.input = channel;
 						r.vc = vc;
-						antenna2tile_reservation_table.release(r,port);
+						antenna2tile_reservation_table.release(r,port,0);
 					}
 				}
 				else
@@ -520,12 +520,12 @@ void Hub::tileToAntennaProcess()
 
 					LOG << "Checking reservation availability of Channel " << channel << " by Hub port[" << i << "][" << vc << "] for flit " << flit << endl;
 
-					int rt_status = tile2antenna_reservation_table.checkReservation(r,channel);
+					int rt_status = tile2antenna_reservation_table.checkReservation(r,channel,0);
 
 					if (rt_status == RT_AVAILABLE)
 					{
 						LOG << "Reservation of channel " << channel << " from Hub port["<< i << "]["<<vc<<"] by flit " << flit << endl;
-						tile2antenna_reservation_table.reserve(r, channel);
+						tile2antenna_reservation_table.reserve(r, channel,0);
 					}
 					else if (rt_status == RT_ALREADY_SAME)
 					{
@@ -584,7 +584,7 @@ void Hub::tileToAntennaProcess()
 							TReservation r;
 							r.input = i;
 							r.vc = vc;
-							tile2antenna_reservation_table.release(r,channel);
+							tile2antenna_reservation_table.release(r,channel,0);
 						}
 
 						LOG << "Flit " << flit << " moved from buffer_from_tile["<<i<<"]["<<vc<<"]  to buffer_tx["<<channel<<"] " << endl;

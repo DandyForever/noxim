@@ -361,6 +361,23 @@ vector < vector < unsigned long > > GlobalStats::getRecvFlits(int pe_id)
     return mtx;
 }
 
+vector < vector < unsigned long > > GlobalStats::getSentPEFlits(int pe_id)
+{
+	vector < vector < unsigned long > > mtx;
+    assert (GlobalParams::topology == TOPOLOGY_MESH); 
+
+    mtx.resize(GlobalParams::mesh_dim_y);
+    for (int y = 0; y < GlobalParams::mesh_dim_y; y++)
+	mtx[y].resize(GlobalParams::mesh_dim_x);
+
+    for (int y = 0; y < GlobalParams::mesh_dim_y; y++)
+	for (int x = 0; x < GlobalParams::mesh_dim_x; x++)
+	// for (int pe_id = 0; pe_id < DIRECTIONS; pe_id++)
+			mtx[y][x] += noc->t[x][y]->pe[pe_id]->flits_sent;
+
+    return mtx;
+}
+
 unsigned int GlobalStats::getWirelessPackets()
 {
     unsigned int packets = 0;
@@ -524,7 +541,8 @@ void GlobalStats::showStats(std::ostream & out, bool detailed)
 		}
 		f_sent_flits << endl;
 	}
-	f_sent_flits.close();
+
+	
 
 	// show RecvFlits matrix
 	vector < vector < unsigned long > > recvf_mtx_pe0 = getRecvFlits(0);
@@ -581,6 +599,113 @@ void GlobalStats::showStats(std::ostream & out, bool detailed)
 		out << endl;
 	}
 	out << "]" << endl;
+
+
+	f_sent_flits << endl;
+	for (unsigned int y = 0; y < recvf_mtx_pe3.size(); y++) {
+		for (unsigned int x = 0; x < recvf_mtx_pe3[y].size(); x++) {
+			f_sent_flits << recvf_mtx_pe0[y][x] + recvf_mtx_pe1[y][x] + recvf_mtx_pe2[y][x] + recvf_mtx_pe3[y][x] << ';';
+		}
+		f_sent_flits << endl;
+	}
+
+	// show SentPEFlits matrix
+	vector < vector < unsigned long > > sentf_mtx_pe0 = getSentPEFlits(0);
+	vector < vector < unsigned long > > sentf_mtx_pe1 = getSentPEFlits(1);
+	vector < vector < unsigned long > > sentf_mtx_pe2 = getSentPEFlits(2);
+	vector < vector < unsigned long > > sentf_mtx_pe3 = getSentPEFlits(3);
+
+	out << endl << "sent_flits_pe0 = [" << endl;
+	for (unsigned int y = 0; y < sentf_mtx_pe0.size(); y++) {
+		out << "  ";
+		for (unsigned int x = 0; x < sentf_mtx_pe0[y].size(); x++) {
+			out << setw(10) << sentf_mtx_pe0[y][x] << ',';
+		}
+		out << endl;
+	}
+	out << "]" << endl;
+
+	out << endl << "sent_flits_pe1 = [" << endl;
+	for (unsigned int y = 0; y < sentf_mtx_pe1.size(); y++) {
+		out << "  ";
+		for (unsigned int x = 0; x < sentf_mtx_pe1[y].size(); x++) {
+			out << setw(10) << sentf_mtx_pe1[y][x] << ',';
+		}
+		out << endl;
+	}
+	out << "]" << endl;
+
+	out << endl << "sent_flits_pe2 = [" << endl;
+	for (unsigned int y = 0; y < sentf_mtx_pe2.size(); y++) {
+		out << "  ";
+		for (unsigned int x = 0; x < sentf_mtx_pe2[y].size(); x++) {
+			out << setw(10) << sentf_mtx_pe2[y][x] << ',';
+		}
+		out << endl;
+	}
+	out << "]" << endl;
+
+	out << endl << "sent_flits_pe3 = [" << endl;
+	for (unsigned int y = 0; y < sentf_mtx_pe3.size(); y++) {
+		out << "  ";
+		for (unsigned int x = 0; x < sentf_mtx_pe3[y].size(); x++) {
+			out << setw(10) << sentf_mtx_pe3[y][x] << ',';
+		}
+		out << endl;
+	}
+	out << "]" << endl;
+
+	out << endl << "sent_flits_pe = [" << endl;
+	for (unsigned int y = 0; y < sentf_mtx_pe3.size(); y++) {
+		out << "  ";
+		for (unsigned int x = 0; x < sentf_mtx_pe3[y].size(); x++) {
+			out << setw(10) << sentf_mtx_pe0[y][x] + sentf_mtx_pe1[y][x] + sentf_mtx_pe2[y][x] + sentf_mtx_pe3[y][x] << ',';
+		}
+		out << endl;
+	}
+	out << "]" << endl;
+
+	f_sent_flits << endl;
+	for (unsigned int y = 0; y < recvf_mtx_pe3.size(); y++) {
+		for (unsigned int x = 0; x < recvf_mtx_pe3[y].size(); x++) {
+			f_sent_flits << sentf_mtx_pe0[y][x] + sentf_mtx_pe1[y][x] + sentf_mtx_pe2[y][x] + sentf_mtx_pe3[y][x] << ';';
+		}
+		f_sent_flits << endl;
+	}
+	
+	f_sent_flits.close();
+
+	if (GlobalParams::buffer_verbose) {
+		out << "Buffer out state for req router " << endl;
+		for (unsigned int d = 0; d < 2*DIRECTIONS; d++) {
+			out << "\tDirection " << d << endl;
+			for (int vc = 0; vc < GlobalParams::n_virtual_channels; vc++) {
+				out << "\t\tVC" << vc << endl; 
+				for (int y = 0; y < GlobalParams::mesh_dim_y; y++) {
+					for (int x = 0; x < GlobalParams::mesh_dim_x; x++) {
+						if (vc == 0)
+							out << "(" << noc->t[x][y]->r_req->buffer_out[d][0].Size() << ", " << noc->t[x][y]->r_req->buffer_out[d][1].Size() << ")" << " ";
+					}
+					out << endl;
+				}
+			}
+		}
+
+		out << "Buffer in state for req router " << endl;
+		for (unsigned int d = 0; d < 2*DIRECTIONS; d++) {
+			out << "\tDirection " << d << endl;
+			for (int vc = 0; vc < GlobalParams::n_virtual_channels; vc++) {
+				out << "\t\tVC" << vc << endl; 
+				for (int y = 0; y < GlobalParams::mesh_dim_y; y++) {
+					for (int x = 0; x < GlobalParams::mesh_dim_x; x++) {
+						if (vc == 0)
+							out << "(" << noc->t[x][y]->r_req->buffer[d][0].Size() << ", " << noc->t[x][y]->r_req->buffer[d][1].Size() << ")" << " ";
+					}
+					out << endl;
+				}
+			}
+		}
+	}
 
 	showPowerBreakDown(out);
 	showPowerManagerStats(out);

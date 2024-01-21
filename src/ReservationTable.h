@@ -42,36 +42,37 @@ class ReservationTable {
     inline string name() const {return "ReservationTable";};
 
     // check if the input/vc/output is a
-    int checkReservation(const TReservation r, const int port_out);
+    int checkReservation(const TReservation r, const int port_out, const int vc_out);
 
     // Connects port_in with port_out. Asserts if port_out is reserved
-    void reserve(const TReservation r, const int port_out);
+    void reserve(const TReservation r, const int port_out, const int vc_out);
 
     // Releases port_out connection. 
     // Asserts if port_out is not reserved or not valid
-    void release(const TReservation r, const int port_out);
+    void release(const TReservation r, const int port_out, const int vc_out);
 
     // Returns the pairs of output port and virtual channel reserved by port_in
     vector<pair<int,int> > getReservations(const int port_int);
 
-    vector<TReservation> getOutReservations(const int port_out);
+    vector<TReservation> getOutReservations(const int port_out, const int vc_out);
 
     // update the index of the reservation having highest priority in the current cycle
     void updateIndex();
 
     // check whether port_out has no reservations
-    bool isNotReserved(const int port_out);
+    bool isNotReserved(const int port_out, const int vc_out);
 
-    void setSize(const int n_outputs);
+    void setSize(const int n_outputs, const int n_vc);
 
     void print();
 
   private:
 
-     TRTEntry *rtable;	// reservation vector: rtable[i] gives a RTEntry containing the set of input/VC 
+     TRTEntry **rtable;	// reservation vector: rtable[i] gives a RTEntry containing the set of input/VC 
 			// which reserved output port
 
      int n_outputs;
+     int n_vc;
 };
 
 #endif

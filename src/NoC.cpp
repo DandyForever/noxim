@@ -2168,7 +2168,9 @@ void NoC::buildMesh()
     int dimX = GlobalParams::mesh_dim_x + 1;
     int dimY = GlobalParams::mesh_dim_y + 1;
 
-    
+    //-------------------------------------------------------------------------
+    // X channel
+    //-------------------------------------------------------------------------
     req = new sc_signal_NSWEH<bool>*[dimX];
     ack = new sc_signal_NSWEH<bool>*[dimX];
     buffer_full_status = new sc_signal_NSWEH<TBufferFullStatus>*[dimX];
@@ -2186,6 +2188,29 @@ void NoC::buildMesh()
         free_slots[i] = new sc_signal_NSWE<int>[dimY];
         nop_data[i] = new sc_signal_NSWE<NoP_data>[dimY];
     }
+	//-------------------------------------------------------------------------
+
+	//-------------------------------------------------------------------------
+    // Y channel
+    //-------------------------------------------------------------------------
+	req_y = new sc_signal_NSWEH<bool>*[dimX];
+    ack_y = new sc_signal_NSWEH<bool>*[dimX];
+    buffer_full_status_y = new sc_signal_NSWEH<TBufferFullStatus>*[dimX];
+    flit_y = new sc_signal_NSWEH<Flit>*[dimX];
+
+    free_slots_y = new sc_signal_NSWE<int>*[dimX];
+    nop_data_y = new sc_signal_NSWE<NoP_data>*[dimX];
+
+    for (int i=0; i < dimX; i++) {
+        req_y[i] = new sc_signal_NSWEH<bool>[dimY];
+        ack_y[i] = new sc_signal_NSWEH<bool>[dimY];
+	buffer_full_status_y[i] = new sc_signal_NSWEH<TBufferFullStatus>[dimY];
+        flit_y[i] = new sc_signal_NSWEH<Flit>[dimY];
+
+        free_slots_y[i] = new sc_signal_NSWE<int>[dimY];
+        nop_data_y[i] = new sc_signal_NSWE<NoP_data>[dimY];
+    }
+	//-------------------------------------------------------------------------
 
     t = new Tile**[GlobalParams::mesh_dim_x];
     for (int i = 0; i < GlobalParams::mesh_dim_x; i++) {
@@ -2211,6 +2236,16 @@ void NoC::buildMesh()
 				  GlobalParams::buffer_depth,
 				  grtable);
 	    t[i][j]->r->power.configureRouter(GlobalParams::flit_size,
+		      			      GlobalParams::buffer_depth,
+					      GlobalParams::flit_size,
+					      string(GlobalParams::routing_algorithm),
+					      "default");
+
+		t[i][j]->r_req->configure(j * GlobalParams::mesh_dim_x + i,
+				  GlobalParams::stats_warm_up_time,
+				  GlobalParams::buffer_depth,
+				  grtable);
+	    t[i][j]->r_req->power.configureRouter(GlobalParams::flit_size,
 		      			      GlobalParams::buffer_depth,
 					      GlobalParams::flit_size,
 					      string(GlobalParams::routing_algorithm),
@@ -2245,6 +2280,9 @@ void NoC::buildMesh()
 	    t[i][j]->clock(clock);
 	    t[i][j]->reset(reset);
 
+	//-------------------------------------------------------------------------
+	// X channel
+	//-------------------------------------------------------------------------
 	    // Map Rx signals
 	    t[i][j]->req_rx[DIRECTION_NORTH] (req[i][j].south);
 	    t[i][j]->flit_rx[DIRECTION_NORTH] (flit[i][j].south);
@@ -2286,7 +2324,57 @@ void NoC::buildMesh()
 	    t[i][j]->flit_tx[DIRECTION_WEST] (flit[i][j].west);
 	    t[i][j]->ack_tx[DIRECTION_WEST] (ack[i][j].east);
 	    t[i][j]->buffer_full_status_tx[DIRECTION_WEST] (buffer_full_status[i][j].east);
+	//-------------------------------------------------------------------------
 
+	//-------------------------------------------------------------------------
+	// Y channel
+	//-------------------------------------------------------------------------
+	    // Map Ry signals
+	    t[i][j]->req_ry[DIRECTION_NORTH] (req_y[i][j].south);
+	    t[i][j]->flit_ry[DIRECTION_NORTH] (flit_y[i][j].south);
+	    t[i][j]->ack_ry[DIRECTION_NORTH] (ack_y[i][j].north);
+	    t[i][j]->buffer_full_status_ry[DIRECTION_NORTH] (buffer_full_status_y[i][j].north);
+
+	    t[i][j]->req_ry[DIRECTION_EAST] (req_y[i + 1][j].west);
+	    t[i][j]->flit_ry[DIRECTION_EAST] (flit_y[i + 1][j].west);
+	    t[i][j]->ack_ry[DIRECTION_EAST] (ack_y[i + 1][j].east);
+	    t[i][j]->buffer_full_status_ry[DIRECTION_EAST] (buffer_full_status_y[i+1][j].east);
+
+	    t[i][j]->req_ry[DIRECTION_SOUTH] (req_y[i][j + 1].north);
+	    t[i][j]->flit_ry[DIRECTION_SOUTH] (flit_y[i][j + 1].north);
+	    t[i][j]->ack_ry[DIRECTION_SOUTH] (ack_y[i][j + 1].south);
+	    t[i][j]->buffer_full_status_ry[DIRECTION_SOUTH] (buffer_full_status_y[i][j+1].south);
+
+	    t[i][j]->req_ry[DIRECTION_WEST] (req_y[i][j].east);
+	    t[i][j]->flit_ry[DIRECTION_WEST] (flit_y[i][j].east);
+	    t[i][j]->ack_ry[DIRECTION_WEST] (ack_y[i][j].west);
+	    t[i][j]->buffer_full_status_ry[DIRECTION_WEST] (buffer_full_status_y[i][j].west);
+
+	    // Map Ty signals
+	    t[i][j]->req_ty[DIRECTION_NORTH] (req_y[i][j].north);
+	    t[i][j]->flit_ty[DIRECTION_NORTH] (flit_y[i][j].north);
+	    t[i][j]->ack_ty[DIRECTION_NORTH] (ack_y[i][j].south);
+	    t[i][j]->buffer_full_status_ty[DIRECTION_NORTH] (buffer_full_status_y[i][j].south);
+
+	    t[i][j]->req_ty[DIRECTION_EAST] (req_y[i + 1][j].east);
+	    t[i][j]->flit_ty[DIRECTION_EAST] (flit_y[i + 1][j].east);
+	    t[i][j]->ack_ty[DIRECTION_EAST] (ack_y[i + 1][j].west);
+	    t[i][j]->buffer_full_status_ty[DIRECTION_EAST] (buffer_full_status_y[i + 1][j].west);
+
+	    t[i][j]->req_ty[DIRECTION_SOUTH] (req_y[i][j + 1].south);
+	    t[i][j]->flit_ty[DIRECTION_SOUTH] (flit_y[i][j + 1].south);
+	    t[i][j]->ack_ty[DIRECTION_SOUTH] (ack_y[i][j + 1].north);
+	    t[i][j]->buffer_full_status_ty[DIRECTION_SOUTH] (buffer_full_status_y[i][j + 1].north);
+
+	    t[i][j]->req_ty[DIRECTION_WEST] (req_y[i][j].west);
+	    t[i][j]->flit_ty[DIRECTION_WEST] (flit_y[i][j].west);
+	    t[i][j]->ack_ty[DIRECTION_WEST] (ack_y[i][j].east);
+	    t[i][j]->buffer_full_status_ty[DIRECTION_WEST] (buffer_full_status_y[i][j].east);
+	//-------------------------------------------------------------------------
+
+	//-------------------------------------------------------------------------
+	// X channel
+	//-------------------------------------------------------------------------
 	    // TODO: check if hub signal is always required
 	    // signals/port when tile receives(rx) from hub
 	    t[i][j]->hub_req_rx(req[i][j].from_hub);
@@ -2299,6 +2387,24 @@ void NoC::buildMesh()
 	    t[i][j]->hub_flit_tx(flit[i][j].to_hub);
 	    t[i][j]->hub_ack_tx(ack[i][j].from_hub);
 	    t[i][j]->hub_buffer_full_status_tx(buffer_full_status[i][j].from_hub);
+	//-------------------------------------------------------------------------
+
+	//-------------------------------------------------------------------------
+	// Y channel
+	//-------------------------------------------------------------------------
+    	// TODO: check if hub signal is always required
+	    // signals/port when tile receives(rx) from hub
+	    t[i][j]->hub_req_ry(req_y[i][j].from_hub);
+	    t[i][j]->hub_flit_ry(flit_y[i][j].from_hub);
+	    t[i][j]->hub_ack_ry(ack_y[i][j].to_hub);
+	    t[i][j]->hub_buffer_full_status_ry(buffer_full_status_y[i][j].to_hub);
+
+	    // signals/port when tile transmits(tx) to hub
+	    t[i][j]->hub_req_ty(req_y[i][j].to_hub); // 7, sc_out
+	    t[i][j]->hub_flit_ty(flit_y[i][j].to_hub);
+	    t[i][j]->hub_ack_ty(ack_y[i][j].from_hub);
+	    t[i][j]->hub_buffer_full_status_ty(buffer_full_status_y[i][j].from_hub);
+	//-------------------------------------------------------------------------
 
         // TODO: Review port index. Connect each Hub to all its Channels 
         map<int, int>::iterator it = GlobalParams::hub_for_tile.find(tile_id);
@@ -2323,6 +2429,9 @@ void NoC::buildMesh()
             hub[hub_id]->buffer_full_status_tx[port](buffer_full_status[i][j].to_hub);
         }
 
+	//-------------------------------------------------------------------------
+	// X channel
+	//-------------------------------------------------------------------------
         // Map buffer level signals (analogy with req_tx/rx port mapping)
 	    t[i][j]->free_slots[DIRECTION_NORTH] (free_slots[i][j].north);
 	    t[i][j]->free_slots[DIRECTION_EAST] (free_slots[i + 1][j].east);
@@ -2344,7 +2453,33 @@ void NoC::buildMesh()
 	    t[i][j]->NoP_data_in[DIRECTION_EAST] (nop_data[i + 1][j].west);
 	    t[i][j]->NoP_data_in[DIRECTION_SOUTH] (nop_data[i][j + 1].north);
 	    t[i][j]->NoP_data_in[DIRECTION_WEST] (nop_data[i][j].east);
+	//-------------------------------------------------------------------------
 
+	//-------------------------------------------------------------------------
+	// Y channel
+	//-------------------------------------------------------------------------
+    	// Map buffer level signals (analogy with req_tx/rx port mapping)
+	    t[i][j]->free_slots_y[DIRECTION_NORTH] (free_slots_y[i][j].north);
+	    t[i][j]->free_slots_y[DIRECTION_EAST] (free_slots_y[i + 1][j].east);
+	    t[i][j]->free_slots_y[DIRECTION_SOUTH] (free_slots_y[i][j + 1].south);
+	    t[i][j]->free_slots_y[DIRECTION_WEST] (free_slots_y[i][j].west);
+
+	    t[i][j]->free_slots_neighbor_y[DIRECTION_NORTH] (free_slots_y[i][j].south);
+	    t[i][j]->free_slots_neighbor_y[DIRECTION_EAST] (free_slots_y[i + 1][j].west);
+	    t[i][j]->free_slots_neighbor_y[DIRECTION_SOUTH] (free_slots_y[i][j + 1].north);
+	    t[i][j]->free_slots_neighbor_y[DIRECTION_WEST] (free_slots_y[i][j].east);
+
+	    // NoP 
+	    t[i][j]->NoP_data_out_y[DIRECTION_NORTH] (nop_data_y[i][j].north);
+	    t[i][j]->NoP_data_out_y[DIRECTION_EAST] (nop_data_y[i + 1][j].east);
+	    t[i][j]->NoP_data_out_y[DIRECTION_SOUTH] (nop_data_y[i][j + 1].south);
+	    t[i][j]->NoP_data_out_y[DIRECTION_WEST] (nop_data_y[i][j].west);
+
+	    t[i][j]->NoP_data_in_y[DIRECTION_NORTH] (nop_data_y[i][j].south);
+	    t[i][j]->NoP_data_in_y[DIRECTION_EAST] (nop_data_y[i + 1][j].west);
+	    t[i][j]->NoP_data_in_y[DIRECTION_SOUTH] (nop_data_y[i][j + 1].north);
+	    t[i][j]->NoP_data_in_y[DIRECTION_WEST] (nop_data_y[i][j].east);
+	//-------------------------------------------------------------------------
 	}
     }
 
@@ -2362,6 +2497,9 @@ void NoC::buildMesh()
     // Clear signals for borderline nodes
 
     for (int i = 0; i <= GlobalParams::mesh_dim_x; i++) {
+	//-------------------------------------------------------------------------
+    // X channel
+    //-------------------------------------------------------------------------
 	req[i][0].south = 0;
 	ack[i][0].north = 0;
 	req[i][GlobalParams::mesh_dim_y].north = 0;
@@ -2372,10 +2510,29 @@ void NoC::buildMesh()
 
 	nop_data[i][0].south.write(tmp_NoP);
 	nop_data[i][GlobalParams::mesh_dim_y].north.write(tmp_NoP);
+	//-------------------------------------------------------------------------
 
+	//-------------------------------------------------------------------------
+    // Y channel
+    //-------------------------------------------------------------------------
+	req_y[i][0].south = 0;
+	ack_y[i][0].north = 0;
+	req_y[i][GlobalParams::mesh_dim_y].north = 0;
+	ack_y[i][GlobalParams::mesh_dim_y].south = 0;
+
+	free_slots_y[i][0].south.write(NOT_VALID);
+	free_slots_y[i][GlobalParams::mesh_dim_y].north.write(NOT_VALID);
+
+	nop_data_y[i][0].south.write(tmp_NoP);
+	nop_data_y[i][GlobalParams::mesh_dim_y].north.write(tmp_NoP);
+	//-------------------------------------------------------------------------
+    
     }
 
     for (int j = 0; j <= GlobalParams::mesh_dim_y; j++) {
+	//-------------------------------------------------------------------------
+    // X channel
+    //-------------------------------------------------------------------------
 	req[0][j].east = 0;
 	ack[0][j].west = 0;
 	req[GlobalParams::mesh_dim_x][j].west = 0;
@@ -2386,7 +2543,23 @@ void NoC::buildMesh()
 
 	nop_data[0][j].east.write(tmp_NoP);
 	nop_data[GlobalParams::mesh_dim_x][j].west.write(tmp_NoP);
+	//-------------------------------------------------------------------------
 
+	//-------------------------------------------------------------------------
+    // Y channel
+    //-------------------------------------------------------------------------
+	req_y[0][j].east = 0;
+	ack_y[0][j].west = 0;
+	req_y[GlobalParams::mesh_dim_x][j].west = 0;
+	ack_y[GlobalParams::mesh_dim_x][j].east = 0;
+
+	free_slots_y[0][j].east.write(NOT_VALID);
+	free_slots_y[GlobalParams::mesh_dim_x][j].west.write(NOT_VALID);
+
+	nop_data_y[0][j].east.write(tmp_NoP);
+	nop_data_y[GlobalParams::mesh_dim_x][j].west.write(tmp_NoP);
+	//-------------------------------------------------------------------------
+    
     }
 
 }

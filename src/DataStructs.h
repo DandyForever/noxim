@@ -42,6 +42,7 @@ struct Packet {
     int src_id;
     int dst_id;
     int local_direction_id;
+    int phys_channel_id;
     int vc_id;
     double timestamp;		// SC timestamp at packet generation
     int size;
@@ -51,15 +52,16 @@ struct Packet {
     // Constructors
     Packet() { }
 
-    Packet(const int s, const int d, const int vc, const double ts, const int sz, const int ldi) {
-	make(s, d, vc, ts, sz, ldi);
+    Packet(const int s, const int d, const int vc, const double ts, const int sz, const int ldi, const int pci) {
+	make(s, d, vc, ts, sz, ldi, pci);
     }
 
-    void make(const int s, const int d, const int vc, const double ts, const int sz, const int ldi) {
+    void make(const int s, const int d, const int vc, const double ts, const int sz, const int ldi, const int pci) {
 	src_id = s;
 	dst_id = d;
 	vc_id = vc;
     local_direction_id = ldi;
+    phys_channel_id = pci;
 	timestamp = ts;
 	size = sz;
 	flit_left = sz;
@@ -73,6 +75,7 @@ struct RouteData {
     int src_id;
     int dst_id;
     int local_direction_id;
+    int phys_channel_id;
     int dir_in;			// direction from which the packet comes from
     int vc_id;
 };
@@ -116,6 +119,7 @@ struct TBufferFullStatus {
     };
    
     bool mask[MAX_VIRTUAL_CHANNELS];
+    unsigned int fullness[MAX_VIRTUAL_CHANNELS];
 };
 
 // Flit -- Flit definition
@@ -123,6 +127,7 @@ struct Flit {
     int src_id;
     int dst_id;
     int local_direction_id;
+    int phys_channel_id;
     int vc_id; // Virtual Channel
     // FlitType flit_type;	// The flit type (FLIT_TYPE_HEAD, FLIT_TYPE_BODY, FLIT_TYPE_TAIL)
     bool is_head = false;
@@ -139,6 +144,8 @@ struct Flit {
     inline bool operator ==(const Flit & flit) const {
 	return (flit.src_id == src_id && flit.dst_id == dst_id
 		// && flit.flit_type == flit_type
+        && local_direction_id == flit.local_direction_id
+        && phys_channel_id == flit.phys_channel_id
         && is_head == flit.is_head && is_tail == flit.is_tail
 		&& flit.vc_id == vc_id
 		&& flit.sequence_no == sequence_no

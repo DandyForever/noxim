@@ -13,8 +13,8 @@
 #   BUTTERFLY, BASELINE, and OMEGA are Delta Network topologies
 # topology: MESH
 # X and Y mesh sizes
-mesh_dim_x: 10
-mesh_dim_y: 6
+mesh_dim_x: 4
+mesh_dim_y: 4
 # number of flits for each router buffer
 buffer_depth: 2
 # size of flits, in bits
@@ -167,9 +167,9 @@ traffic_distribution: TRAFFIC_RANDOM
 traffic_table_filename: "t.txt"
 
 # Interliving params
-interliving_reps: 1
+interliving_reps: 0
 interliving_direction: 0
-mem_ports: 1
+mem_ports: 4
 eu_ports: 1
 switch_vertical_masters: false
 switch_angle_masters: 0

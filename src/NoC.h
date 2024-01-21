@@ -49,6 +49,9 @@ SC_MODULE(NoC)
     sc_in_clk clock;		// The input clock for the NoC
     sc_in < bool > reset;	// The reset signal for the NoC
 
+    //-------------------------------------------------------------------------
+    // X channel
+    //-------------------------------------------------------------------------
     // Signals mesh and switch bloc in delta topologies
     sc_signal_NSWEH<bool> **req;
     sc_signal_NSWEH<bool> **ack;
@@ -71,8 +74,21 @@ SC_MODULE(NoC)
 
     sc_signal<TBufferFullStatus> *buffer_full_status_from_hub;
     sc_signal<TBufferFullStatus> *buffer_full_status_to_hub;
+    //-------------------------------------------------------------------------
 
+    //-------------------------------------------------------------------------
+    // Y channel
+    //-------------------------------------------------------------------------
+    // Signals mesh and switch bloc in delta topologies
+    sc_signal_NSWEH<bool> **req_y;
+    sc_signal_NSWEH<bool> **ack_y;
+    sc_signal_NSWEH<TBufferFullStatus> **buffer_full_status_y;
+    sc_signal_NSWEH<Flit> **flit_y;
+    sc_signal_NSWE<int> **free_slots_y;
 
+    // NoP
+    sc_signal_NSWE<NoP_data> **nop_data_y;
+    //-------------------------------------------------------------------------
 
     // Matrix of tiles
     Tile ***t;

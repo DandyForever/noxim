@@ -151,7 +151,7 @@ struct GlobalParams {
     static int n_delta_tiles;
     static double r2r_link_length;
     static double r2h_link_length;
-    static int buffer_depth;
+    static unsigned int buffer_depth;
     static int flit_size;
     static int min_packet_size;
     static int max_packet_size;
@@ -198,6 +198,9 @@ struct GlobalParams {
     static bool switch_interliving_validation;
     static bool switch_debug;
     static string log_file_name;
+    static bool req_ack_mode;
+    static bool buffer_verbose;
+    static bool flit_dump;
 };
 
 #endif

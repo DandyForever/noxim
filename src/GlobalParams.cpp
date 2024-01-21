@@ -23,7 +23,7 @@ int GlobalParams::n_delta_tiles;
 
 double GlobalParams::r2r_link_length;
 double GlobalParams::r2h_link_length;
-int GlobalParams::buffer_depth;
+unsigned int GlobalParams::buffer_depth;
 int GlobalParams::flit_size;
 int GlobalParams::min_packet_size;
 int GlobalParams::max_packet_size;
@@ -70,3 +70,6 @@ int GlobalParams::switch_horizontal_masters;
 bool GlobalParams::switch_interliving_validation;
 bool GlobalParams::switch_debug;
 string GlobalParams::log_file_name;
+bool GlobalParams::req_ack_mode;
+bool GlobalParams::buffer_verbose;
+bool GlobalParams::flit_dump;
