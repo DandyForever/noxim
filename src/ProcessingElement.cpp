@@ -34,21 +34,12 @@ void ProcessingElement::rxProcess()
             }
             flits_recv++;
             Flit flit_tmp = flit_rx.read();
-            if (GlobalParams::routing_algorithm == "MOD_DOR") {
-                Coord coord = id2Coord(flit_tmp.src_id);
-                if (((coord.x == 0) || (coord.x == GlobalParams::mesh_dim_x - 1))) {
-                    free_slots_queue.push(0);
-                } else {
-                    free_slots_queue.push(1);
-                }
-            } else {
-                free_slots_queue.push(0);
-            }
+            flit_tmp.vc_id = 1 - flit_tmp.vc_id;
+            free_slots_queue.push(flit_tmp.vc_id);
             if (free_slots_queue.size() == 1) {
                 free_slots_y.write(free_slots_queue.front());
             }
             swap(flit_tmp.src_id, flit_tmp.dst_id);
-            // flit_tmp.vc_id = 1 - flit_tmp.vc_id;
             flit_tmp.local_direction_id = DIRECTION_LOCAL_NORTH;
             flit_tmp.phys_channel_id = 1 - flit_tmp.phys_channel_id;
             if (GlobalParams::req_ack_mode) {
@@ -76,8 +67,21 @@ void ProcessingElement::txProcess()
         if ((packet_queue.size() < 2) && canShot(packet)) {
             packet_queue.push(packet);
             transmittedAtPreviousCycle = true;
-        } else
+        } else {
             transmittedAtPreviousCycle = false;
+        }
+
+        if (!is_memory_pe(local_id)) {
+            if (GlobalParams::routing_algorithm == "MOD_DOR") {
+                if (is_vertical_pe(local_id)) {
+                    free_slots.write(1);
+                } else {
+                    free_slots.write(0);
+                }
+            } else {
+                free_slots.write(0);
+            }
+        }
 
         // Master AXIS valid & ready handshake
         if (ack_tx.read() && req_tx.read()) {
@@ -88,7 +92,6 @@ void ProcessingElement::txProcess()
                 flits_sent++;
                 Flit flit = nextFlit();	// Generate a new flit
                 flit_tx->write(flit);	// Send the generated flit
-                current_level_tx = 1 - current_level_tx;	// Negate the old value for Alternating Bit Protocol (ABP)
                 // Valid if packets to send exist
                 req_tx.write(1);
             } else {
@@ -119,45 +122,6 @@ void ProcessingElement::txProcess()
         if (is_memory_pe(local_id))
         {
             assert (!req_tx.read());
-            // req_tx.write(0);
-            /*
-            if (!in_flit_queue.empty())
-            {
-                if (req_tx.read() && ack_tx.read())
-                {
-                    flits_sent++;
-                    flit_tx->write(in_flit_queue.front());
-                    req_tx.write(1);
-                    in_flit_queue.pop();
-                }
-                if (req_tx.read() && !ack_tx.read())
-                {
-                    req_tx.write(1);
-                }
-                if (!req_tx.read())
-                {
-                    flit_tx->write(in_flit_queue.front());
-                    req_tx.write(1);
-                    in_flit_queue.pop();
-                }
-            }
-            else
-            {
-                if (req_tx.read() && ack_tx.read())
-                {
-                    flits_sent++;
-                    req_tx.write(0);
-                }
-                if (req_tx.read() && !ack_tx.read())
-                {
-                    req_tx.write(1);
-                }
-                if (!req_tx.read())
-                {
-                    req_tx.write(0);
-                }
-            }
-            */
         }
     }
 }
@@ -663,7 +627,16 @@ Packet ProcessingElement::trafficRandom()
 
     p.timestamp = sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
     p.size = p.flit_left = getRandomSize();
-    p.vc_id = 0;//randInt(0,GlobalParams::n_virtual_channels-1);
+    if (GlobalParams::routing_algorithm == "MOD_DOR") {
+        if (is_vertical_pe(local_id)) {
+            p.vc_id = 1;
+        } else {
+            p.vc_id = 0;
+        }
+    } else {
+        p.vc_id = 0;
+    }
+
     if (GlobalParams::switch_debug)
         cout << "For " << local_id << " dst " << p.dst_id << " ldid " << p.local_direction_id << endl; 
     return p;

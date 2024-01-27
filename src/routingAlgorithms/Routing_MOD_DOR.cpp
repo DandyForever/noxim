@@ -15,10 +15,7 @@ Routing_MOD_DOR * Routing_MOD_DOR::getInstance() {
 
 vector<int> Routing_MOD_DOR::route(Router * router, const RouteData & routeData)
 {
-    if (
-        ((routeData.phys_channel_id == 0) && ((id2Coord(routeData.src_id).x == 0) || (id2Coord(routeData.src_id).x == GlobalParams::mesh_dim_x - 1))) ||
-        ((routeData.phys_channel_id == 1) && ((id2Coord(routeData.dst_id).x != 0) && (id2Coord(routeData.dst_id).x != GlobalParams::mesh_dim_x - 1)))
-    ) {
+    if (routeData.vc_id) {
         if (!xy)
         {
             xy = RoutingAlgorithms::get("XY");

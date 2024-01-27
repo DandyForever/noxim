@@ -17,7 +17,7 @@ vector<int> Routing_DOR::route(Router * router, const RouteData & routeData)
     Coord destination = id2Coord(routeData.dst_id);
     vector <int> directions;
     
-    if (routeData.phys_channel_id == 0 || GlobalParams::routing_algorithm == "MOD_DOR") {
+    if (routeData.vc_id == 0) {
         if (destination.y > current.y)
             directions.push_back(DIRECTION_SOUTH);
         else if (destination.y < current.y)

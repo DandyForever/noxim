@@ -35,7 +35,6 @@ void Router::rxProcess()
 		{
 			// Ready to recieve packets on reset
 			ack_rx[i].write(1);
-			current_level_rx[i] = 0;
 			buffer_full_status_rx[i].write(bfs);
 		}
 		routed_flits = 0;
@@ -53,20 +52,7 @@ void Router::rxProcess()
 					assert (is_memory_pe(received_flit.src_id));
 				}
 
-				int vc = 0;
-				if ((GlobalParams::routing_algorithm == "MOD_DOR") && (
-						(received_flit.phys_channel_id == 0 && ((received_flit.src_id % GlobalParams::mesh_dim_x == 0) || ((received_flit.src_id + 1) % GlobalParams::mesh_dim_x == 0))) ||
-						(received_flit.phys_channel_id == 1 && ((received_flit.dst_id % GlobalParams::mesh_dim_x != 0) && ((received_flit.dst_id + 1) % GlobalParams::mesh_dim_x != 0)))
-						)
-				)
-				{
-					vc = 1;
-				}
-				received_flit.vc_id = vc;
-
-				if (GlobalParams::routing_algorithm != "MOD_DOR") {
-					assert(vc == 0);
-				}
+				int vc = received_flit.vc_id;
 
 				if (!buffer[i][vc].IsFull()) 
 				{
@@ -76,8 +62,6 @@ void Router::rxProcess()
 					LOG << " Flit " << received_flit << " collected from Input[" << i << "][" << vc <<"]" << endl;
 					
 					power.bufferRouterPush();
-
-					current_level_rx[i] = 1 - current_level_rx[i];
 
 					// if a new flit is injected from local PE
 					if (received_flit.src_id == local_id)
@@ -92,19 +76,7 @@ void Router::rxProcess()
 				}
 	    	}
 			// Ready to recieve if buffer is not full
-			assert (
-				((GlobalParams::routing_algorithm != "MOD_DOR") && (free_slots_neighbor[i].read() != 1))
-				|| (GlobalParams::routing_algorithm == "MOD_DOR")
-				);
 			ack_rx[i].write(!buffer[i][free_slots_neighbor[i].read()].IsFull());
-			if ((GlobalParams::routing_algorithm == "MOD_DOR")) {
-				Coord coord = id2Coord(local_id);
-				if (((coord.x == 0) || (coord.x == GlobalParams::mesh_dim_x - 1)) && (i >= DIRECTIONS)) {
-					ack_rx[i].write(!buffer[i][1].IsFull());
-				} else if (((coord.y == 0) || (coord.y == GlobalParams::mesh_dim_y - 1)) && (i >= DIRECTIONS)) {
-					ack_rx[i].write(!buffer[i][0].IsFull());
-				}
-			}
 
 			TBufferFullStatus bfs;
 			for (int vc=0;vc<GlobalParams::n_virtual_channels;vc++) {
@@ -125,7 +97,6 @@ void Router::txProcess()
 		{
 			// Not valid on reset
 			req_tx[i].write(0);
-			current_level_tx[i] = 0;
 		}
     } 
   	else 
