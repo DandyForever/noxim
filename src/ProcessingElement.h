@@ -75,8 +75,10 @@ SC_MODULE(ProcessingElement)
     int interliving_local_dst;
 
     // Metrics
-    unsigned long flits_sent = 0;
-    unsigned long flits_recv = 0;
+    unsigned long flits_sent_x = 0;
+    unsigned long flits_recv_x = 0;
+    unsigned long flits_sent_y = 0;
+    unsigned long flits_recv_y = 0;
 
     // Functions
     void rxProcess();		// The receiving process
@@ -110,10 +112,6 @@ SC_MODULE(ProcessingElement)
     void setBit(int &x, int w, int v);
     int getBit(int x, int w);
     double log2ceil(double x);
-
-    unsigned long getSentFlits() {
-        return flits_sent;
-    }
 
     int roulett();
     int findRandomDestination(int local_id,int hops);

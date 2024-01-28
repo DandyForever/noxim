@@ -201,6 +201,7 @@ struct GlobalParams {
     static bool req_ack_mode;
     static bool buffer_verbose;
     static bool flit_dump;
+    static bool traffic_verbose;
 };
 
 #endif

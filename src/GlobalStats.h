@@ -68,16 +68,16 @@ class GlobalStats {
 
 
     // Returns the number of routed flits for each router
-     vector < vector < unsigned long > > getRoutedFlitsMtx();
+     vector < vector < unsigned long > > getRoutedFlitsMtx(char dir);
 
     // Returns the number of sent flits for each PE
-    vector < vector <unsigned long> > getSentFlits();
+    vector < vector <unsigned long> > getSentFlits(char dir);
 
     // Returns the number of received flits for each PE
-    vector < vector <unsigned long> > getRecvFlits(int pe_id);
+    vector < vector <unsigned long> > getRecvFlits(int pe_id, char dir);
 
     // Returns the number of sent flits for each PE
-    vector < vector <unsigned long> > getSentPEFlits(int pe_id);
+    vector < vector <unsigned long> > getSentPEFlits(int pe_id, char dir);
 
     // Returns the total dyamic power
     double getDynamicPower();
@@ -91,7 +91,6 @@ class GlobalStats {
     void showStats(std::ostream & out = std::cout, bool detailed = false);
 
     void showBufferStats(std::ostream & out);
-
 
     void showPowerBreakDown(std::ostream & out);
 
@@ -108,6 +107,8 @@ class GlobalStats {
   private:
     const NoC *noc;
     void updatePowerBreakDown(map<string,double> &dst,PowerBreakdown* src);
+
+    unsigned long getLocalDirectionsTotal(vector<vector<vector<unsigned long>>>& stat_mtx, Coord coord);
 };
 
 #endif

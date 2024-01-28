@@ -73,3 +73,4 @@ string GlobalParams::log_file_name;
 bool GlobalParams::req_ack_mode;
 bool GlobalParams::buffer_verbose;
 bool GlobalParams::flit_dump;
+bool GlobalParams::traffic_verbose;

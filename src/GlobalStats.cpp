@@ -20,6 +20,17 @@ GlobalStats::GlobalStats(const NoC * _noc)
 	#endif
 }
 
+unsigned long GlobalStats::getLocalDirectionsTotal(vector<vector<vector<unsigned long>>>& stat_mtx, Coord coord) {
+	assert(GlobalParams::topology == TOPOLOGY_MESH);
+
+	unsigned long result = 0;
+	for (unsigned int loc_dir = 0; loc_dir < DIRECTIONS; loc_dir++) {
+		result += stat_mtx[loc_dir][coord.y][coord.x];
+	}
+
+	return result;
+}
+
 double GlobalStats::getAverageDelay()
 {
     unsigned int total_packets = 0;
@@ -307,75 +318,89 @@ double GlobalStats::getActiveThroughput()
 
 }
 
-vector < vector < unsigned long > > GlobalStats::getRoutedFlitsMtx()
+vector < vector < unsigned long > > GlobalStats::getRoutedFlitsMtx(char dir)
 {
 
-    vector < vector < unsigned long > > mtx;
-    assert (GlobalParams::topology == TOPOLOGY_MESH); 
+	vector < vector < unsigned long > > mtx;
+	assert (GlobalParams::topology == TOPOLOGY_MESH);
+	assert (dir == 'x' || dir == 'y');
 
-    mtx.resize(GlobalParams::mesh_dim_y);
-    for (int y = 0; y < GlobalParams::mesh_dim_y; y++)
-	mtx[y].resize(GlobalParams::mesh_dim_x);
+	mtx.resize(GlobalParams::mesh_dim_y);
+	for (int y = 0; y < GlobalParams::mesh_dim_y; y++)
+		mtx[y].resize(GlobalParams::mesh_dim_x);
 
-    for (int y = 0; y < GlobalParams::mesh_dim_y; y++)
-	for (int x = 0; x < GlobalParams::mesh_dim_x; x++)
-	    mtx[y][x] = noc->t[x][y]->r->getRoutedFlits();
+	for (int y = 0; y < GlobalParams::mesh_dim_y; y++)
+		for (int x = 0; x < GlobalParams::mesh_dim_x; x++)
+		if (dir == 'x')
+			mtx[y][x] = noc->t[x][y]->r->getRoutedFlits();
+		else
+			mtx[y][x] = noc->t[x][y]->r_req->getRoutedFlits();
 
 
-    return mtx;
+	return mtx;
 }
 
-vector < vector < unsigned long > > GlobalStats::getSentFlits()
+vector < vector < unsigned long > > GlobalStats::getSentFlits(char dir)
 {
 
-    vector < vector < unsigned long > > mtx;
-    assert (GlobalParams::topology == TOPOLOGY_MESH); 
+	vector < vector < unsigned long > > mtx;
+	assert (GlobalParams::topology == TOPOLOGY_MESH);
+	assert (dir == 'x' || dir == 'y');
 
-    mtx.resize(GlobalParams::mesh_dim_y);
-    for (int y = 0; y < GlobalParams::mesh_dim_y; y++)
-	mtx[y].resize(GlobalParams::mesh_dim_x);
+	mtx.resize(GlobalParams::mesh_dim_y);
+	for (int y = 0; y < GlobalParams::mesh_dim_y; y++)
+		mtx[y].resize(GlobalParams::mesh_dim_x);
 
-    for (int y = 0; y < GlobalParams::mesh_dim_y; y++)
-	for (int x = 0; x < GlobalParams::mesh_dim_x; x++)
-	    for (int y_ = 0; y_ < GlobalParams::mesh_dim_y; y_++)
-		for (int x_ = 0; x_ < GlobalParams::mesh_dim_x; x_++)
-			mtx[y][x] += noc->t[x_][y_]->r->stats.getFlitsSrcCount(y*GlobalParams::mesh_dim_x+x);
+	for (int y = 0; y < GlobalParams::mesh_dim_y; y++)
+		for (int x = 0; x < GlobalParams::mesh_dim_x; x++)
+			for (int y_ = 0; y_ < GlobalParams::mesh_dim_y; y_++)
+				for (int x_ = 0; x_ < GlobalParams::mesh_dim_x; x_++)
+					if (dir == 'x')
+						mtx[y][x] += noc->t[x_][y_]->r->stats.getFlitsSrcCount(y*GlobalParams::mesh_dim_x+x);
+					else
+						mtx[y][x] += noc->t[x_][y_]->r_req->stats.getFlitsSrcCount(y*GlobalParams::mesh_dim_x+x);
 
-    return mtx;
+	return mtx;
 }
 
-vector < vector < unsigned long > > GlobalStats::getRecvFlits(int pe_id)
+vector < vector < unsigned long > > GlobalStats::getRecvFlits(int pe_id, char dir = 'x')
 {
 	vector < vector < unsigned long > > mtx;
-    assert (GlobalParams::topology == TOPOLOGY_MESH); 
+  assert (GlobalParams::topology == TOPOLOGY_MESH);
+	assert (dir == 'x' || dir == 'y');
 
-    mtx.resize(GlobalParams::mesh_dim_y);
-    for (int y = 0; y < GlobalParams::mesh_dim_y; y++)
-	mtx[y].resize(GlobalParams::mesh_dim_x);
+	mtx.resize(GlobalParams::mesh_dim_y);
+	for (int y = 0; y < GlobalParams::mesh_dim_y; y++)
+		mtx[y].resize(GlobalParams::mesh_dim_x);
 
-    for (int y = 0; y < GlobalParams::mesh_dim_y; y++)
-	for (int x = 0; x < GlobalParams::mesh_dim_x; x++)
-	// for (int pe_id = 0; pe_id < DIRECTIONS; pe_id++)
-			mtx[y][x] += noc->t[x][y]->pe[pe_id]->flits_recv;
+	for (int y = 0; y < GlobalParams::mesh_dim_y; y++)
+		for (int x = 0; x < GlobalParams::mesh_dim_x; x++)
+			if (dir == 'x')
+				mtx[y][x] += noc->t[x][y]->pe[pe_id]->flits_recv_x;
+			else
+				mtx[y][x] += noc->t[x][y]->pe[pe_id]->flits_recv_y;
 
-    return mtx;
+	return mtx;
 }
 
-vector < vector < unsigned long > > GlobalStats::getSentPEFlits(int pe_id)
+vector < vector < unsigned long > > GlobalStats::getSentPEFlits(int pe_id, char dir = 'x')
 {
 	vector < vector < unsigned long > > mtx;
-    assert (GlobalParams::topology == TOPOLOGY_MESH); 
+  assert (GlobalParams::topology == TOPOLOGY_MESH);
+	assert (dir == 'x' || dir == 'y');
 
-    mtx.resize(GlobalParams::mesh_dim_y);
-    for (int y = 0; y < GlobalParams::mesh_dim_y; y++)
-	mtx[y].resize(GlobalParams::mesh_dim_x);
+  mtx.resize(GlobalParams::mesh_dim_y);
+  for (int y = 0; y < GlobalParams::mesh_dim_y; y++)
+		mtx[y].resize(GlobalParams::mesh_dim_x);
 
-    for (int y = 0; y < GlobalParams::mesh_dim_y; y++)
-	for (int x = 0; x < GlobalParams::mesh_dim_x; x++)
-	// for (int pe_id = 0; pe_id < DIRECTIONS; pe_id++)
-			mtx[y][x] += noc->t[x][y]->pe[pe_id]->flits_sent;
+	for (int y = 0; y < GlobalParams::mesh_dim_y; y++)
+		for (int x = 0; x < GlobalParams::mesh_dim_x; x++)
+			if (dir == 'x')
+				mtx[y][x] += noc->t[x][y]->pe[pe_id]->flits_sent_x;
+			else
+				mtx[y][x] += noc->t[x][y]->pe[pe_id]->flits_sent_y;
 
-    return mtx;
+	return mtx;
 }
 
 unsigned int GlobalStats::getWirelessPackets()
@@ -483,233 +508,262 @@ double GlobalStats::getStaticPower()
     return power;
 }
 
-void GlobalStats::showStats(std::ostream & out, bool detailed)
-{
-    if (detailed) 
-    {
-	assert (GlobalParams::topology == TOPOLOGY_MESH); 
-	out << endl << "detailed = [" << endl;
+void GlobalStats::showStats(std::ostream & out, bool detailed) {
 
-	for (int y = 0; y < GlobalParams::mesh_dim_y; y++)
-	    for (int x = 0; x < GlobalParams::mesh_dim_x; x++)
-		noc->t[x][y]->r->stats.showStats(y * GlobalParams:: mesh_dim_x + x, out, true);
-	out << "];" << endl;
+	if (detailed) {
 
-	// show MaxDelay matrix
-	vector < vector < double > > md_mtx = getMaxDelayMtx();
+		assert (GlobalParams::topology == TOPOLOGY_MESH);
 
-	out << endl << "max_delay = [" << endl;
-	for (unsigned int y = 0; y < md_mtx.size(); y++) 
-	{
-	    out << "   ";
-	    for (unsigned int x = 0; x < md_mtx[y].size(); x++)
-		out << setw(6) << md_mtx[y][x];
-	    out << endl;
-	}
-	out << "];" << endl;
+		stringstream file_name;
+		file_name << GlobalParams::log_file_name <<
+			"_mesh_" << GlobalParams::mesh_dim_x << "x" <<
+			GlobalParams::mesh_dim_y << "_" <<
+			GlobalParams::routing_algorithm;
+			if (GlobalParams::interliving_reps)
+				file_name << "_il_" << GlobalParams::interliving_reps;
+			if (GlobalParams::GlobalParams::switch_angle_masters)
+				file_name << "_sv_" << GlobalParams::switch_angle_masters;
+			if (GlobalParams::switch_vertical_masters)
+				file_name << "_sv_all_";
+			if (GlobalParams::switch_horizontal_masters)
+				file_name << "_sh_" << GlobalParams::switch_horizontal_masters;
+			file_name << "_pir_" << (int)(GlobalParams::packet_injection_rate * 100) << ".csv";
+		std::ofstream f_sent_flits (file_name.str(), std::ofstream::out);
 
-	// show RoutedFlits matrix
-	vector < vector < unsigned long > > rf_mtx = getRoutedFlitsMtx();
+		vector < char > directions;
+		directions.push_back('x');
+		directions.push_back('y');
 
-	out << endl << "routed_flits = [" << endl;
-	for (unsigned int y = 0; y < rf_mtx.size(); y++) 
-	{
-	    out << "   ";
-	    for (unsigned int x = 0; x < rf_mtx[y].size(); x++)
-		out << setw(10) << rf_mtx[y][x];
-	    out << endl;
-	}
-	out << "]" << endl;
+		//-----------------------------------------------------------------------
+		// Start Router stats
+		//-----------------------------------------------------------------------
+		// Router x
+		out << endl << "detailed router [x] = [" << endl;
 
-	// show SentFlits matrix
-	vector < vector < unsigned long > > sp_mtx = getSentFlits();
+		for (int y = 0; y < GlobalParams::mesh_dim_y; y++)
+			for (int x = 0; x < GlobalParams::mesh_dim_x; x++)
+				noc->t[x][y]->r->stats.showStats(y * GlobalParams:: mesh_dim_x + x, out, true);
+		out << "];" << endl;
 
-	out << endl << "sent_flits = [" << endl;
-	for (unsigned int y = 0; y < sp_mtx.size(); y++) {
-		out << "  ";
-		for (unsigned int x = 0; x < sp_mtx[y].size(); x++) {
-			out << setw(10) << sp_mtx[y][x] << ',';
+		// Router y (Router req)
+		out << endl << "detailed router [y] = [" << endl;
+
+		for (int y = 0; y < GlobalParams::mesh_dim_y; y++)
+			for (int x = 0; x < GlobalParams::mesh_dim_x; x++)
+				noc->t[x][y]->r_req->stats.showStats(y * GlobalParams:: mesh_dim_x + x, out, true);
+		out << "];" << endl;
+		//-----------------------------------------------------------------------
+		// End Router stats
+		//-----------------------------------------------------------------------
+
+		//-----------------------------------------------------------------------
+		// Start MaxDelay
+		//-----------------------------------------------------------------------
+		vector < vector < double > > md_mtx = getMaxDelayMtx();
+
+		out << endl << "max_delay = [" << endl;
+		for (unsigned int y = 0; y < md_mtx.size(); y++) {
+			out << "   ";
+			for (unsigned int x = 0; x < md_mtx[y].size(); x++)
+				out << setw(6) << md_mtx[y][x];
+			out << endl;
 		}
-		out << endl;
-	}
-	out << "]" << endl;
+		out << "];" << endl;
+		//-----------------------------------------------------------------------
+		// End MaxDelay
+		//-----------------------------------------------------------------------
 
-	std::ofstream f_sent_flits (GlobalParams::log_file_name, std::ofstream::out);
-	for (unsigned int y = 0; y < sp_mtx.size(); y++) {
-		for (unsigned int x = 0; x < sp_mtx[y].size(); x++) {
-			f_sent_flits << sp_mtx[y][x] << ';';
+		//-----------------------------------------------------------------------
+		// Start RoutedFlits
+		//-----------------------------------------------------------------------
+		for (auto dir : directions) {
+			vector < vector < unsigned long > > rf_mtx = getRoutedFlitsMtx(dir);
+
+			out << endl << "routed_flits[" << dir << "] = [" << endl;
+			for (unsigned int y = 0; y < rf_mtx.size(); y++) {
+				out << "   ";
+				for (unsigned int x = 0; x < rf_mtx[y].size(); x++)
+					out << setw(10) << rf_mtx[y][x];
+				out << endl;
+			}
+			out << "]" << endl;
 		}
-		f_sent_flits << endl;
-	}
+		//-----------------------------------------------------------------------
+		// End RoutedFlits
+		//-----------------------------------------------------------------------
 
-	
+		//-----------------------------------------------------------------------
+		// Start SentFlits (Router side)
+		//-----------------------------------------------------------------------
+		for (auto dir : directions) {
+			vector < vector < unsigned long > > sp_mtx = getSentFlits(dir);
 
-	// show RecvFlits matrix
-	vector < vector < unsigned long > > recvf_mtx_pe0 = getRecvFlits(0);
-	vector < vector < unsigned long > > recvf_mtx_pe1 = getRecvFlits(1);
-	vector < vector < unsigned long > > recvf_mtx_pe2 = getRecvFlits(2);
-	vector < vector < unsigned long > > recvf_mtx_pe3 = getRecvFlits(3);
+			// Print stats to output
+			out << endl << "sent_flits[" << dir << "] = [" << endl;
+			for (unsigned int y = 0; y < sp_mtx.size(); y++) {
+				out << "  ";
+				for (unsigned int x = 0; x < sp_mtx[y].size(); x++) {
+					out << setw(10) << sp_mtx[y][x] << ',';
+				}
+				out << endl;
+			}
+			out << "]" << endl;
 
-	out << endl << "received_flits_pe0 = [" << endl;
-	for (unsigned int y = 0; y < recvf_mtx_pe0.size(); y++) {
-		out << "  ";
-		for (unsigned int x = 0; x < recvf_mtx_pe0[y].size(); x++) {
-			out << setw(10) << recvf_mtx_pe0[y][x] << ',';
+			// Print stats to file
+			f_sent_flits << "SentFlits[" << dir << "] (Router side)" << endl;
+			for (int y = 0; y < GlobalParams::mesh_dim_y; y++) {
+				for (int x = 0; x < GlobalParams::mesh_dim_x; x++) {
+					f_sent_flits << sp_mtx[y][x] << ';';
+				}
+				f_sent_flits << endl;
+			}
 		}
-		out << endl;
-	}
-	out << "]" << endl;
+		//-----------------------------------------------------------------------
+		// End SentFlits (Router side)
+		//-----------------------------------------------------------------------
 
-	out << endl << "received_flits_pe1 = [" << endl;
-	for (unsigned int y = 0; y < recvf_mtx_pe1.size(); y++) {
-		out << "  ";
-		for (unsigned int x = 0; x < recvf_mtx_pe1[y].size(); x++) {
-			out << setw(10) << recvf_mtx_pe1[y][x] << ',';
-		}
-		out << endl;
-	}
-	out << "]" << endl;
+		//-----------------------------------------------------------------------
+		// Start RecvFlits (PE side)
+		//-----------------------------------------------------------------------
 
-	out << endl << "received_flits_pe2 = [" << endl;
-	for (unsigned int y = 0; y < recvf_mtx_pe2.size(); y++) {
-		out << "  ";
-		for (unsigned int x = 0; x < recvf_mtx_pe2[y].size(); x++) {
-			out << setw(10) << recvf_mtx_pe2[y][x] << ',';
-		}
-		out << endl;
-	}
-	out << "]" << endl;
+		for (auto dir : directions) {
+			vector < vector < vector < unsigned long > > > recvf_mtx_pe;
 
-	out << endl << "received_flits_pe3 = [" << endl;
-	for (unsigned int y = 0; y < recvf_mtx_pe3.size(); y++) {
-		out << "  ";
-		for (unsigned int x = 0; x < recvf_mtx_pe3[y].size(); x++) {
-			out << setw(10) << recvf_mtx_pe3[y][x] << ',';
-		}
-		out << endl;
-	}
-	out << "]" << endl;
+			// Aggregate all local directions
+			for (unsigned int loc_dir = 0; loc_dir < DIRECTIONS; loc_dir++) {
+				recvf_mtx_pe.push_back(getRecvFlits(loc_dir, dir));
+			}
 
-	out << endl << "received_flits = [" << endl;
-	for (unsigned int y = 0; y < recvf_mtx_pe3.size(); y++) {
-		out << "  ";
-		for (unsigned int x = 0; x < recvf_mtx_pe3[y].size(); x++) {
-			out << setw(10) << recvf_mtx_pe0[y][x] + recvf_mtx_pe1[y][x] + recvf_mtx_pe2[y][x] + recvf_mtx_pe3[y][x] << ',';
-		}
-		out << endl;
-	}
-	out << "]" << endl;
-
-
-	f_sent_flits << endl;
-	for (unsigned int y = 0; y < recvf_mtx_pe3.size(); y++) {
-		for (unsigned int x = 0; x < recvf_mtx_pe3[y].size(); x++) {
-			f_sent_flits << recvf_mtx_pe0[y][x] + recvf_mtx_pe1[y][x] + recvf_mtx_pe2[y][x] + recvf_mtx_pe3[y][x] << ';';
-		}
-		f_sent_flits << endl;
-	}
-
-	// show SentPEFlits matrix
-	vector < vector < unsigned long > > sentf_mtx_pe0 = getSentPEFlits(0);
-	vector < vector < unsigned long > > sentf_mtx_pe1 = getSentPEFlits(1);
-	vector < vector < unsigned long > > sentf_mtx_pe2 = getSentPEFlits(2);
-	vector < vector < unsigned long > > sentf_mtx_pe3 = getSentPEFlits(3);
-
-	out << endl << "sent_flits_pe0 = [" << endl;
-	for (unsigned int y = 0; y < sentf_mtx_pe0.size(); y++) {
-		out << "  ";
-		for (unsigned int x = 0; x < sentf_mtx_pe0[y].size(); x++) {
-			out << setw(10) << sentf_mtx_pe0[y][x] << ',';
-		}
-		out << endl;
-	}
-	out << "]" << endl;
-
-	out << endl << "sent_flits_pe1 = [" << endl;
-	for (unsigned int y = 0; y < sentf_mtx_pe1.size(); y++) {
-		out << "  ";
-		for (unsigned int x = 0; x < sentf_mtx_pe1[y].size(); x++) {
-			out << setw(10) << sentf_mtx_pe1[y][x] << ',';
-		}
-		out << endl;
-	}
-	out << "]" << endl;
-
-	out << endl << "sent_flits_pe2 = [" << endl;
-	for (unsigned int y = 0; y < sentf_mtx_pe2.size(); y++) {
-		out << "  ";
-		for (unsigned int x = 0; x < sentf_mtx_pe2[y].size(); x++) {
-			out << setw(10) << sentf_mtx_pe2[y][x] << ',';
-		}
-		out << endl;
-	}
-	out << "]" << endl;
-
-	out << endl << "sent_flits_pe3 = [" << endl;
-	for (unsigned int y = 0; y < sentf_mtx_pe3.size(); y++) {
-		out << "  ";
-		for (unsigned int x = 0; x < sentf_mtx_pe3[y].size(); x++) {
-			out << setw(10) << sentf_mtx_pe3[y][x] << ',';
-		}
-		out << endl;
-	}
-	out << "]" << endl;
-
-	out << endl << "sent_flits_pe = [" << endl;
-	for (unsigned int y = 0; y < sentf_mtx_pe3.size(); y++) {
-		out << "  ";
-		for (unsigned int x = 0; x < sentf_mtx_pe3[y].size(); x++) {
-			out << setw(10) << sentf_mtx_pe0[y][x] + sentf_mtx_pe1[y][x] + sentf_mtx_pe2[y][x] + sentf_mtx_pe3[y][x] << ',';
-		}
-		out << endl;
-	}
-	out << "]" << endl;
-
-	f_sent_flits << endl;
-	for (unsigned int y = 0; y < recvf_mtx_pe3.size(); y++) {
-		for (unsigned int x = 0; x < recvf_mtx_pe3[y].size(); x++) {
-			f_sent_flits << sentf_mtx_pe0[y][x] + sentf_mtx_pe1[y][x] + sentf_mtx_pe2[y][x] + sentf_mtx_pe3[y][x] << ';';
-		}
-		f_sent_flits << endl;
-	}
-	
-	f_sent_flits.close();
-
-	if (GlobalParams::buffer_verbose) {
-		out << "Buffer out state for req router " << endl;
-		for (unsigned int d = 0; d < 2*DIRECTIONS; d++) {
-			out << "\tDirection " << d << endl;
-			for (int vc = 0; vc < GlobalParams::n_virtual_channels; vc++) {
-				out << "\t\tVC" << vc << endl; 
-				for (int y = 0; y < GlobalParams::mesh_dim_y; y++) {
-					for (int x = 0; x < GlobalParams::mesh_dim_x; x++) {
-						if (vc == 0)
-							out << "(" << noc->t[x][y]->r_req->buffer_out[d][0].Size() << ", " << noc->t[x][y]->r_req->buffer_out[d][1].Size() << ")" << " ";
+			// Print stats for all local directions
+			if (GlobalParams::traffic_verbose) {
+				for (unsigned int loc_dir = 0; loc_dir < DIRECTIONS; loc_dir++) {
+					out << endl << "received_flits_pe[" << loc_dir << "][" << dir << "] = [" << endl;
+					for (int y = 0; y < GlobalParams::mesh_dim_y; y++) {
+						out << "  ";
+						for (int x = 0; x < GlobalParams::mesh_dim_x; x++) {
+							out << setw(10) << recvf_mtx_pe[loc_dir][y][x] << ',';
+						}
+						out << endl;
 					}
-					out << endl;
+					out << "]" << endl;
+				}
+			}
+
+			// Print stats for sum of local directions
+			out << endl << "received_flits_total[" << dir << "] = [" << endl;
+			for (int y = 0; y < GlobalParams::mesh_dim_y; y++) {
+				out << "  ";
+				for (int x = 0; x < GlobalParams::mesh_dim_x; x++) {
+					out << setw(10) << getLocalDirectionsTotal(recvf_mtx_pe, {x, y}) << ',';
+				}
+				out << endl;
+			}
+			out << "]" << endl;
+
+			f_sent_flits << "RecvFlits (PE side) direction " << dir << endl;
+			for (int y = 0; y < GlobalParams::mesh_dim_y; y++) {
+				for (int x = 0; x < GlobalParams::mesh_dim_x; x++) {
+					f_sent_flits << getLocalDirectionsTotal(recvf_mtx_pe, {x, y}) << ';';
+				}
+				f_sent_flits << endl;
+			}
+		}
+		//-----------------------------------------------------------------------
+		// End RecvFlits (PE side)
+		//-----------------------------------------------------------------------
+
+		//-----------------------------------------------------------------------
+		// Start SentFlits (PE side)
+		//-----------------------------------------------------------------------
+
+		for (auto dir : directions) {
+			vector < vector < vector < unsigned long > > > sentf_mtx_pe;
+
+			// Aggregate all local directions
+			for (unsigned int loc_dir = 0; loc_dir < DIRECTIONS; loc_dir++) {
+				sentf_mtx_pe.push_back(getSentPEFlits(loc_dir, dir));
+			}
+
+			// Print stats for all local directions
+			if (GlobalParams::traffic_verbose) {
+				for (unsigned int loc_dir = 0; loc_dir < DIRECTIONS; loc_dir++) {
+					out << endl << "sent_flits_pe[" << loc_dir << "][" << dir << "] = [" << endl;
+					for (int y = 0; y < GlobalParams::mesh_dim_y; y++) {
+						out << "  ";
+						for (int x = 0; x < GlobalParams::mesh_dim_x; x++) {
+							out << setw(10) << sentf_mtx_pe[loc_dir][y][x] << ',';
+						}
+						out << endl;
+					}
+					out << "]" << endl;
+				}
+			}
+
+			// Print stats for sum of local directions
+			out << endl << "sent_flits_total[" << dir << "] = [" << endl;
+			for (int y = 0; y < GlobalParams::mesh_dim_y; y++) {
+				out << "  ";
+				for (int x = 0; x < GlobalParams::mesh_dim_x; x++) {
+					out << setw(10) << getLocalDirectionsTotal(sentf_mtx_pe, {x, y}) << ',';
+				}
+				out << endl;
+			}
+			out << "]" << endl;
+
+			f_sent_flits << "SentFlits (PE side) direction " << dir << endl;
+			for (int y = 0; y < GlobalParams::mesh_dim_y; y++) {
+				for (int x = 0; x < GlobalParams::mesh_dim_x; x++) {
+					f_sent_flits << getLocalDirectionsTotal(sentf_mtx_pe, {x, y}) << ';';
+				}
+				f_sent_flits << endl;
+			}
+		}
+		//-----------------------------------------------------------------------
+		// End RecvFlits (PE side)
+		//-----------------------------------------------------------------------
+		f_sent_flits.close();
+
+		//-----------------------------------------------------------------------
+		// Start Router buffers state for deadlock analysis
+		//-----------------------------------------------------------------------
+		if (GlobalParams::buffer_verbose) {
+			out << "Buffer out state for req router " << endl;
+			for (unsigned int d = 0; d < 2*DIRECTIONS; d++) {
+				out << "\tDirection " << d << endl;
+				for (int vc = 0; vc < GlobalParams::n_virtual_channels; vc++) {
+					out << "\t\tVC" << vc << endl;
+					for (int y = 0; y < GlobalParams::mesh_dim_y; y++) {
+						for (int x = 0; x < GlobalParams::mesh_dim_x; x++) {
+							if (vc == 0)
+								out << "(" << noc->t[x][y]->r_req->buffer_out[d][0].Size() << ", " << noc->t[x][y]->r_req->buffer_out[d][1].Size() << ")" << " ";
+						}
+						out << endl;
+					}
+				}
+			}
+
+			out << "Buffer in state for req router " << endl;
+			for (unsigned int d = 0; d < 2*DIRECTIONS; d++) {
+				out << "\tDirection " << d << endl;
+				for (int vc = 0; vc < GlobalParams::n_virtual_channels; vc++) {
+					out << "\t\tVC" << vc << endl; 
+					for (int y = 0; y < GlobalParams::mesh_dim_y; y++) {
+						for (int x = 0; x < GlobalParams::mesh_dim_x; x++) {
+							if (vc == 0)
+								out << "(" << noc->t[x][y]->r_req->buffer[d][0].Size() << ", " << noc->t[x][y]->r_req->buffer[d][1].Size() << ")" << " ";
+						}
+						out << endl;
+					}
 				}
 			}
 		}
+		//-----------------------------------------------------------------------
+		// End Router buffers state for deadlock analysis
+		//-----------------------------------------------------------------------
 
-		out << "Buffer in state for req router " << endl;
-		for (unsigned int d = 0; d < 2*DIRECTIONS; d++) {
-			out << "\tDirection " << d << endl;
-			for (int vc = 0; vc < GlobalParams::n_virtual_channels; vc++) {
-				out << "\t\tVC" << vc << endl; 
-				for (int y = 0; y < GlobalParams::mesh_dim_y; y++) {
-					for (int x = 0; x < GlobalParams::mesh_dim_x; x++) {
-						if (vc == 0)
-							out << "(" << noc->t[x][y]->r_req->buffer[d][0].Size() << ", " << noc->t[x][y]->r_req->buffer[d][1].Size() << ")" << " ";
-					}
-					out << endl;
-				}
-			}
-		}
-	}
-
-	showPowerBreakDown(out);
-	showPowerManagerStats(out);
-    }
+		showPowerBreakDown(out);
+		showPowerManagerStats(out);
+  } // detailed stats
 
 #ifdef DEBUG
 
@@ -726,123 +780,125 @@ void GlobalStats::showStats(std::ostream & out, bool detailed)
 		out << "PE"<<i << ": " << noc->core[i]->pe->getQueueSize()<< ",";
 	out << endl;
     }
-	
+
     out << endl;
 #endif
 
-    //int total_cycles = GlobalParams::simulation_time - GlobalParams::stats_warm_up_time;
-    out << "% Total received packets: " << getReceivedPackets() << endl;
-    out << "% Total received flits: " << getReceivedFlits() << endl;
-    out << "% Received/Ideal flits Ratio: " << getReceivedIdealFlitRatio() << endl;
-    out << "% Average wireless utilization: " << getWirelessPackets()/(double)getReceivedPackets() << endl;
-    out << "% Global average delay (cycles): " << getAverageDelay() << endl;
-    out << "% Max delay (cycles): " << getMaxDelay() << endl;
-    out << "% Network throughput (flits/cycle): " << getAggregatedThroughput() << endl;
-    out << "% Average IP throughput (flits/cycle/IP): " << getThroughput() << endl;
-    out << "% Total energy (J): " << getTotalPower() << endl;
-    out << "% \tDynamic energy (J): " << getDynamicPower() << endl;
-    out << "% \tStatic energy (J): " << getStaticPower() << endl;
+	//int total_cycles = GlobalParams::simulation_time - GlobalParams::stats_warm_up_time;
+	out << "% Total received packets: " << getReceivedPackets() << endl;
+	out << "% Total received flits: " << getReceivedFlits() << endl;
+	out << "% Received/Ideal flits Ratio: " << getReceivedIdealFlitRatio() << endl;
+	out << "% Average wireless utilization: " << getWirelessPackets()/(double)getReceivedPackets() << endl;
+	out << "% Global average delay (cycles): " << getAverageDelay() << endl;
+	out << "% Max delay (cycles): " << getMaxDelay() << endl;
+	out << "% Network throughput (flits/cycle): " << getAggregatedThroughput() << endl;
+	out << "% Average IP throughput (flits/cycle/IP): " << getThroughput() << endl;
+	out << "% Total energy (J): " << getTotalPower() << endl;
+	out << "% \tDynamic energy (J): " << getDynamicPower() << endl;
+	out << "% \tStatic energy (J): " << getStaticPower() << endl;
 
-    if (GlobalParams::show_buffer_stats)
-      showBufferStats(out);
+	if (GlobalParams::show_buffer_stats)
+		showBufferStats(out);
 
 }
 
 void GlobalStats::updatePowerBreakDown(map<string,double> &dst,PowerBreakdown* src)
 {
-    for (int i=0;i!=src->size;i++)
-    {
+	for (int i=0;i!=src->size;i++) {
 		dst[src->breakdown[i].label]+=src->breakdown[i].value;
-    }
+	}
 }
 
 void GlobalStats::showPowerManagerStats(std::ostream & out)
 {
-    std::streamsize p = out.precision();
-    int total_cycles = sc_time_stamp().to_double() / GlobalParams::clock_period_ps - GlobalParams::reset_time;
-
-    out.precision(4);
-
-    out << "powermanager_stats_tx = [" << endl;
-    out << "%\tFraction of: TX Transceiver off (TTXoff), AntennaBufferTX off (ABTXoff) " << endl;
-    out << "%\tHUB\tTTXoff\tABTXoff\t" << endl;
-
-    for (map<int, HubConfig>::iterator it = GlobalParams::hub_configuration.begin();
-            it != GlobalParams::hub_configuration.end();
-            ++it)
-    {
-	int hub_id = it->first;
-
-	map<int,Hub*>::const_iterator i = noc->hub.find(hub_id);
-	Hub * h = i->second;
-
-	out << "\t" << hub_id << "\t" << std::fixed << (double)h->total_ttxoff_cycles/total_cycles << "\t";
-
-	int s = 0;
-	for (map<int,int>::iterator i = h->abtxoff_cycles.begin(); i!=h->abtxoff_cycles.end();i++) s+=i->second;
-
-	out << (double)s/h->abtxoff_cycles.size()/total_cycles << endl;
-    }
-
-    out << "];" << endl;
-
-
-
-    out << "powermanager_stats_rx = [" << endl;
-    out << "%\tFraction of: RX Transceiver off (TRXoff), AntennaBufferRX off (ABRXoff), BufferToTile off (BTToff) " << endl;
-    out << "%\tHUB\tTRXoff\tABRXoff\tBTToff\t" << endl;
-
-
-
-    for (map<int, HubConfig>::iterator it = GlobalParams::hub_configuration.begin();
-            it != GlobalParams::hub_configuration.end();
-            ++it)
-    {
-	string bttoff_str;
+	std::streamsize p = out.precision();
+	int total_cycles = sc_time_stamp().to_double() / GlobalParams::clock_period_ps - GlobalParams::reset_time;
 
 	out.precision(4);
 
-	int hub_id = it->first;
+	out << "powermanager_stats_tx = [" << endl;
+	out << "%\tFraction of: TX Transceiver off (TTXoff), AntennaBufferTX off (ABTXoff) " << endl;
+	out << "%\tHUB\tTTXoff\tABTXoff\t" << endl;
 
-	map<int,Hub*>::const_iterator i = noc->hub.find(hub_id);
-	Hub * h = i->second;
+	for (
+		map<int, HubConfig>::iterator it = GlobalParams::hub_configuration.begin();
+		it != GlobalParams::hub_configuration.end();
+		++it
+	) {
+		int hub_id = it->first;
 
-	out << "\t" << hub_id << "\t" << std::fixed << (double)h->total_sleep_cycles/total_cycles << "\t";
+		map<int,Hub*>::const_iterator i = noc->hub.find(hub_id);
+		Hub * h = i->second;
 
-	int s = 0;
-	for (map<int,int>::iterator i = h->buffer_rx_sleep_cycles.begin();
-		i!=h->buffer_rx_sleep_cycles.end();i++)
-	    s+=i->second;
+		out << "\t" << hub_id << "\t" << std::fixed << (double)h->total_ttxoff_cycles/total_cycles << "\t";
 
-	out << (double)s/h->buffer_rx_sleep_cycles.size()/total_cycles << "\t";
+		int s = 0;
+		for (map<int,int>::iterator i = h->abtxoff_cycles.begin(); i!=h->abtxoff_cycles.end();i++)
+			s+=i->second;
 
-	s = 0;
-	for (map<int,int>::iterator i = h->buffer_to_tile_poweroff_cycles.begin();
-		i!=h->buffer_to_tile_poweroff_cycles.end();i++)
-	{
-	    double bttoff_fraction = i->second/(double)total_cycles;
-	    s+=i->second;
-	    if (bttoff_fraction<0.25)
-		bttoff_str+=" ";
-	    else if (bttoff_fraction<0.5)
-		    bttoff_str+=".";
-	    else if (bttoff_fraction<0.75)
-		    bttoff_str+="o";
-	    else if (bttoff_fraction<0.90)
-		    bttoff_str+="O";
-	    else 
-		bttoff_str+="0";
-	    
+		out << (double)s/h->abtxoff_cycles.size()/total_cycles << endl;
+  }
 
-	}
-	out << (double)s/h->buffer_to_tile_poweroff_cycles.size()/total_cycles << "\t" << bttoff_str << endl;
-    }
+	out << "];" << endl;
 
-    out << "];" << endl;
+	out << "powermanager_stats_rx = [" << endl;
+	out << "%\tFraction of: RX Transceiver off (TRXoff), AntennaBufferRX off (ABRXoff), BufferToTile off (BTToff) " << endl;
+	out << "%\tHUB\tTRXoff\tABRXoff\tBTToff\t" << endl;
 
-    out.unsetf(std::ios::fixed);
+	for (
+		map<int, HubConfig>::iterator it = GlobalParams::hub_configuration.begin();
+		it != GlobalParams::hub_configuration.end();
+		++it
+	) {
+		string bttoff_str;
 
-    out.precision(p);
+		out.precision(4);
+
+		int hub_id = it->first;
+
+		map<int,Hub*>::const_iterator i = noc->hub.find(hub_id);
+		Hub * h = i->second;
+
+		out << "\t" << hub_id << "\t" << std::fixed << (double)h->total_sleep_cycles/total_cycles << "\t";
+
+		int s = 0;
+		for (
+			map<int,int>::iterator i = h->buffer_rx_sleep_cycles.begin();
+			i!=h->buffer_rx_sleep_cycles.end();
+			i++
+		)
+			s+=i->second;
+
+		out << (double)s/h->buffer_rx_sleep_cycles.size()/total_cycles << "\t";
+
+		s = 0;
+		for (
+			map<int,int>::iterator i = h->buffer_to_tile_poweroff_cycles.begin();
+			i!=h->buffer_to_tile_poweroff_cycles.end();
+			i++
+		) {
+			double bttoff_fraction = i->second/(double)total_cycles;
+			s+=i->second;
+			if (bttoff_fraction<0.25)
+				bttoff_str+=" ";
+			else if (bttoff_fraction<0.5)
+				bttoff_str+=".";
+			else if (bttoff_fraction<0.75)
+				bttoff_str+="o";
+			else if (bttoff_fraction<0.90)
+				bttoff_str+="O";
+			else
+				bttoff_str+="0";
+
+		}
+		out << (double)s/h->buffer_to_tile_poweroff_cycles.size()/total_cycles << "\t" << bttoff_str << endl;
+  }
+
+	out << "];" << endl;
+
+	out.unsetf(std::ios::fixed);
+
+	out.precision(p);
 
 }
 

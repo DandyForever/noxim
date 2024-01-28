@@ -32,7 +32,7 @@ void ProcessingElement::rxProcess()
             if (GlobalParams::flit_dump) {
                 cout << "To Recv Info: Cycle[" << sc_time_stamp().to_double() / GlobalParams::clock_period_ps << "] sent flit " << flit_rx.read().src_id << " -> " << flit_rx.read().dst_id << endl;
             }
-            flits_recv++;
+            flits_recv_x++;
             Flit flit_tmp = flit_rx.read();
             flit_tmp.vc_id = 1 - flit_tmp.vc_id;
             free_slots_queue.push(flit_tmp.vc_id);
@@ -88,8 +88,8 @@ void ProcessingElement::txProcess()
             if (GlobalParams::flit_dump) {
                 cout << "To Send Info: Cycle[" << sc_time_stamp().to_double() / GlobalParams::clock_period_ps << "] sent flit " << flit_tx.read().src_id << " -> " << flit_tx.read().dst_id << endl;
             }
+            flits_sent_x++;
             if (!packet_queue.empty()) {
-                flits_sent++;
                 Flit flit = nextFlit();	// Generate a new flit
                 flit_tx->write(flit);	// Send the generated flit
                 // Valid if packets to send exist
@@ -107,7 +107,6 @@ void ProcessingElement::txProcess()
         {
             if (!packet_queue.empty())
             {
-                flits_sent++;
                 Flit flit = nextFlit();
                 flit_tx->write(flit);
                 req_tx.write(1);
@@ -138,7 +137,7 @@ void ProcessingElement::ryProcess()
             if (GlobalParams::flit_dump) {
                 cout << "Re Recv Info: Cycle[" << sc_time_stamp().to_double() / GlobalParams::clock_period_ps << "] sent flit " << flit_ry.read().src_id << " -> " << flit_ry.read().dst_id << endl;
             }
-            flits_recv++;
+            flits_recv_y++;
         }
 
         if (is_memory_pe(local_id))
@@ -157,6 +156,7 @@ void ProcessingElement::tyProcess()
             if (GlobalParams::flit_dump) {
                 cout << "Re Send Info: Cycle[" << sc_time_stamp().to_double() / GlobalParams::clock_period_ps << "] sent flit " << flit_ty.read().src_id << " -> " << flit_ty.read().dst_id << endl;
             }
+            flits_sent_y++;
             int trans_sent_slot = free_slots_queue.front();
             free_slots_queue.pop();
             assert (free_slots_queue.size() == in_flit_queue.size());
@@ -170,7 +170,6 @@ void ProcessingElement::tyProcess()
                     ((trans_sent_slot == free_slots_queue.front()) && (buffer_full_status_ty.read().fullness[free_slots_queue.front()] < GlobalParams::buffer_depth)) ||
                     ((trans_sent_slot != free_slots_queue.front()) && (!buffer_full_status_ty.read().mask[free_slots_queue.front()]))
                 ) {
-                    flits_sent++;
                     req_ty.write(1);
                     flit_ty->write(in_flit_queue.front());
                     in_flit_queue.pop();
@@ -189,7 +188,6 @@ void ProcessingElement::tyProcess()
                 if (GlobalParams::routing_algorithm == "MOD_DOR")
                     assert (free_slots_queue.size());
                 if (!buffer_full_status_ty.read().mask[free_slots_queue.front()]) {
-                    flits_sent++;
                     req_ty.write(1);
                     flit_ty->write(in_flit_queue.front());
                     in_flit_queue.pop();

@@ -177,5 +177,6 @@ switch_horizontal_masters: 0
 switch_interliving_validation: false
 switch_debug: false
 buffer_verbose: false
+traffic_verbose: false
 flit_dump: false
 log_file_name: "./results/results.csv"
