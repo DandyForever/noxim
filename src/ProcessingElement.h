@@ -64,9 +64,12 @@ SC_MODULE(ProcessingElement)
     int local_direction_id;
     bool current_level_rx;	// Current level for Alternating Bit Protocol (ABP)
     bool current_level_tx;	// Current level for Alternating Bit Protocol (ABP)
-    queue < Packet > packet_queue;	// Local queue of packets
-    queue < Flit > in_flit_queue;
-    queue < int > free_slots_queue;
+    queue < Packet > packet_queue_x;	// Local queue of packets for x channel
+    queue < Flit > in_flit_queue_x;     // Queue of incoming flits for x channel
+    queue < int > free_slots_queue_x;   // Queue of free slots for incoming flits for x channel
+    queue < Packet > packet_queue_y;	// Local queue of packets for y channel
+    queue < Flit > in_flit_queue_y;     // Queue of incoming flits for y channel
+    queue < int > free_slots_queue_y;   // Queue of free slots for incoming flits for y channel
     bool transmittedAtPreviousCycle;	// Used for distributions with memory
 
     // Interlivin feature parameters
@@ -91,7 +94,7 @@ SC_MODULE(ProcessingElement)
     bool is_angle_special_pe(int id, int num);
     bool is_horizontal_special_pe(int id, int num);
     bool canShot(Packet & packet);	// True when the packet must be shot
-    Flit nextFlit();	// Take the next flit of the current packet
+    Flit nextFlit(queue < Packet >& packet_queue);	// Take the next flit of the current packet
     Packet trafficTest();	// used for testing traffic
     Packet trafficRandom();	// Random destination distribution
     Packet trafficTranspose1();	// Transpose 1 destination distribution
@@ -123,13 +126,13 @@ SC_MODULE(ProcessingElement)
 	sensitive << reset;
 	sensitive << clock.pos();
 
-	SC_METHOD(txProcess);
-	sensitive << reset;
-	sensitive << clock.pos();
-
     SC_METHOD(ryProcess);
     sensitive << reset;
     sensitive << clock.pos();
+
+	SC_METHOD(txProcess);
+	sensitive << reset;
+	sensitive << clock.pos();
 
     SC_METHOD(tyProcess);
     sensitive << reset;

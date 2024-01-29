@@ -54,13 +54,13 @@ void Router::rxProcess()
 
 				int vc = received_flit.vc_id;
 
-				if (!buffer[i][vc].IsFull()) 
+				if (!buffer[i][vc].IsFull())
 				{
 
 					// Store the incoming flit in the circular buffer
 					buffer[i][vc].Push(received_flit);
 					LOG << " Flit " << received_flit << " collected from Input[" << i << "][" << vc <<"]" << endl;
-					
+
 					power.bufferRouterPush();
 
 					// if a new flit is injected from local PE
@@ -90,16 +90,16 @@ void Router::rxProcess()
 
 void Router::txProcess()
 {
-	if (reset.read()) 
+	if (reset.read())
     {
 		// Clear outputs and indexes of transmitting protocol
-		for (int i = 0; i < 2*DIRECTIONS+1; i++) 
+		for (int i = 0; i < 2*DIRECTIONS+1; i++)
 		{
 			// Not valid on reset
 			req_tx[i].write(0);
 		}
-    } 
-  	else 
+    }
+  	else
     {
 		// 0 phase: Checking
 		// Round robin for input buffers ordering
@@ -141,12 +141,12 @@ void Router::txProcess()
 			int i = item_i_vc.first;
 			int vc = item_i_vc.second;
 
-			if (!buffer[i][vc].IsEmpty()) 
+			if (!buffer[i][vc].IsEmpty())
 			{
 				Flit flit = buffer[i][vc].Front();
 				power.bufferRouterFront();
 
-				if (flit.flit_type(FLIT_TYPE_HEAD)) 
+				if (flit.flit_type(FLIT_TYPE_HEAD))
 				{
 					// prepare data for routing
 					RouteData route_data;
@@ -180,7 +180,7 @@ void Router::txProcess()
 
 					int rt_status = reservation_table.checkReservation(r,o,vc);
 
-					if (rt_status == RT_AVAILABLE) 
+					if (rt_status == RT_AVAILABLE)
 					{
 						LOG << " reserving direction " << o << " for flit " << flit << endl;
 						reservation_table.reserve(r, o, vc);
@@ -213,11 +213,11 @@ void Router::txProcess()
 
 		// 2nd phase: Forwarding
 		// Move flits from input buffers to output buffers in accordance with routing algorithm
-		for (int o = 0; o < 2*DIRECTIONS+1; o++) 
+		for (int o = 0; o < 2*DIRECTIONS+1; o++)
 		{
 			for (int vc_o = 0; vc_o < GlobalParams::n_virtual_channels; vc_o++) {
 				vector <TReservation> reservations = reservation_table.getOutReservations(o, vc_o);
-			
+
 				if (reservations.size()!=0)
 				{
 
@@ -229,15 +229,15 @@ void Router::txProcess()
 					assert(vc == vc_o);
 
 					// can happen
-					if (!buffer[i][vc].IsEmpty())  
+					if (!buffer[i][vc].IsEmpty())
 					{
 						// power contribution already computed in 1st phase
 						Flit flit = buffer[i][vc].Front();
-						
+
 						if (!buffer_out[o][vc].IsFull())
 						{
 							LOG << "Input[" << i << "][" << vc << "] forwarded to Output[" << o << "], flit: " << flit << endl;
-							
+
 							reservation_status[i][vc] = false;
 
 							buffer[i][vc].Pop();
@@ -250,7 +250,7 @@ void Router::txProcess()
 								r.vc = vc;
 								reservation_table.release(r,o,vc);
 							} else {
-								assert (0);
+								assert (GlobalParams::max_packet_size > 1);
 							}
 
 							// Power & Stats -------------------------------------------------
@@ -260,7 +260,7 @@ void Router::txProcess()
 							power.bufferRouterPop();
 							power.crossBar();
 
-							if (o >= DIRECTION_LOCAL_NORTH && o <= DIRECTION_LOCAL_WEST) 
+							if (o >= DIRECTION_LOCAL_NORTH && o <= DIRECTION_LOCAL_WEST)
 							{
 								power.networkInterface();
 
@@ -269,13 +269,13 @@ void Router::txProcess()
 								{
 									if (drained_volume >= GlobalParams:: max_volume_to_be_drained)
 										sc_stop();
-									else 
+									else
 									{
 										drained_volume++;
 										local_drained++;
 									}
 								}
-							} 
+							}
 							else if (!(i >= DIRECTION_LOCAL_NORTH && i <= DIRECTION_LOCAL_WEST)) // not generated locally
 								routed_flits++;
 							// End Power & Stats ------------------------------------------------- 

@@ -568,6 +568,9 @@ void parseCmdLine(int arg_num, char *arg_vet[])
         else if (!strcmp(arg_vet[i], "-req_ack_mode")) {
             GlobalParams::req_ack_mode = atoi(arg_vet[++i]);
         }
+        else if (!strcmp(arg_vet[i], "-both_phys_req_mode")) {
+            GlobalParams::both_phys_req_mode = atoi(arg_vet[++i]);
+        }
         else if (!strcmp(arg_vet[i], "-buffer_verbose")) {
             GlobalParams::buffer_verbose = atoi(arg_vet[++i]);
         }

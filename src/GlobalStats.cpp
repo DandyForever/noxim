@@ -727,8 +727,38 @@ void GlobalStats::showStats(std::ostream & out, bool detailed) {
 		// Start Router buffers state for deadlock analysis
 		//-----------------------------------------------------------------------
 		if (GlobalParams::buffer_verbose) {
+			out << "Buffer out state for router " << endl;
+			for (unsigned int d = 0; d < DIRECTIONS + GlobalParams::mem_ports; d++) {
+				out << "\tDirection " << d << endl;
+				for (int vc = 0; vc < GlobalParams::n_virtual_channels; vc++) {
+					out << "\t\tVC" << vc << endl;
+					for (int y = 0; y < GlobalParams::mesh_dim_y; y++) {
+						for (int x = 0; x < GlobalParams::mesh_dim_x; x++) {
+							if (vc == 0)
+								out << "(" << noc->t[x][y]->r->buffer_out[d][0].Size() << ", " << noc->t[x][y]->r_req->buffer_out[d][1].Size() << ")" << " ";
+						}
+						out << endl;
+					}
+				}
+			}
+
+			out << "Buffer in state for router " << endl;
+			for (unsigned int d = 0; d < DIRECTIONS + GlobalParams::mem_ports; d++) {
+				out << "\tDirection " << d << endl;
+				for (int vc = 0; vc < GlobalParams::n_virtual_channels; vc++) {
+					out << "\t\tVC" << vc << endl;
+					for (int y = 0; y < GlobalParams::mesh_dim_y; y++) {
+						for (int x = 0; x < GlobalParams::mesh_dim_x; x++) {
+							if (vc == 0)
+								out << "(" << noc->t[x][y]->r->buffer[d][0].Size() << ", " << noc->t[x][y]->r_req->buffer[d][1].Size() << ")" << " ";
+						}
+						out << endl;
+					}
+				}
+			}
+
 			out << "Buffer out state for req router " << endl;
-			for (unsigned int d = 0; d < 2*DIRECTIONS; d++) {
+			for (unsigned int d = 0; d < DIRECTIONS + GlobalParams::mem_ports; d++) {
 				out << "\tDirection " << d << endl;
 				for (int vc = 0; vc < GlobalParams::n_virtual_channels; vc++) {
 					out << "\t\tVC" << vc << endl;
@@ -743,10 +773,10 @@ void GlobalStats::showStats(std::ostream & out, bool detailed) {
 			}
 
 			out << "Buffer in state for req router " << endl;
-			for (unsigned int d = 0; d < 2*DIRECTIONS; d++) {
+			for (unsigned int d = 0; d < DIRECTIONS + GlobalParams::mem_ports; d++) {
 				out << "\tDirection " << d << endl;
 				for (int vc = 0; vc < GlobalParams::n_virtual_channels; vc++) {
-					out << "\t\tVC" << vc << endl; 
+					out << "\t\tVC" << vc << endl;
 					for (int y = 0; y < GlobalParams::mesh_dim_y; y++) {
 						for (int x = 0; x < GlobalParams::mesh_dim_x; x++) {
 							if (vc == 0)

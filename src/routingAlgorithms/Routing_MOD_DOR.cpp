@@ -28,7 +28,7 @@ vector<int> Routing_MOD_DOR::route(Router * router, const RouteData & routeData)
         if (!yx)
         {
             yx = RoutingAlgorithms::get("DOR");
-            
+
             assert(yx);
         }
 

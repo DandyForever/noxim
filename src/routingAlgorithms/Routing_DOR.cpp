@@ -16,7 +16,7 @@ vector<int> Routing_DOR::route(Router * router, const RouteData & routeData)
     Coord current = id2Coord(routeData.current_id);
     Coord destination = id2Coord(routeData.dst_id);
     vector <int> directions;
-    
+
     if (routeData.vc_id == 0) {
         if (destination.y > current.y)
             directions.push_back(DIRECTION_SOUTH);
@@ -39,4 +39,4 @@ vector<int> Routing_DOR::route(Router * router, const RouteData & routeData)
 
     return directions;
 
-} 
+}

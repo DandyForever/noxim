@@ -199,6 +199,7 @@ struct GlobalParams {
     static bool switch_debug;
     static string log_file_name;
     static bool req_ack_mode;
+    static bool both_phys_req_mode;
     static bool buffer_verbose;
     static bool flit_dump;
     static bool traffic_verbose;
