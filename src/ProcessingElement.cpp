@@ -70,15 +70,10 @@ void ProcessingElement::rxProcess()
             if (req_rx.read() && ack_rx.read()) {
                 Flit flit_tmp = flit_rx.read();
                 flit_tmp.vc_id = 1 - flit_tmp.vc_id; // Switching virtual channel
-                free_slots_queue_x.push(flit_tmp.vc_id); // Push VC to queue to notify router
-                if (free_slots_queue_x.size() == 1) {
-                    // If we pushed first elem to queue, notify router immediately
-                    free_slots_y.write(free_slots_queue_x.front());
-                }
                 swap(flit_tmp.src_id, flit_tmp.dst_id);
                 flit_tmp.local_direction_id = DIRECTION_LOCAL_NORTH;
                 flit_tmp.phys_channel_id = 1 - flit_tmp.phys_channel_id;
-                in_flit_queue_x.push(flit_tmp);
+                in_flit_queue_x[flit_tmp.vc_id].push(flit_tmp);
             }
         }
         //!---------------------------------------------------------------------
@@ -89,7 +84,7 @@ void ProcessingElement::rxProcess()
         // Start managing ack_rx
         //---------------------------------------------------------------------
         if (is_memory_pe(local_id)) {
-            ack_rx.write(in_flit_queue_x.size() < GlobalParams::buffer_depth);
+            ack_rx.write(in_flit_queue_x[0].size() + in_flit_queue_x[1].size() < 2*GlobalParams::buffer_depth);
         } else {
             // PE is always ready to recieve packets
             ack_rx.write(1);
@@ -137,45 +132,54 @@ void ProcessingElement::txProcess()
         // Start managing memory PE
         //---------------------------------------------------------------------
         if (is_memory_pe(local_id)) {
-            if (req_tx.read() && ack_tx.read())
-            {
-                int trans_sent_slot = free_slots_queue_y.front();
-                free_slots_queue_y.pop();
-                assert (free_slots_queue_y.size() == in_flit_queue_y.size());
-                if (!in_flit_queue_y.empty()) { // We are going to send flit
-                    int required_slot = free_slots_queue_y.front();
-                    free_slots.write(required_slot);
-                    if ( // We could send flit if router is ready to recieve it
-                        ((trans_sent_slot == required_slot) && (buffer_full_status_tx.read().fullness[required_slot] < GlobalParams::buffer_depth)) ||
-                        ((trans_sent_slot != required_slot) && (!buffer_full_status_tx.read().mask[required_slot]))
-                    ) {
-                        req_tx.write(1);
-                        flit_tx->write(in_flit_queue_y.front());
-                        in_flit_queue_y.pop();
-                    } else { // Router is not ready with required VC
-                        req_tx.write(0);
-                    }
-                } else { // Incoming flit queue is empty
-                    req_tx.write(0);
+            if (req_tx.read() && ack_tx.read()) {
+                assert (!in_flit_queue_y[cur_out_vc_x].empty());
+                in_flit_queue_y[cur_out_vc_x].pop();
+            }
+
+            bool is_first_vc = !in_flit_queue_y[0].empty();
+            bool is_second_vc = !in_flit_queue_y[1].empty();
+            bool is_both_vc = !in_flit_queue_y[0].empty() && !in_flit_queue_y[1].empty();
+
+            if (!is_vc_set_x) {
+                req_tx.write(0);
+                if (is_first_vc) {
+                    free_slots.write(0);
+                    next_out_vc_x = 0;
+                    is_vc_set_x = 1;
+                } else if (is_second_vc) {
+                    free_slots.write(1);
+                    next_out_vc_x = 1;
+                    is_vc_set_x = 1;
                 }
-            }
-            else if (req_tx.read() && !ack_tx.read())
-            {
-                req_tx.write(1);
-            }
-            else if (!req_tx.read())
-            {
-                if (!in_flit_queue_y.empty()) {
-                    assert (!free_slots_queue_y.empty());
-                    if (!buffer_full_status_tx.read().mask[free_slots_queue_y.front()]) {
-                        req_tx.write(1);
-                        flit_tx->write(in_flit_queue_y.front());
-                        in_flit_queue_y.pop();
-                    } else { // Router is not ready with required VC
-                        req_tx.write(0);
+            } else {
+                if (is_both_vc) {
+                    req_tx.write(1);
+                    flit_tx->write(in_flit_queue_y[next_out_vc_x].front());
+                    cur_out_vc_x = next_out_vc_x;
+                    next_out_vc_x = 1 - next_out_vc_x;
+                    free_slots.write(next_out_vc_x);
+                } else if (is_first_vc) {
+                    req_tx.write(1);
+                    flit_tx->write(in_flit_queue_y[0].front());
+                    cur_out_vc_x = 0;
+                    next_out_vc_x = 0;
+                    free_slots.write(0);
+                    if (in_flit_queue_y[0].size() == 1) {
+                        is_vc_set_x = 0;//!buffer_full_status_ty.read().mask[0] && !buffer_full_status_ty.read().mask[1];
                     }
-                } else { // Incoming flit queue is empty
+                } else if (is_second_vc) {
+                    req_tx.write(1);
+                    flit_tx->write(in_flit_queue_y[1].front());
+                    cur_out_vc_x = 1;
+                    next_out_vc_x = 1;
+                    free_slots.write(1);
+                    if (in_flit_queue_y[1].size() == 1) {
+                        is_vc_set_x = 0;//!buffer_full_status_ty.read().mask[0] && !buffer_full_status_ty.read().mask[1];
+                    }
+                } else {
                     req_tx.write(0);
+                    is_vc_set_x = 0;
                 }
             }
         }
@@ -236,7 +240,8 @@ void ProcessingElement::txProcess()
             }
         }
         if (!GlobalParams::req_ack_mode) {
-            assert (in_flit_queue_y.empty());
+            assert (in_flit_queue_y[0].empty());
+            assert (in_flit_queue_y[1].empty());
             assert (free_slots_queue_y.empty());
         }
         //!---------------------------------------------------------------------
@@ -300,15 +305,10 @@ void ProcessingElement::ryProcess()
             if (req_ry.read() && ack_ry.read()) {
                 Flit flit_tmp = flit_ry.read();
                 flit_tmp.vc_id = 1 - flit_tmp.vc_id; // Switching virtual channel
-                free_slots_queue_y.push(flit_tmp.vc_id); // Push VC to queue to notify router
-                if (free_slots_queue_y.size() == 1) {
-                    // If we pushed first elem to queue, notify router immediately
-                    free_slots.write(free_slots_queue_y.front());
-                }
                 swap(flit_tmp.src_id, flit_tmp.dst_id);
                 flit_tmp.local_direction_id = DIRECTION_LOCAL_NORTH;
                 flit_tmp.phys_channel_id = 1 - flit_tmp.phys_channel_id;
-                in_flit_queue_y.push(flit_tmp);
+                in_flit_queue_y[flit_tmp.vc_id].push(flit_tmp);
             }
         }
         //!---------------------------------------------------------------------
@@ -319,7 +319,7 @@ void ProcessingElement::ryProcess()
         // Start managing ack_ry
         //---------------------------------------------------------------------
         if (is_memory_pe(local_id)) {
-            ack_ry.write(in_flit_queue_y.size() < GlobalParams::buffer_depth);
+            ack_ry.write(in_flit_queue_y[0].size()+in_flit_queue_y[0].size() < 2*GlobalParams::buffer_depth);
         } else {
             // PE is always ready to recieve packets
             ack_ry.write(1);
@@ -364,45 +364,54 @@ void ProcessingElement::tyProcess()
         // Start managing memory PE
         //---------------------------------------------------------------------
         if (is_memory_pe(local_id)) {
-            if (req_ty.read() && ack_ty.read())
-            {
-                int trans_sent_slot = free_slots_queue_x.front();
-                free_slots_queue_x.pop();
-                assert (free_slots_queue_x.size() == in_flit_queue_x.size());
-                if (!in_flit_queue_x.empty()) { // We are going to send flit
-                    int required_slot = free_slots_queue_x.front();
-                    free_slots_y.write(required_slot);
-                    if ( // We could send flit if router is ready to recieve it
-                        ((trans_sent_slot == required_slot) && (buffer_full_status_ty.read().fullness[required_slot] < GlobalParams::buffer_depth)) ||
-                        ((trans_sent_slot != required_slot) && (!buffer_full_status_ty.read().mask[required_slot]))
-                    ) {
-                        req_ty.write(1);
-                        flit_ty->write(in_flit_queue_x.front());
-                        in_flit_queue_x.pop();
-                    } else { // Router is not ready with required VC
-                        req_ty.write(0);
-                    }
-                } else { // Incoming flit queue is empty
-                    req_ty.write(0);
+            if (req_ty.read() && ack_ty.read()) {
+                assert (!in_flit_queue_x[cur_out_vc_y].empty());
+                in_flit_queue_x[cur_out_vc_y].pop();
+            }
+
+            bool is_first_vc = !in_flit_queue_x[0].empty();
+            bool is_second_vc = !in_flit_queue_x[1].empty();
+            bool is_both_vc = !in_flit_queue_x[0].empty() && !in_flit_queue_x[1].empty();
+
+            if (!is_vc_set_y) {
+                req_ty.write(0);
+                if (is_first_vc) {
+                    free_slots_y.write(0);
+                    next_out_vc_y = 0;
+                    is_vc_set_y = 1;
+                } else if (is_second_vc) {
+                    free_slots_y.write(1);
+                    next_out_vc_y = 1;
+                    is_vc_set_y = 1;
                 }
-            }
-            else if (req_ty.read() && !ack_ty.read())
-            {
-                req_ty.write(1);
-            }
-            else if (!req_ty.read())
-            {
-                if (!in_flit_queue_x.empty()) {
-                    assert (!free_slots_queue_x.empty());
-                    if (!buffer_full_status_ty.read().mask[free_slots_queue_x.front()]) {
-                        req_ty.write(1);
-                        flit_ty->write(in_flit_queue_x.front());
-                        in_flit_queue_x.pop();
-                    } else { // Router is not ready with required VC
-                        req_ty.write(0);
+            } else {
+                if (is_both_vc) {
+                    req_ty.write(1);
+                    flit_ty->write(in_flit_queue_x[next_out_vc_y].front());
+                    cur_out_vc_y = next_out_vc_y;
+                    next_out_vc_y = 1 - next_out_vc_y;
+                    free_slots_y.write(next_out_vc_y);
+                } else if (is_first_vc) {
+                    req_ty.write(1);
+                    flit_ty->write(in_flit_queue_x[0].front());
+                    cur_out_vc_y = 0;
+                    next_out_vc_y = 0;
+                    free_slots_y.write(0);
+                    if (in_flit_queue_x[0].size() == 1) {
+                        is_vc_set_y = 0;//!buffer_full_status_ty.read().mask[0] && !buffer_full_status_ty.read().mask[1];
                     }
-                } else { // Incoming flit queue is empty
+                } else if (is_second_vc) {
+                    req_ty.write(1);
+                    flit_ty->write(in_flit_queue_x[1].front());
+                    cur_out_vc_y = 1;
+                    next_out_vc_y = 1;
+                    free_slots_y.write(1);
+                    if (in_flit_queue_x[1].size() == 1) {
+                        is_vc_set_y = 0;//!buffer_full_status_ty.read().mask[0] && !buffer_full_status_ty.read().mask[1];
+                    }
+                } else {
                     req_ty.write(0);
+                    is_vc_set_y = 0;
                 }
             }
         }
@@ -463,7 +472,8 @@ void ProcessingElement::tyProcess()
             }
         }
         if (!GlobalParams::req_ack_mode) {
-            assert (in_flit_queue_x.empty());
+            assert (in_flit_queue_x[0].empty());
+            assert (in_flit_queue_x[1].empty());
             assert (free_slots_queue_x.empty());
         }
         //!---------------------------------------------------------------------

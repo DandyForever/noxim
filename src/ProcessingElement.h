@@ -65,11 +65,20 @@ SC_MODULE(ProcessingElement)
     bool current_level_rx;	// Current level for Alternating Bit Protocol (ABP)
     bool current_level_tx;	// Current level for Alternating Bit Protocol (ABP)
     queue < Packet > packet_queue_x;	// Local queue of packets for x channel
-    queue < Flit > in_flit_queue_x;     // Queue of incoming flits for x channel
+    queue < Flit > in_flit_queue_x[2];     // Queue of incoming flits for x channel
     queue < int > free_slots_queue_x;   // Queue of free slots for incoming flits for x channel
     queue < Packet > packet_queue_y;	// Local queue of packets for y channel
-    queue < Flit > in_flit_queue_y;     // Queue of incoming flits for y channel
+    queue < Flit > in_flit_queue_y[2];     // Queue of incoming flits for y channel
     queue < int > free_slots_queue_y;   // Queue of free slots for incoming flits for y channel
+
+    int cur_out_vc_x;
+    int next_out_vc_x;
+    int is_vc_set_x = 0;
+
+    int cur_out_vc_y;
+    int next_out_vc_y;
+    int is_vc_set_y = 0;
+
     bool transmittedAtPreviousCycle;	// Used for distributions with memory
 
     // Interlivin feature parameters
@@ -122,19 +131,20 @@ SC_MODULE(ProcessingElement)
 
     // Constructor
     SC_CTOR(ProcessingElement) {
-	SC_METHOD(rxProcess);
-	sensitive << reset;
-	sensitive << clock.pos();
-
-    SC_METHOD(ryProcess);
-    sensitive << reset;
-    sensitive << clock.pos();
 
 	SC_METHOD(txProcess);
 	sensitive << reset;
 	sensitive << clock.pos();
 
     SC_METHOD(tyProcess);
+    sensitive << reset;
+    sensitive << clock.pos();
+
+    SC_METHOD(rxProcess);
+	sensitive << reset;
+	sensitive << clock.pos();
+
+    SC_METHOD(ryProcess);
     sensitive << reset;
     sensitive << clock.pos();
     }

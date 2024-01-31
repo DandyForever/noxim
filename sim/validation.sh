@@ -26,7 +26,7 @@
     -switch_vertical_masters 0 \
     -switch_angle_masters 0 \
     -req_ack_mode 1 \
-    -both_phys_req_mode 1 \
+    -both_phys_req_mode 0 \
     -switch_debug 0 \
     -traffic_verbose 0 \
     -flit_dump 1 \
