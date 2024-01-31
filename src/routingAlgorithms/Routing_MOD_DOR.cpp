@@ -15,7 +15,7 @@ Routing_MOD_DOR * Routing_MOD_DOR::getInstance() {
 
 vector<int> Routing_MOD_DOR::route(Router * router, const RouteData & routeData)
 {
-    if (routeData.vc_id) {
+    if (routeData.vc_id == 1 || routeData.vc_id == 2) {
         if (!xy)
         {
             xy = RoutingAlgorithms::get("XY");

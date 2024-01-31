@@ -39,9 +39,9 @@ void Router::rxProcess()
 		}
 		routed_flits = 0;
 		local_drained = 0;
-    } 
-    else 
-    { 
+    }
+    else
+    {
 		for (int i = 0; i < 2*DIRECTIONS+1; i++)
 		{
 			if (req_rx[i].read() && ack_rx[i].read())
@@ -298,59 +298,90 @@ void Router::txProcess()
 		// Step 3. Checking output buffers
 		for (int o = 0; o < 2*DIRECTIONS+1; o++)
 		{
-			bool is_both_vc_reserved = GlobalParams::n_virtual_channels > 1;
-			bool is_none_vc_reserved = true;
-			for (int vc = 0; vc < GlobalParams::n_virtual_channels; vc++)
-			{
-				is_both_vc_reserved = is_both_vc_reserved && !buffer_out[o][vc].IsEmpty();
-				is_none_vc_reserved = is_none_vc_reserved &&  buffer_out[o][vc].IsEmpty();
+			for (int vc = 0; vc < GlobalParams::n_virtual_channels; vc++) {
+				if (!buffer_out[o][vc].IsEmpty() && !out_reservation_status[o][vc]) {
+					out_reservation_queue[o].push(vc);
+					out_reservation_status[o][vc] = true;
+				}
 			}
-			assert (!(is_both_vc_reserved && is_none_vc_reserved));
-			both_out_vc_reserved[o] = is_both_vc_reserved;
-			none_out_vc_reserved[o] = is_none_vc_reserved;
+			// bool is_both_vc_reserved = GlobalParams::n_virtual_channels > 1;
+			// bool is_none_vc_reserved = true;
+			// for (int vc = 0; vc < GlobalParams::n_virtual_channels; vc++)
+			// {
+			// 	is_both_vc_reserved = is_both_vc_reserved && !buffer_out[o][vc].IsEmpty();
+			// 	is_none_vc_reserved = is_none_vc_reserved &&  buffer_out[o][vc].IsEmpty();
+			// }
+			// assert (!(is_both_vc_reserved && is_none_vc_reserved));
+			// both_out_vc_reserved[o] = is_both_vc_reserved;
+			// none_out_vc_reserved[o] = is_none_vc_reserved;
 		}
 
 		// Step 4. Managing output buffers
 		for (int o = 0; o < 2*DIRECTIONS+1; o++)
 		{
-			if (none_out_vc_reserved[o])
-			{
+			if (!is_vc_set[o]) {
 				req_tx[o].write(0);
-			}
-			else if (both_out_vc_reserved[o])
-			{
+				if (!out_reservation_queue[o].empty()) {
+					free_slots[o].write(out_reservation_queue[o].front());
+					is_vc_set[o] = true;
+				}
+			} else {
 				req_tx[o].write(1);
-				Flit f = buffer_out[o][next_out_vc[o]].Front();
-				flit_tx[o].write(f);
-				cur_out_vc[o] = next_out_vc[o];
-				next_out_vc[o] = !next_out_vc[o];
-			}
-			else
-			{
-				// req_tx[o].write(1);
-				for (int vc = 0; vc < GlobalParams::n_virtual_channels; vc++)
-				{
-					if (!buffer_out[o][vc].IsEmpty())
-					{
-						Flit f = buffer_out[o][vc].Front();
-						flit_tx[o].write(f);
-						if (next_out_vc[o] == vc)
-						{
-							req_tx[o].write(1);
-							cur_out_vc[o] = vc;
-						}
-						else
-						{
-							req_tx[o].write(0);
-							next_out_vc[o] = vc;
-						}
-						break;
+				int vc = out_reservation_queue[o].front();
+				cur_out_vc[o] = vc;
+				flit_tx[o]->write(buffer_out[o][vc].Front());
+				out_reservation_status[o][vc] = false;
+				out_reservation_queue[o].pop();
+				if (out_reservation_queue[o].empty()) {
+					if (buffer_out[o][vc].Size() > 1) {
+						free_slots[o].write(vc);
+						out_reservation_queue[o].push(vc);
+						out_reservation_status[o][vc] = true;
+					} else {
+						is_vc_set[o] = false;
 					}
+				} else {
+					free_slots[o].write(out_reservation_queue[o].front());
 				}
 			}
-			if (o < 2*DIRECTIONS) {
-				free_slots[o].write(next_out_vc[o]);
-			}
+			// if (none_out_vc_reserved[o])
+			// {
+			// 	req_tx[o].write(0);
+			// }
+			// else if (both_out_vc_reserved[o])
+			// {
+			// 	req_tx[o].write(1);
+			// 	Flit f = buffer_out[o][next_out_vc[o]].Front();
+			// 	flit_tx[o].write(f);
+			// 	cur_out_vc[o] = next_out_vc[o];
+			// 	next_out_vc[o] = !next_out_vc[o];
+			// }
+			// else
+			// {
+			// 	// req_tx[o].write(1);
+			// 	for (int vc = 0; vc < GlobalParams::n_virtual_channels; vc++)
+			// 	{
+			// 		if (!buffer_out[o][vc].IsEmpty())
+			// 		{
+			// 			Flit f = buffer_out[o][vc].Front();
+			// 			flit_tx[o].write(f);
+			// 			if (next_out_vc[o] == vc)
+			// 			{
+			// 				req_tx[o].write(1);
+			// 				cur_out_vc[o] = vc;
+			// 			}
+			// 			else
+			// 			{
+			// 				req_tx[o].write(0);
+			// 				next_out_vc[o] = vc;
+			// 			}
+			// 			break;
+			// 		}
+			// 	}
+			// }
+			// if (o < 2*DIRECTIONS) {
+			// 	free_slots[o].write(next_out_vc[o]);
+			// }
 		}
     }
 }
@@ -626,14 +657,12 @@ void Router::configure(const int _id,
 			reservation_status[i][vc] = false;
 			out_reservation_status[i][vc] = false;
 		}
+		is_vc_set[i] = false;
 		both_out_vc_reserved[i] = false;
 		none_out_vc_reserved[i] = true;
-		prev_out_vc[i] = false;
 		cur_out_vc[i] = false;
 		next_out_vc[i] = false;
 	}
-	out_reservation_queue.reserve(2*DIRECTIONS+1);
-  
 
     if (grt.isValid())
 	routing_table.configure(grt, _id);

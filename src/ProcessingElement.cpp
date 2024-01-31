@@ -69,11 +69,12 @@ void ProcessingElement::rxProcess()
             // Slave AXIS valid & ready handshake
             if (req_rx.read() && ack_rx.read()) {
                 Flit flit_tmp = flit_rx.read();
-                flit_tmp.vc_id = 1 - flit_tmp.vc_id; // Switching virtual channel
+                int vc = flit_tmp.vc_id;
+                flit_tmp.vc_id = vc + 2; // Switching virtual channel
                 swap(flit_tmp.src_id, flit_tmp.dst_id);
                 flit_tmp.local_direction_id = DIRECTION_LOCAL_NORTH;
                 flit_tmp.phys_channel_id = 1 - flit_tmp.phys_channel_id;
-                in_flit_queue_x[flit_tmp.vc_id].push(flit_tmp);
+                in_flit_queue_x[vc].push(flit_tmp);
             }
         }
         //!---------------------------------------------------------------------
@@ -144,11 +145,11 @@ void ProcessingElement::txProcess()
             if (!is_vc_set_x) {
                 req_tx.write(0);
                 if (is_first_vc) {
-                    free_slots.write(0);
+                    free_slots.write(2);
                     next_out_vc_x = 0;
                     is_vc_set_x = 1;
                 } else if (is_second_vc) {
-                    free_slots.write(1);
+                    free_slots.write(3);
                     next_out_vc_x = 1;
                     is_vc_set_x = 1;
                 }
@@ -158,13 +159,13 @@ void ProcessingElement::txProcess()
                     flit_tx->write(in_flit_queue_y[next_out_vc_x].front());
                     cur_out_vc_x = next_out_vc_x;
                     next_out_vc_x = 1 - next_out_vc_x;
-                    free_slots.write(next_out_vc_x);
+                    free_slots.write(next_out_vc_x+2);
                 } else if (is_first_vc) {
                     req_tx.write(1);
                     flit_tx->write(in_flit_queue_y[0].front());
                     cur_out_vc_x = 0;
                     next_out_vc_x = 0;
-                    free_slots.write(0);
+                    free_slots.write(2);
                     if (in_flit_queue_y[0].size() == 1) {
                         is_vc_set_x = 0;//!buffer_full_status_ty.read().mask[0] && !buffer_full_status_ty.read().mask[1];
                     }
@@ -173,7 +174,7 @@ void ProcessingElement::txProcess()
                     flit_tx->write(in_flit_queue_y[1].front());
                     cur_out_vc_x = 1;
                     next_out_vc_x = 1;
-                    free_slots.write(1);
+                    free_slots.write(3);
                     if (in_flit_queue_y[1].size() == 1) {
                         is_vc_set_x = 0;//!buffer_full_status_ty.read().mask[0] && !buffer_full_status_ty.read().mask[1];
                     }
@@ -304,11 +305,12 @@ void ProcessingElement::ryProcess()
             // Slave AXIS valid & ready handshake
             if (req_ry.read() && ack_ry.read()) {
                 Flit flit_tmp = flit_ry.read();
-                flit_tmp.vc_id = 1 - flit_tmp.vc_id; // Switching virtual channel
+                int vc = flit_tmp.vc_id;
+                flit_tmp.vc_id = vc + 2; // Switching virtual channel
                 swap(flit_tmp.src_id, flit_tmp.dst_id);
                 flit_tmp.local_direction_id = DIRECTION_LOCAL_NORTH;
                 flit_tmp.phys_channel_id = 1 - flit_tmp.phys_channel_id;
-                in_flit_queue_y[flit_tmp.vc_id].push(flit_tmp);
+                in_flit_queue_y[vc].push(flit_tmp);
             }
         }
         //!---------------------------------------------------------------------
@@ -376,11 +378,11 @@ void ProcessingElement::tyProcess()
             if (!is_vc_set_y) {
                 req_ty.write(0);
                 if (is_first_vc) {
-                    free_slots_y.write(0);
+                    free_slots_y.write(2);
                     next_out_vc_y = 0;
                     is_vc_set_y = 1;
                 } else if (is_second_vc) {
-                    free_slots_y.write(1);
+                    free_slots_y.write(3);
                     next_out_vc_y = 1;
                     is_vc_set_y = 1;
                 }
@@ -390,13 +392,13 @@ void ProcessingElement::tyProcess()
                     flit_ty->write(in_flit_queue_x[next_out_vc_y].front());
                     cur_out_vc_y = next_out_vc_y;
                     next_out_vc_y = 1 - next_out_vc_y;
-                    free_slots_y.write(next_out_vc_y);
+                    free_slots_y.write(next_out_vc_y+2);
                 } else if (is_first_vc) {
                     req_ty.write(1);
                     flit_ty->write(in_flit_queue_x[0].front());
                     cur_out_vc_y = 0;
                     next_out_vc_y = 0;
-                    free_slots_y.write(0);
+                    free_slots_y.write(2);
                     if (in_flit_queue_x[0].size() == 1) {
                         is_vc_set_y = 0;//!buffer_full_status_ty.read().mask[0] && !buffer_full_status_ty.read().mask[1];
                     }
@@ -405,7 +407,7 @@ void ProcessingElement::tyProcess()
                     flit_ty->write(in_flit_queue_x[1].front());
                     cur_out_vc_y = 1;
                     next_out_vc_y = 1;
-                    free_slots_y.write(1);
+                    free_slots_y.write(3);
                     if (in_flit_queue_x[1].size() == 1) {
                         is_vc_set_y = 0;//!buffer_full_status_ty.read().mask[0] && !buffer_full_status_ty.read().mask[1];
                     }
