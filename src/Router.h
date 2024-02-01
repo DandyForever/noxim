@@ -138,14 +138,9 @@ SC_MODULE(Router)
 
     bool out_reservation_status[2*DIRECTIONS+1][MAX_VIRTUAL_CHANNELS];
     queue < int > out_reservation_queue[2*DIRECTIONS+1];
-    bool both_out_vc_reserved[2*DIRECTIONS+1];
-    bool none_out_vc_reserved[2*DIRECTIONS+1];
     int cur_out_vc[2*DIRECTIONS+1];
-    bool next_out_vc[2*DIRECTIONS+1];
 
     bool is_vc_set[2*DIRECTIONS+1];
-    
-    int start_from_vc[2*DIRECTIONS+1]; // VC from which to start the reservation cycle for the specific port
 
     vector<int> nextDeltaHops(RouteData rd);
   public:

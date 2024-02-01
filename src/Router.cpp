@@ -304,16 +304,6 @@ void Router::txProcess()
 					out_reservation_status[o][vc] = true;
 				}
 			}
-			// bool is_both_vc_reserved = GlobalParams::n_virtual_channels > 1;
-			// bool is_none_vc_reserved = true;
-			// for (int vc = 0; vc < GlobalParams::n_virtual_channels; vc++)
-			// {
-			// 	is_both_vc_reserved = is_both_vc_reserved && !buffer_out[o][vc].IsEmpty();
-			// 	is_none_vc_reserved = is_none_vc_reserved &&  buffer_out[o][vc].IsEmpty();
-			// }
-			// assert (!(is_both_vc_reserved && is_none_vc_reserved));
-			// both_out_vc_reserved[o] = is_both_vc_reserved;
-			// none_out_vc_reserved[o] = is_none_vc_reserved;
 		}
 
 		// Step 4. Managing output buffers
@@ -344,44 +334,6 @@ void Router::txProcess()
 					free_slots[o].write(out_reservation_queue[o].front());
 				}
 			}
-			// if (none_out_vc_reserved[o])
-			// {
-			// 	req_tx[o].write(0);
-			// }
-			// else if (both_out_vc_reserved[o])
-			// {
-			// 	req_tx[o].write(1);
-			// 	Flit f = buffer_out[o][next_out_vc[o]].Front();
-			// 	flit_tx[o].write(f);
-			// 	cur_out_vc[o] = next_out_vc[o];
-			// 	next_out_vc[o] = !next_out_vc[o];
-			// }
-			// else
-			// {
-			// 	// req_tx[o].write(1);
-			// 	for (int vc = 0; vc < GlobalParams::n_virtual_channels; vc++)
-			// 	{
-			// 		if (!buffer_out[o][vc].IsEmpty())
-			// 		{
-			// 			Flit f = buffer_out[o][vc].Front();
-			// 			flit_tx[o].write(f);
-			// 			if (next_out_vc[o] == vc)
-			// 			{
-			// 				req_tx[o].write(1);
-			// 				cur_out_vc[o] = vc;
-			// 			}
-			// 			else
-			// 			{
-			// 				req_tx[o].write(0);
-			// 				next_out_vc[o] = vc;
-			// 			}
-			// 			break;
-			// 		}
-			// 	}
-			// }
-			// if (o < 2*DIRECTIONS) {
-			// 	free_slots[o].write(next_out_vc[o]);
-			// }
 		}
     }
 }
@@ -658,10 +610,7 @@ void Router::configure(const int _id,
 			out_reservation_status[i][vc] = false;
 		}
 		is_vc_set[i] = false;
-		both_out_vc_reserved[i] = false;
-		none_out_vc_reserved[i] = true;
 		cur_out_vc[i] = false;
-		next_out_vc[i] = false;
 	}
 
     if (grt.isValid())
@@ -678,7 +627,6 @@ void Router::configure(const int _id,
 	    buffer[i][vc].setLabel(string(name())+"->buffer["+i_to_string(i)+"]");
 		buffer_out[i][vc].setLabel(string(name())+"->buffer["+i_to_string(i)+"]");
 	}
-	start_from_vc[i] = 0;
     }
 
 

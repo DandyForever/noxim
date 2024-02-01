@@ -728,7 +728,7 @@ void GlobalStats::showStats(std::ostream & out, bool detailed) {
 		//-----------------------------------------------------------------------
 		if (GlobalParams::buffer_verbose) {
 			out << "Buffer out state for router " << endl;
-			for (unsigned int d = 0; d < DIRECTIONS + GlobalParams::mem_ports; d++) {
+			for (int d = 0; d < DIRECTIONS + GlobalParams::mem_ports; d++) {
 				out << "\tDirection " << d << endl;
 				for (int vc = 0; vc < GlobalParams::n_virtual_channels; vc++) {
 					out << "\t\tVC" << vc << endl;
@@ -743,7 +743,7 @@ void GlobalStats::showStats(std::ostream & out, bool detailed) {
 			}
 
 			out << "Buffer in state for router " << endl;
-			for (unsigned int d = 0; d < DIRECTIONS + GlobalParams::mem_ports; d++) {
+			for (int d = 0; d < DIRECTIONS + GlobalParams::mem_ports; d++) {
 				out << "\tDirection " << d << endl;
 				for (int vc = 0; vc < GlobalParams::n_virtual_channels; vc++) {
 					out << "\t\tVC" << vc << endl;
@@ -758,7 +758,7 @@ void GlobalStats::showStats(std::ostream & out, bool detailed) {
 			}
 
 			out << "Buffer out state for req router " << endl;
-			for (unsigned int d = 0; d < DIRECTIONS + GlobalParams::mem_ports; d++) {
+			for (int d = 0; d < DIRECTIONS + GlobalParams::mem_ports; d++) {
 				out << "\tDirection " << d << endl;
 				for (int vc = 0; vc < GlobalParams::n_virtual_channels; vc++) {
 					out << "\t\tVC" << vc << endl;
@@ -773,7 +773,7 @@ void GlobalStats::showStats(std::ostream & out, bool detailed) {
 			}
 
 			out << "Buffer in state for req router " << endl;
-			for (unsigned int d = 0; d < DIRECTIONS + GlobalParams::mem_ports; d++) {
+			for (int d = 0; d < DIRECTIONS + GlobalParams::mem_ports; d++) {
 				out << "\tDirection " << d << endl;
 				for (int vc = 0; vc < GlobalParams::n_virtual_channels; vc++) {
 					out << "\t\tVC" << vc << endl;

@@ -70,11 +70,11 @@ void ProcessingElement::rxProcess()
             if (req_rx.read() && ack_rx.read()) {
                 Flit flit_tmp = flit_rx.read();
                 int vc = flit_tmp.vc_id;
-                flit_tmp.vc_id = vc + 2; // Switching virtual channel
+                flit_tmp.vc_id = 3 - vc; // Switching virtual channel
                 swap(flit_tmp.src_id, flit_tmp.dst_id);
                 flit_tmp.local_direction_id = DIRECTION_LOCAL_NORTH;
                 flit_tmp.phys_channel_id = 1 - flit_tmp.phys_channel_id;
-                in_flit_queue_x[vc].push(flit_tmp);
+                in_flit_queue_x[flit_tmp.vc_id].push(flit_tmp);
             }
         }
         //!---------------------------------------------------------------------
@@ -85,7 +85,7 @@ void ProcessingElement::rxProcess()
         // Start managing ack_rx
         //---------------------------------------------------------------------
         if (is_memory_pe(local_id)) {
-            ack_rx.write(in_flit_queue_x[0].size() + in_flit_queue_x[1].size() < 2*GlobalParams::buffer_depth);
+            ack_rx.write(in_flit_queue_x[free_slots_neighbor].size() < GlobalParams::buffer_depth);
         } else {
             // PE is always ready to recieve packets
             ack_rx.write(1);
@@ -138,49 +138,36 @@ void ProcessingElement::txProcess()
                 in_flit_queue_y[cur_out_vc_x].pop();
             }
 
-            bool is_first_vc = !in_flit_queue_y[0].empty();
-            bool is_second_vc = !in_flit_queue_y[1].empty();
-            bool is_both_vc = !in_flit_queue_y[0].empty() && !in_flit_queue_y[1].empty();
+            for (int vc = 0; vc < GlobalParams::n_virtual_channels; vc++) {
+                if (!in_flit_queue_y[vc].empty() && !out_reservation_status_x[vc]) {
+                    out_reservation_queue_x.push(vc);
+                    out_reservation_status_x[vc] = true;
+                }
+            }
 
             if (!is_vc_set_x) {
                 req_tx.write(0);
-                if (is_first_vc) {
-                    free_slots.write(2);
-                    next_out_vc_x = 0;
-                    is_vc_set_x = 1;
-                } else if (is_second_vc) {
-                    free_slots.write(3);
-                    next_out_vc_x = 1;
-                    is_vc_set_x = 1;
+                if (!out_reservation_queue_x.empty()) {
+                    free_slots.write(out_reservation_queue_x.front());
+                    is_vc_set_x = true;
                 }
             } else {
-                if (is_both_vc) {
-                    req_tx.write(1);
-                    flit_tx->write(in_flit_queue_y[next_out_vc_x].front());
-                    cur_out_vc_x = next_out_vc_x;
-                    next_out_vc_x = 1 - next_out_vc_x;
-                    free_slots.write(next_out_vc_x+2);
-                } else if (is_first_vc) {
-                    req_tx.write(1);
-                    flit_tx->write(in_flit_queue_y[0].front());
-                    cur_out_vc_x = 0;
-                    next_out_vc_x = 0;
-                    free_slots.write(2);
-                    if (in_flit_queue_y[0].size() == 1) {
-                        is_vc_set_x = 0;//!buffer_full_status_ty.read().mask[0] && !buffer_full_status_ty.read().mask[1];
-                    }
-                } else if (is_second_vc) {
-                    req_tx.write(1);
-                    flit_tx->write(in_flit_queue_y[1].front());
-                    cur_out_vc_x = 1;
-                    next_out_vc_x = 1;
-                    free_slots.write(3);
-                    if (in_flit_queue_y[1].size() == 1) {
-                        is_vc_set_x = 0;//!buffer_full_status_ty.read().mask[0] && !buffer_full_status_ty.read().mask[1];
+                req_tx.write(1);
+                int vc = out_reservation_queue_x.front();
+                cur_out_vc_x = vc;
+                flit_tx->write(in_flit_queue_y[vc].front());
+                out_reservation_status_x[vc] = false;
+                out_reservation_queue_x.pop();
+                if (out_reservation_queue_x.empty()) {
+                    if (in_flit_queue_y[vc].size() > 1) {
+                        free_slots.write(vc);
+                        out_reservation_queue_x.push(vc);
+                        out_reservation_status_x[vc] = true;
+                    } else {
+                        is_vc_set_x = false;
                     }
                 } else {
-                    req_tx.write(0);
-                    is_vc_set_x = 0;
+                    free_slots.write(out_reservation_queue_x.front());
                 }
             }
         }
@@ -241,9 +228,9 @@ void ProcessingElement::txProcess()
             }
         }
         if (!GlobalParams::req_ack_mode) {
-            assert (in_flit_queue_y[0].empty());
-            assert (in_flit_queue_y[1].empty());
-            assert (free_slots_queue_y.empty());
+            for (int vc = 0; vc < GlobalParams::n_virtual_channels; vc++) {
+                assert (in_flit_queue_y[vc].empty());
+            }
         }
         //!---------------------------------------------------------------------
         //! End checks
@@ -306,11 +293,11 @@ void ProcessingElement::ryProcess()
             if (req_ry.read() && ack_ry.read()) {
                 Flit flit_tmp = flit_ry.read();
                 int vc = flit_tmp.vc_id;
-                flit_tmp.vc_id = vc + 2; // Switching virtual channel
+                flit_tmp.vc_id = 3 - vc; // Switching virtual channel
                 swap(flit_tmp.src_id, flit_tmp.dst_id);
                 flit_tmp.local_direction_id = DIRECTION_LOCAL_NORTH;
                 flit_tmp.phys_channel_id = 1 - flit_tmp.phys_channel_id;
-                in_flit_queue_y[vc].push(flit_tmp);
+                in_flit_queue_y[flit_tmp.vc_id].push(flit_tmp);
             }
         }
         //!---------------------------------------------------------------------
@@ -321,7 +308,7 @@ void ProcessingElement::ryProcess()
         // Start managing ack_ry
         //---------------------------------------------------------------------
         if (is_memory_pe(local_id)) {
-            ack_ry.write(in_flit_queue_y[0].size()+in_flit_queue_y[0].size() < 2*GlobalParams::buffer_depth);
+            ack_ry.write(in_flit_queue_y[free_slots_neighbor_y].size() < GlobalParams::buffer_depth);
         } else {
             // PE is always ready to recieve packets
             ack_ry.write(1);
@@ -371,49 +358,36 @@ void ProcessingElement::tyProcess()
                 in_flit_queue_x[cur_out_vc_y].pop();
             }
 
-            bool is_first_vc = !in_flit_queue_x[0].empty();
-            bool is_second_vc = !in_flit_queue_x[1].empty();
-            bool is_both_vc = !in_flit_queue_x[0].empty() && !in_flit_queue_x[1].empty();
+            for (int vc = 0; vc < GlobalParams::n_virtual_channels; vc++) {
+                if (!in_flit_queue_x[vc].empty() && !out_reservation_status_y[vc]) {
+                    out_reservation_queue_y.push(vc);
+                    out_reservation_status_y[vc] = true;
+                }
+            }
 
             if (!is_vc_set_y) {
                 req_ty.write(0);
-                if (is_first_vc) {
-                    free_slots_y.write(2);
-                    next_out_vc_y = 0;
-                    is_vc_set_y = 1;
-                } else if (is_second_vc) {
-                    free_slots_y.write(3);
-                    next_out_vc_y = 1;
-                    is_vc_set_y = 1;
+                if (!out_reservation_queue_y.empty()) {
+                    free_slots_y.write(out_reservation_queue_y.front());
+                    is_vc_set_y = true;
                 }
             } else {
-                if (is_both_vc) {
-                    req_ty.write(1);
-                    flit_ty->write(in_flit_queue_x[next_out_vc_y].front());
-                    cur_out_vc_y = next_out_vc_y;
-                    next_out_vc_y = 1 - next_out_vc_y;
-                    free_slots_y.write(next_out_vc_y+2);
-                } else if (is_first_vc) {
-                    req_ty.write(1);
-                    flit_ty->write(in_flit_queue_x[0].front());
-                    cur_out_vc_y = 0;
-                    next_out_vc_y = 0;
-                    free_slots_y.write(2);
-                    if (in_flit_queue_x[0].size() == 1) {
-                        is_vc_set_y = 0;//!buffer_full_status_ty.read().mask[0] && !buffer_full_status_ty.read().mask[1];
-                    }
-                } else if (is_second_vc) {
-                    req_ty.write(1);
-                    flit_ty->write(in_flit_queue_x[1].front());
-                    cur_out_vc_y = 1;
-                    next_out_vc_y = 1;
-                    free_slots_y.write(3);
-                    if (in_flit_queue_x[1].size() == 1) {
-                        is_vc_set_y = 0;//!buffer_full_status_ty.read().mask[0] && !buffer_full_status_ty.read().mask[1];
+                req_ty.write(1);
+                int vc = out_reservation_queue_y.front();
+                cur_out_vc_y = vc;
+                flit_ty->write(in_flit_queue_x[vc].front());
+                out_reservation_status_y[vc] = false;
+                out_reservation_queue_y.pop();
+                if (out_reservation_queue_y.empty()) {
+                    if (in_flit_queue_x[vc].size() > 1) {
+                        free_slots_y.write(vc);
+                        out_reservation_queue_y.push(vc);
+                        out_reservation_status_y[vc] = true;
+                    } else {
+                        is_vc_set_y = false;
                     }
                 } else {
-                    req_ty.write(0);
-                    is_vc_set_y = 0;
+                    free_slots_y.write(out_reservation_queue_y.front());
                 }
             }
         }
@@ -474,9 +448,9 @@ void ProcessingElement::tyProcess()
             }
         }
         if (!GlobalParams::req_ack_mode) {
-            assert (in_flit_queue_x[0].empty());
-            assert (in_flit_queue_x[1].empty());
-            assert (free_slots_queue_x.empty());
+            for (int vc = 0; vc < GlobalParams::n_virtual_channels; vc++) {
+                assert (in_flit_queue_x[vc].empty());
+            }
         }
         //!---------------------------------------------------------------------
         //! End checks
