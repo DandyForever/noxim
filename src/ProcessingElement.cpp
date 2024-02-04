@@ -12,8 +12,7 @@
 
 int ProcessingElement::randInt(int min, int max)
 {
-    return min +
-	(int) ((double) (max - min + 1) * rand() / (RAND_MAX + 1.0));
+    return min + (int) ((double) (max - min + 1) * rand() / (RAND_MAX + 1.0));
 }
 
 // AXI4-Stream protocol
@@ -41,6 +40,19 @@ void ProcessingElement::rxProcess()
         //---------------------------------------------------------------------
         if  (req_rx.read() && ack_rx.read()) {
             flits_recv_x++;
+
+            if (!is_memory_pe(local_id)) {
+                Flit flit = flit_rx.read();
+                int send_timestamp = flit_latency_y[flit.id].latency;
+                int recv_timestamp = (int) sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
+                int latency = recv_timestamp - send_timestamp;
+                // if (local_id == 3) {
+                //     if (latency > 500)  {
+                //         cout << flit.src_id << " sent " << send_timestamp << " recv " << recv_timestamp << endl;
+                //     }
+                // }
+                flit_latency_y[flit.id] = {1, flit.src_id, latency};
+            }
         }
         //!---------------------------------------------------------------------
         //! End collect stats
@@ -69,8 +81,7 @@ void ProcessingElement::rxProcess()
             // Slave AXIS valid & ready handshake
             if (req_rx.read() && ack_rx.read()) {
                 Flit flit_tmp = flit_rx.read();
-                int vc = flit_tmp.vc_id;
-                flit_tmp.vc_id = 3 - vc; // Switching virtual channel
+                flit_tmp.vc_id = 3 - flit_tmp.vc_id; // Switching virtual channel
                 swap(flit_tmp.src_id, flit_tmp.dst_id);
                 flit_tmp.local_direction_id = DIRECTION_LOCAL_NORTH;
                 flit_tmp.phys_channel_id = 1 - flit_tmp.phys_channel_id;
@@ -108,6 +119,14 @@ void ProcessingElement::txProcess()
         // Start collect stats
         //---------------------------------------------------------------------
         if  (req_tx.read() && ack_tx.read()) {
+
+            if (!is_memory_pe(local_id)) {
+                Flit flit = flit_tx.read();
+                int timestamp = (int) sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
+                int dst_id = flit.dst_id;
+                flit_latency_x[flit.id] = {0, dst_id, timestamp};
+            }
+
             flits_sent_x++;
         }
         //!---------------------------------------------------------------------
@@ -199,7 +218,9 @@ void ProcessingElement::txProcess()
                 !req_tx.read() // Not started sending
             ) {
                 if (!packet_queue_x.empty()) {
-                    flit_tx->write(nextFlit(packet_queue_x));
+                    Flit flit = nextFlit(packet_queue_x);
+                    flit.id = flits_sent_x;
+                    flit_tx->write(flit);
                     req_tx.write(1);
                 } else {
                     req_tx.write(0);
@@ -260,6 +281,14 @@ void ProcessingElement::ryProcess()
         //---------------------------------------------------------------------
         if  (req_ry.read() && ack_ry.read()) {
             flits_recv_y++;
+
+            if (!is_memory_pe(local_id)) {
+                Flit flit = flit_ry.read();
+                int send_timestamp = flit_latency_x[flit.id].latency;
+                int recv_timestamp = (int) sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
+                int latency = recv_timestamp - send_timestamp;
+                flit_latency_x[flit.id] = {1, flit.src_id, latency};
+            }
         }
         //!---------------------------------------------------------------------
         //! End collect stats
@@ -292,8 +321,7 @@ void ProcessingElement::ryProcess()
             // Slave AXIS valid & ready handshake
             if (req_ry.read() && ack_ry.read()) {
                 Flit flit_tmp = flit_ry.read();
-                int vc = flit_tmp.vc_id;
-                flit_tmp.vc_id = 3 - vc; // Switching virtual channel
+                flit_tmp.vc_id = 3 - flit_tmp.vc_id; // Switching virtual channel
                 swap(flit_tmp.src_id, flit_tmp.dst_id);
                 flit_tmp.local_direction_id = DIRECTION_LOCAL_NORTH;
                 flit_tmp.phys_channel_id = 1 - flit_tmp.phys_channel_id;
@@ -328,6 +356,14 @@ void ProcessingElement::tyProcess()
         // Start collect stats
         //---------------------------------------------------------------------
         if  (req_ty.read() && ack_ty.read()) {
+
+            if (!is_memory_pe(local_id)) {
+                Flit flit = flit_ty.read();
+                int timestamp = (int) sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
+                int dst_id = flit.dst_id;
+                flit_latency_y[flit.id] = {0, dst_id, timestamp};
+            }
+
             flits_sent_y++;
         }
         //!---------------------------------------------------------------------
@@ -419,7 +455,9 @@ void ProcessingElement::tyProcess()
                 !req_ty.read() // Not started sending
             ) {
                 if (!packet_queue_y.empty()) {
-                    flit_ty->write(nextFlit(packet_queue_y));
+                    Flit flit = nextFlit(packet_queue_y);
+                    flit.id = flits_sent_y;
+                    flit_ty->write(flit);
                     req_ty.write(1);
                 } else { // Packet queue is empty
                     req_ty.write(0);
@@ -465,6 +503,7 @@ Flit ProcessingElement::nextFlit(queue < Packet >& packet_queue)
 
     flit.src_id = packet.src_id;
     flit.dst_id = packet.dst_id;
+    flit.id = packet.id;
     flit.local_direction_id = packet.local_direction_id;
     flit.phys_channel_id = packet.phys_channel_id;
     flit.vc_id = packet.vc_id;
@@ -482,7 +521,7 @@ Flit ProcessingElement::nextFlit(queue < Packet >& packet_queue)
 
     packet_queue.front().flit_left--;
     if (packet_queue.front().flit_left == 0)
-	packet_queue.pop();
+	    packet_queue.pop();
 
     return flit;
 }
@@ -526,7 +565,7 @@ bool ProcessingElement::is_angle_special_pe(int id, int num)
 bool ProcessingElement::is_horizontal_special_pe(int id, int num)
 {
     assert (GlobalParams::mesh_dim_x >= 2*num);
-    
+
     Coord coord = id2Coord(id);
 
     if (coord.y == 0 || coord.y == GlobalParams::mesh_dim_y - 1)
@@ -647,7 +686,7 @@ bool ProcessingElement::canShot(Packet & packet)
             for (unsigned int i = 0; i < dst_prob.size(); i++) {
                 if (prob < dst_prob[i].second) {
                     int vc = randInt(0,GlobalParams::n_virtual_channels-1);
-                    packet.make(local_id, dst_prob[i].first, vc, now, getRandomSize(), local_direction_id, 0);
+                    packet.make(local_id, dst_prob[i].first, vc, now, getRandomSize(), local_direction_id, 0, 0);
                     break;
                 }
             }
@@ -687,7 +726,7 @@ Packet ProcessingElement::trafficLocal()
     p.timestamp = sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
     p.size = p.flit_left = getRandomSize();
     p.vc_id = randInt(0,GlobalParams::n_virtual_channels-1);
-    
+
     return p;
 }
 
@@ -698,7 +737,7 @@ int ProcessingElement::findRandomDestination(int id, int hops)
 
     int inc_y = rand()%2?-1:1;
     int inc_x = rand()%2?-1:1;
-    
+
     Coord current =  id2Coord(id);
 
     for (int h = 0; h<hops; h++)
@@ -766,38 +805,39 @@ Packet ProcessingElement::trafficRandom()
     Packet p;
     p.src_id = local_id;
     p.phys_channel_id = 0;
+    p.id = 0;
     p.local_direction_id = randInt(DIRECTION_LOCAL_NORTH, DIRECTION_LOCAL_NORTH - 1 + GlobalParams::mem_ports);
     double rnd = rand() / (double) RAND_MAX;
     double range_start = 0.0;
     int max_id;
 
     if (GlobalParams::topology == TOPOLOGY_MESH)
-	max_id = (GlobalParams::mesh_dim_x * GlobalParams::mesh_dim_y) - 1; //Mesh 
+	    max_id = (GlobalParams::mesh_dim_x * GlobalParams::mesh_dim_y) - 1; //Mesh 
     else    // other delta topologies
-	max_id = GlobalParams::n_delta_tiles-1; 
+	    max_id = GlobalParams::n_delta_tiles-1; 
 
     // Random destination distribution
     do {
-	p.dst_id = randInt(0, max_id);
+	    p.dst_id = randInt(0, max_id);
 
-	// check for hotspot destination
-	for (size_t i = 0; i < GlobalParams::hotspots.size(); i++) {
+        // check for hotspot destination
+        for (size_t i = 0; i < GlobalParams::hotspots.size(); i++) {
 
-	    if (rnd >= range_start && rnd < range_start + GlobalParams::hotspots[i].second) {
-		if (local_id != GlobalParams::hotspots[i].first ) {
-		    p.dst_id = GlobalParams::hotspots[i].first;
-		}
-		break;
-	    } else
-		range_start += GlobalParams::hotspots[i].second;	// try next
-	}
-#ifdef DEADLOCK_AVOIDANCE
-	assert((GlobalParams::topology == TOPOLOGY_MESH));
-	if (p.dst_id%2!=0)
-	{
-	    p.dst_id = (p.dst_id+1)%256;
-	}
-#endif
+	        if (rnd >= range_start && rnd < range_start + GlobalParams::hotspots[i].second) {
+		        if (local_id != GlobalParams::hotspots[i].first ) {
+		            p.dst_id = GlobalParams::hotspots[i].first;
+		        }
+		        break;
+	        } else
+		    range_start += GlobalParams::hotspots[i].second;	// try next
+	    }
+        #ifdef DEADLOCK_AVOIDANCE
+            assert((GlobalParams::topology == TOPOLOGY_MESH));
+            if (p.dst_id%2!=0)
+            {
+                p.dst_id = (p.dst_id+1)%256;
+            }
+        #endif
 
     } while (
         !is_memory_pe(p.dst_id)
@@ -809,7 +849,7 @@ Packet ProcessingElement::trafficRandom()
         // || ((p.dst_id - 2) % GlobalParams::mesh_dim_x == 0)
         // || ((p.dst_id + 3) % GlobalParams::mesh_dim_x == 0)
         //------------------------------
-        );
+    );
 
     //-----------------------------------
     // Interliving feature traffic
@@ -839,7 +879,7 @@ Packet ProcessingElement::trafficRandom()
                         {
                             interliving_prev_dst = local_id + 1;
                             interliving_local_dst = (interliving_local_dst + 1) % GlobalParams::mem_ports;
-                        } 
+                        }
                     }
                 }
                 p.dst_id = interliving_prev_dst;

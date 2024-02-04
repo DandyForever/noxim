@@ -92,6 +92,9 @@ SC_MODULE(ProcessingElement)
     unsigned long flits_sent_y = 0;
     unsigned long flits_recv_y = 0;
 
+    map < int, FlitLatencyInfo > flit_latency_x;
+    map < int, FlitLatencyInfo > flit_latency_y;
+
     // Functions
     void rxProcess();		// The receiving process
     void txProcess();		// The transmitting process

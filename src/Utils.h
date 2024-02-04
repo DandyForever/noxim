@@ -60,43 +60,19 @@ inline ostream & operator <<(ostream & os, const Flit & flit)
 
     if (GlobalParams::verbose_mode == VERBOSE_HIGH) {
 
-	os << "### FLIT ###" << endl;
-	os << "Source Tile[" << flit.src_id << "]" << endl;
-	os << "Destination Tile[" << flit.dst_id << "]" << endl;
-    os << "Local Direction ID[" << flit.local_direction_id << "]" << endl;
-    os << "Phys Channel ID[" << flit.phys_channel_id << "]" << endl;
-	// switch (flit.flit_type) {
-	// case FLIT_TYPE_HEAD:
-	//     os << "Flit Type is HEAD" << endl;
-	//     break;
-	// case FLIT_TYPE_BODY:
-	//     os << "Flit Type is BODY" << endl;
-	//     break;
-	// case FLIT_TYPE_TAIL:
-	//     os << "Flit Type is TAIL" << endl;
-	//     break;
-	// }
-	os << "Sequence no. " << flit.sequence_no << endl;
-	os << "Payload printing not implemented (yet)." << endl;
-	os << "Unix timestamp at packet generation " << flit.
-	    timestamp << endl;
-	os << "Total number of hops from source to destination is " <<
-	    flit.hop_no << endl;
+        os << "### FLIT ###" << endl;
+        os << "Source Tile[" << flit.src_id << "]" << endl;
+        os << "Destination Tile[" << flit.dst_id << "]" << endl;
+        os << "Local Direction ID[" << flit.local_direction_id << "]" << endl;
+        os << "Direction ID[" << flit.id << "]" << endl;
+        os << "Sequence no. " << flit.sequence_no << endl;
+        os << "Payload printing not implemented (yet)." << endl;
+        os << "Unix timestamp at packet generation " << flit.timestamp << endl;
+        os << "Total number of hops from source to destination is " << flit.hop_no << endl;
     } else {
-	os << "(";
-	// switch (flit.flit_type) {
-	// case FLIT_TYPE_HEAD:
-	//     os << "H";
-	//     break;
-	// case FLIT_TYPE_BODY:
-	//     os << "B";
-	//     break;
-	// case FLIT_TYPE_TAIL:
-	//     os << "T";
-	//     break;
-	// }
+    	os << "(";
 
-	os <<  flit.sequence_no << ", " << flit.src_id << "->" << flit.dst_id << " VC " << flit.vc_id << ")";
+	    os <<  flit.sequence_no << ", " << flit.src_id << "->" << flit.dst_id << " VC " << flit.vc_id << ")";
     }
 
     return os;
@@ -107,9 +83,9 @@ inline ostream & operator <<(ostream & os,
 {
     char msg;
     if (status.available)
-	msg = 'A';
+	    msg = 'A';
     else
-	msg = 'N';
+	    msg = 'N';
     os << msg << "(" << status.free_slots << ")";
     return os;
 }
@@ -119,7 +95,7 @@ inline ostream & operator <<(ostream & os, const NoP_data & NoP_data)
     os << "      NoP data from [" << NoP_data.sender_id << "] [ ";
 
     for (int j = 0; j < DIRECTIONS; j++)
-	os << NoP_data.channel_status_neighbor[j] << " ";
+	    os << NoP_data.channel_status_neighbor[j] << " ";
 
     os << "]" << endl;
     return os;
@@ -128,7 +104,7 @@ inline ostream & operator <<(ostream & os, const TBufferFullStatus & bfs)
 {
     os << "[" ;
     for (int j = 0; j < GlobalParams::n_virtual_channels; j++)
-	os << bfs.mask[j] << " ";
+	    os << bfs.mask[j] << " ";
 
     os << "]" << endl;
     return os;
@@ -159,7 +135,7 @@ inline void sc_trace(sc_trace_file * &tf, const NoP_data & NoP_data, string & na
 inline void sc_trace(sc_trace_file * &tf, const TBufferFullStatus & bfs, string & name)
 {
     for (int j = 0; j < GlobalParams::n_virtual_channels; j++)
-	sc_trace(tf, bfs.mask[j], name + "VC "+to_string(j));
+	    sc_trace(tf, bfs.mask[j], name + "VC "+to_string(j));
 }
 
 inline void sc_trace(sc_trace_file * &tf, const ChannelStatus & bs, string & name)
@@ -213,8 +189,8 @@ inline int coord2Id(const Coord & coord)
 
 inline bool sameRadioHub(int id1, int id2)
 {
-    map<int, int>::iterator it1 = GlobalParams::hub_for_tile.find(id1); 
-    map<int, int>::iterator it2 = GlobalParams::hub_for_tile.find(id2); 
+    map<int, int>::iterator it1 = GlobalParams::hub_for_tile.find(id1);
+    map<int, int>::iterator it2 = GlobalParams::hub_for_tile.find(id2);
 
     assert( (it1 != GlobalParams::hub_for_tile.end()) && "Specified Tile is not connected to any Hub");
     assert( (it2 != GlobalParams::hub_for_tile.end()) && "Specified Tile is not connected to any Hub");
@@ -232,7 +208,7 @@ inline bool hasRadioHub(int id)
 
 inline int tile2Hub(int id)
 {
-    map<int, int>::iterator it = GlobalParams::hub_for_tile.find(id); 
+    map<int, int>::iterator it = GlobalParams::hub_for_tile.find(id);
     assert( (it != GlobalParams::hub_for_tile.end()) && "Specified Tile is not connected to any Hub");
     return it->second;
 }
@@ -242,23 +218,24 @@ inline void printMap(string label, const map<string,double> & m,std::ostream & o
 {
     out << label << " = [" << endl;
     for (map<string,double>::const_iterator i = m.begin();i!=m.end();i++)
-	out << "\t" << std::scientific << i->second << "\t % " << i->first << endl;
+	    out << "\t" << std::scientific << i->second << "\t % " << i->first << endl;
 
     out << "];" << endl;
 }
 
 template<typename T> std::string i_to_string(const T& t){
-         std::stringstream s;
-	 s << t;
-         return s.str();
+    std::stringstream s;
+    s << t;
+    return s.str();
 }
 
 
 inline bool YouAreSwitch(int id)
 {
     if (id < (GlobalParams::n_delta_tiles/2) * log2(GlobalParams::n_delta_tiles))
-    return true;
-    else return false;
+        return true;
+    else
+        return false;
 }
 
 #endif

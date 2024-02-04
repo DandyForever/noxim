@@ -21,8 +21,9 @@ class Coord {
     int y;			// Y coordinate
 
     inline bool operator ==(const Coord & coord) const {
-	return (coord.x == x && coord.y == y);
-}};
+	    return (coord.x == x && coord.y == y);
+    }
+};
 
 // FlitType -- Flit type enumeration
 enum FlitType {
@@ -34,13 +35,15 @@ struct Payload {
     sc_uint<32> data;	// Bus for the data to be exchanged
 
     inline bool operator ==(const Payload & payload) const {
-	return (payload.data == data);
-}};
+	    return (payload.data == data);
+    }
+};
 
 // Packet -- Packet definition
 struct Packet {
     int src_id;
     int dst_id;
+    int id;
     int local_direction_id;
     int phys_channel_id;
     int vc_id;
@@ -52,20 +55,21 @@ struct Packet {
     // Constructors
     Packet() { }
 
-    Packet(const int s, const int d, const int vc, const double ts, const int sz, const int ldi, const int pci) {
-	make(s, d, vc, ts, sz, ldi, pci);
+    Packet(const int s, const int d, const int vc, const double ts, const int sz, const int ldi, const int pci, const int pid) {
+	    make(s, d, vc, ts, sz, ldi, pci, pid);
     }
 
-    void make(const int s, const int d, const int vc, const double ts, const int sz, const int ldi, const int pci) {
-	src_id = s;
-	dst_id = d;
-	vc_id = vc;
-    local_direction_id = ldi;
-    phys_channel_id = pci;
-	timestamp = ts;
-	size = sz;
-	flit_left = sz;
-	use_low_voltage_path = false;
+    void make(const int s, const int d, const int vc, const double ts, const int sz, const int ldi, const int pci, const int pid) {
+        src_id = s;
+        dst_id = d;
+        id = pid;
+        vc_id = vc;
+        local_direction_id = ldi;
+        phys_channel_id = pci;
+        timestamp = ts;
+        size = sz;
+        flit_left = sz;
+        use_low_voltage_path = false;
     }
 };
 
@@ -82,7 +86,7 @@ struct RouteData {
 
 struct ChannelStatus {
     int free_slots;		// occupied buffer slots
-    bool available;		// 
+    bool available;		//
     inline bool operator ==(const ChannelStatus & bs) const {
 	return (free_slots == bs.free_slots && available == bs.available);
     };
@@ -109,15 +113,15 @@ struct NoP_data {
 struct TBufferFullStatus {
     TBufferFullStatus()
     {
-	for (int i=0;i<MAX_VIRTUAL_CHANNELS;i++)
-	    mask[i] = false;
+        for (int i=0;i<MAX_VIRTUAL_CHANNELS;i++)
+            mask[i] = false;
     };
     inline bool operator ==(const TBufferFullStatus & bfs) const {
-	for (int i=0;i<MAX_VIRTUAL_CHANNELS;i++)
-	    if (mask[i] != bfs.mask[i]) return false;
-	return true;
+        for (int i=0;i<MAX_VIRTUAL_CHANNELS;i++)
+            if (mask[i] != bfs.mask[i]) return false;
+        return true;
     };
-   
+
     bool mask[MAX_VIRTUAL_CHANNELS];
     unsigned int fullness[MAX_VIRTUAL_CHANNELS];
 };
@@ -129,6 +133,7 @@ struct Flit {
     int local_direction_id;
     int phys_channel_id;
     int vc_id; // Virtual Channel
+    int id;
     // FlitType flit_type;	// The flit type (FLIT_TYPE_HEAD, FLIT_TYPE_BODY, FLIT_TYPE_TAIL)
     bool is_head = false;
     bool is_tail = false;
@@ -143,6 +148,7 @@ struct Flit {
 
     inline bool operator ==(const Flit & flit) const {
 	return (flit.src_id == src_id && flit.dst_id == dst_id
+        && flit.id == id
 		// && flit.flit_type == flit_type
         && local_direction_id == flit.local_direction_id
         && phys_channel_id == flit.phys_channel_id
@@ -166,7 +172,7 @@ struct Flit {
 };
 
 
-typedef struct 
+typedef struct
 {
     string label;
     double value;
@@ -217,11 +223,16 @@ enum
     NO_BREAKDOWN_ENTRIES_S
 };
 
-typedef struct 
+typedef struct
 {
     int size;
     PowerBreakdownEntry breakdown[NO_BREAKDOWN_ENTRIES_D+NO_BREAKDOWN_ENTRIES_S];
 } PowerBreakdown;
 
+struct FlitLatencyInfo {
+    bool is_back;
+    int dst_id;
+    int latency;
+};
 
 #endif

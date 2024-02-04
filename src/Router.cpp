@@ -27,7 +27,7 @@ void Router::process()
 // req_tx <-> m_axis_tvalid
 void Router::rxProcess()
 {
-    if (reset.read())
+  if (reset.read())
 	{
 		TBufferFullStatus bfs;
 		// Clear outputs and indexes of receiving protocol
@@ -39,9 +39,9 @@ void Router::rxProcess()
 		}
 		routed_flits = 0;
 		local_drained = 0;
-    }
-    else
-    {
+  }
+  else
+  {
 		for (int i = 0; i < 2*DIRECTIONS+1; i++)
 		{
 			if (req_rx[i].read() && ack_rx[i].read())
@@ -85,22 +85,22 @@ void Router::rxProcess()
 			}
 			buffer_full_status_rx[i].write(bfs);
 		}
-    }
+  }
 }
 
 void Router::txProcess()
 {
 	if (reset.read())
-    {
+  {
 		// Clear outputs and indexes of transmitting protocol
 		for (int i = 0; i < 2*DIRECTIONS+1; i++)
 		{
 			// Not valid on reset
 			req_tx[i].write(0);
 		}
-    }
-  	else
-    {
+  }
+  else
+  {
 		// 0 phase: Checking
 		// Round robin for input buffers ordering
 		for (int i = 0; i < 2*DIRECTIONS+1; i++)
@@ -291,7 +291,7 @@ void Router::txProcess()
 					}
 				} // if not reserved
 			}
-      	} // for loop directions
+    } // for loop directions
 
 		reservation_table.updateIndex();
 
@@ -335,7 +335,7 @@ void Router::txProcess()
 				}
 			}
 		}
-    }
+  }
 }
 
 bool Router::is_memory_pe(int id)
@@ -347,54 +347,54 @@ bool Router::is_memory_pe(int id)
 	if (coord.x == GlobalParams::mesh_dim_x) return false;
 	if (coord.y == GlobalParams::mesh_dim_y) return false;
 
-    return true;
+  return true;
 
 }
 
 NoP_data Router::getCurrentNoPData()
 {
-    NoP_data NoP_data;
+  NoP_data NoP_data;
 
-    for (int j = 0; j < DIRECTIONS; j++) {
-	try {
-		NoP_data.channel_status_neighbor[j].free_slots = free_slots_neighbor[j].read();
-		NoP_data.channel_status_neighbor[j].available = (reservation_table.isNotReserved(j, 0));
-	}
-	catch (int e)
-	{
-	    if (e!=NOT_VALID) assert(false);
-	    // Nothing to do if an NOT_VALID direction is caught
-	};
-    }
+  for (int j = 0; j < DIRECTIONS; j++) {
+		try {
+			NoP_data.channel_status_neighbor[j].free_slots = free_slots_neighbor[j].read();
+			NoP_data.channel_status_neighbor[j].available = (reservation_table.isNotReserved(j, 0));
+		}
+		catch (int e)
+		{
+			if (e!=NOT_VALID) assert(false);
+			// Nothing to do if an NOT_VALID direction is caught
+		};
+  }
 
-    NoP_data.sender_id = local_id;
+	NoP_data.sender_id = local_id;
 
-    return NoP_data;
+	return NoP_data;
 }
 
 void Router::perCycleUpdate()
 {
-    if (reset.read()) {
-	for (int i = 0; i < 2*DIRECTIONS; i++)
-	{
-	    // free_slots[i].write(buffer[i][DEFAULT_VC].GetMaxBufferSize());
-		// free_slots[i].write(buffer_out[i][DEFAULT_VC].GetMaxBufferSize());
-	}
-    } else {
-        selectionStrategy->perCycleUpdate(this);
+  if (reset.read()) {
+		for (int i = 0; i < 2*DIRECTIONS; i++)
+		{
+				// free_slots[i].write(buffer[i][DEFAULT_VC].GetMaxBufferSize());
+			// free_slots[i].write(buffer_out[i][DEFAULT_VC].GetMaxBufferSize());
+		}
+  } else {
+    selectionStrategy->perCycleUpdate(this);
 
-	power.leakageRouter();
-	for (int i = 0; i < 2*DIRECTIONS; i++)
-	{
-	    for (int vc=0;vc<GlobalParams::n_virtual_channels;vc++)
-	    {
-		power.leakageBufferRouter();
-		power.leakageLinkRouter2Router();
-	    }
-	}
+		power.leakageRouter();
+		for (int i = 0; i < 2*DIRECTIONS; i++)
+		{
+			for (int vc=0;vc<GlobalParams::n_virtual_channels;vc++)
+			{
+				power.leakageBufferRouter();
+				power.leakageLinkRouter2Router();
+			}
+		}
 
-	power.leakageLinkRouter2Hub();
-    }
+		power.leakageLinkRouter2Hub();
+  }
 }
 
 vector<int> Router::nextDeltaHops(RouteData rd) {
@@ -419,26 +419,25 @@ vector<int> Router::nextDeltaHops(RouteData rd) {
 	//Topology omega 
 	if (GlobalParams::topology == TOPOLOGY_OMEGA) 	
 	{
-	if(current_node < (GlobalParams::n_delta_tiles/2))	
-		 c = current_node;
-	else if(current_node >= (GlobalParams::n_delta_tiles/2))	
-		 c = (current_node - (GlobalParams::n_delta_tiles/2));		
+		if(current_node < (GlobalParams::n_delta_tiles/2))	
+			c = current_node;
+		else if(current_node >= (GlobalParams::n_delta_tiles/2))	
+			c = (current_node - (GlobalParams::n_delta_tiles/2));		
 	}
 	//Other delta topologies: Butterfly and baseline
 	else if ((GlobalParams::topology == TOPOLOGY_BUTTERFLY)||(GlobalParams::topology == TOPOLOGY_BASELINE))
 	{
-		 c =  (current_node >>1);
+		c =  (current_node >>1);
 	}
 
-		Coord temp_coord;
-		temp_coord.x = 0;
-		temp_coord.y = c;
-		int N = coord2Id(temp_coord);
+	Coord temp_coord;
+	temp_coord.x = 0;
+	temp_coord.y = c;
+	int N = coord2Id(temp_coord);
 
-		next_hops.push_back(N);
-		current_node = N;
-	
-	
+	next_hops.push_back(N);
+	current_node = N;
+
    //---From stage 0 to Destination---
 	int current_stage = 0;
 
@@ -491,28 +490,28 @@ vector < int > Router::routingFunction(const RouteData & route_data)
 			if ( hasRadioHub(route_data.dst_id) &&
 				 !sameRadioHub(local_id,route_data.dst_id) )
 			{
-                map<int, int>::iterator it1 = GlobalParams::hub_for_tile.find(route_data.dst_id);
-                map<int, int>::iterator it2 = GlobalParams::hub_for_tile.find(route_data.current_id);
+				map<int, int>::iterator it1 = GlobalParams::hub_for_tile.find(route_data.dst_id);
+				map<int, int>::iterator it2 = GlobalParams::hub_for_tile.find(route_data.current_id);
 
-                if (connectedHubs(it1->second,it2->second))
-                {
-                    LOG << "Destination node " << route_data.dst_id << " is directly connected to a reachable RadioHub" << endl;
-                    vector<int> dirv;
-                    dirv.push_back(DIRECTION_HUB);
-                    return dirv;
-                }
+				if (connectedHubs(it1->second,it2->second))
+				{
+					LOG << "Destination node " << route_data.dst_id << " is directly connected to a reachable RadioHub" << endl;
+					vector<int> dirv;
+					dirv.push_back(DIRECTION_HUB);
+					return dirv;
+				}
 			}
 			// let's check whether some node in the route has an acceptable distance to the dst
-            if (GlobalParams::winoc_dst_hops>0)
-            {
-                // TODO: for the moment, just print the set of nexts hops to check everything is ok
-                LOG << "NEXT_DELTA_HOPS (from node " << route_data.src_id << " to " << route_data.dst_id << ") >>>> :";
-                vector<int> nexthops;
-                nexthops = nextDeltaHops(route_data);
-                for (int i=1;i<=GlobalParams::winoc_dst_hops;i++)
+			if (GlobalParams::winoc_dst_hops>0)
+			{
+				// TODO: for the moment, just print the set of nexts hops to check everything is ok
+				LOG << "NEXT_DELTA_HOPS (from node " << route_data.src_id << " to " << route_data.dst_id << ") >>>> :";
+				vector<int> nexthops;
+				nexthops = nextDeltaHops(route_data);
+				for (int i=1;i<=GlobalParams::winoc_dst_hops;i++)
 				{
-                	int dest_position = nexthops.size()-1;
-                	int candidate_hop = nexthops[dest_position-i];
+					int dest_position = nexthops.size()-1;
+					int candidate_hop = nexthops[dest_position-i];
 					if ( hasRadioHub(candidate_hop) && !sameRadioHub(local_id,candidate_hop) ) {
 						//LOG << "Checking candidate hop " << candidate_hop << " ... It's OK!" << endl;
 						LOG << "Relaying to hub-connected node " << candidate_hop << " to reach destination " << route_data.dst_id << endl;
@@ -523,7 +522,7 @@ vector < int > Router::routingFunction(const RouteData & route_data)
 					//else
 					// LOG << "Checking candidate hop " << candidate_hop << " ... NOT OK" << endl;
 				}
-            }
+			}
 		}
 	}
 	// TODO: fix all the deprecated verbose mode logs
@@ -537,26 +536,26 @@ vector < int > Router::routingFunction(const RouteData & route_data)
 int Router::route(const RouteData & route_data)
 {
 
-    if (route_data.dst_id == local_id)
-	return route_data.local_direction_id;
+	if (route_data.dst_id == local_id)
+		return route_data.local_direction_id;
 
-    power.routing();
-    vector < int >candidate_channels = routingFunction(route_data);
+	power.routing();
+	vector < int >candidate_channels = routingFunction(route_data);
 
-    power.selection();
-    return selectionFunction(candidate_channels, route_data);
+	power.selection();
+	return selectionFunction(candidate_channels, route_data);
 }
 
 void Router::NoP_report() const
 {
-    NoP_data NoP_tmp;
+	NoP_data NoP_tmp;
 	LOG << "NoP report: " << endl;
 
-    for (int i = 0; i < DIRECTIONS; i++) {
-	NoP_tmp = NoP_data_in[i].read();
-	if (NoP_tmp.sender_id != NOT_VALID)
+	for (int i = 0; i < DIRECTIONS; i++) {
+		NoP_tmp = NoP_data_in[i].read();
+		if (NoP_tmp.sender_id != NOT_VALID)
 	    cout << NoP_tmp;
-    }
+	}
 }
 
 //---------------------------------------------------------------------------
@@ -564,33 +563,33 @@ void Router::NoP_report() const
 int Router::NoPScore(const NoP_data & nop_data,
 			  const vector < int >&nop_channels) const
 {
-    int score = 0;
+	int score = 0;
 
-    for (unsigned int i = 0; i < nop_channels.size(); i++) {
-	int available;
+	for (unsigned int i = 0; i < nop_channels.size(); i++) {
+		int available;
 
-	if (nop_data.channel_status_neighbor[nop_channels[i]].available)
+		if (nop_data.channel_status_neighbor[nop_channels[i]].available)
 	    available = 1;
-	else
+		else
 	    available = 0;
 
-	int free_slots =
+		int free_slots =
 	    nop_data.channel_status_neighbor[nop_channels[i]].free_slots;
 
-	score += available * free_slots;
-    }
+		score += available * free_slots;
+	}
 
-    return score;
+	return score;
 }
 
 int Router::selectionFunction(const vector < int >&directions,
 				   const RouteData & route_data)
 {
-    // not so elegant but fast escape ;)
-    if (directions.size() == 1)
-	return directions[0];
+	// not so elegant but fast escape ;)
+	if (directions.size() == 1)
+		return directions[0];
 
-    return selectionStrategy->apply(this, directions, route_data);
+	return selectionStrategy->apply(this, directions, route_data);
 }
 
 void Router::configure(const int _id,
@@ -598,10 +597,10 @@ void Router::configure(const int _id,
 			    const unsigned int _max_buffer_size,
 			    GlobalRoutingTable & grt)
 {
-    local_id = _id;
-    stats.configure(_id, _warm_up_time);
+	local_id = _id;
+	stats.configure(_id, _warm_up_time);
 
-    start_from_port = DIRECTION_LOCAL_NORTH;
+	start_from_port = DIRECTION_LOCAL_NORTH;
 	for (int i = 0; i < 2*DIRECTIONS+1; i++)
 	{
 		for (int vc = 0; vc < GlobalParams::n_virtual_channels; vc++)
@@ -613,151 +612,150 @@ void Router::configure(const int _id,
 		cur_out_vc[i] = false;
 	}
 
-    if (grt.isValid())
-	routing_table.configure(grt, _id);
+	if (grt.isValid())
+		routing_table.configure(grt, _id);
 
     reservation_table.setSize(2*DIRECTIONS+1, GlobalParams::n_virtual_channels);
 
-    for (int i = 0; i < 2*DIRECTIONS+1; i++)
-    {
-	for (int vc = 0; vc < GlobalParams::n_virtual_channels; vc++)
+	for (int i = 0; i < 2*DIRECTIONS+1; i++)
 	{
-	    buffer[i][vc].SetMaxBufferSize(_max_buffer_size);
-		buffer_out[i][vc].SetMaxBufferSize(_max_buffer_size);
-	    buffer[i][vc].setLabel(string(name())+"->buffer["+i_to_string(i)+"]");
-		buffer_out[i][vc].setLabel(string(name())+"->buffer["+i_to_string(i)+"]");
+		for (int vc = 0; vc < GlobalParams::n_virtual_channels; vc++)
+		{
+			buffer[i][vc].SetMaxBufferSize(_max_buffer_size);
+			buffer_out[i][vc].SetMaxBufferSize(_max_buffer_size);
+			buffer[i][vc].setLabel(string(name())+"->buffer["+i_to_string(i)+"]");
+			buffer_out[i][vc].setLabel(string(name())+"->buffer["+i_to_string(i)+"]");
+		}
 	}
-    }
 
 
-    if (GlobalParams::topology == TOPOLOGY_MESH)
-    {
-	int row = _id / GlobalParams::mesh_dim_x;
-	int col = _id % GlobalParams::mesh_dim_x;
-
-	for (int vc = 0; vc<GlobalParams::n_virtual_channels; vc++)
+	if (GlobalParams::topology == TOPOLOGY_MESH)
 	{
+		int row = _id / GlobalParams::mesh_dim_x;
+		int col = _id % GlobalParams::mesh_dim_x;
+
+		for (int vc = 0; vc<GlobalParams::n_virtual_channels; vc++)
+		{
 	    if (row == 0)
-		{
+			{
 	      buffer[DIRECTION_NORTH][vc].Disable();
-		  buffer_out[DIRECTION_NORTH][vc].Disable();
-		}
+		  	buffer_out[DIRECTION_NORTH][vc].Disable();
+			}
 	    if (row == GlobalParams::mesh_dim_y-1)
-		{
+			{
 	      buffer[DIRECTION_SOUTH][vc].Disable();
-		  buffer_out[DIRECTION_SOUTH][vc].Disable();
-		}
+		  	buffer_out[DIRECTION_SOUTH][vc].Disable();
+			}
 	    if (col == 0)
-		{
+			{
 	      buffer[DIRECTION_WEST][vc].Disable();
-		  buffer_out[DIRECTION_WEST][vc].Disable();
-		}
+		  	buffer_out[DIRECTION_WEST][vc].Disable();
+			}
 	    if (col == GlobalParams::mesh_dim_x-1)
-		{
+			{
 	      buffer[DIRECTION_EAST][vc].Disable();
-		  buffer_out[DIRECTION_EAST][vc].Disable();
+		  	buffer_out[DIRECTION_EAST][vc].Disable();
+			}
 		}
 	}
-    }
-
 }
 
 unsigned long Router::getRoutedFlits()
 {
-    return routed_flits;
+	return routed_flits;
 }
 
 
 int Router::reflexDirection(int direction) const
 {
-    if (direction == DIRECTION_NORTH)
-	return DIRECTION_SOUTH;
-    if (direction == DIRECTION_EAST)
-	return DIRECTION_WEST;
-    if (direction == DIRECTION_WEST)
-	return DIRECTION_EAST;
-    if (direction == DIRECTION_SOUTH)
-	return DIRECTION_NORTH;
+	if (direction == DIRECTION_NORTH)
+		return DIRECTION_SOUTH;
+	if (direction == DIRECTION_EAST)
+		return DIRECTION_WEST;
+	if (direction == DIRECTION_WEST)
+		return DIRECTION_EAST;
+	if (direction == DIRECTION_SOUTH)
+		return DIRECTION_NORTH;
 
-    // you shouldn't be here
-    assert(false);
-    return NOT_VALID;
+	// you shouldn't be here
+	assert(false);
+	return NOT_VALID;
 }
 
 int Router::getNeighborId(int _id, int direction) const
 {
-    assert(GlobalParams::topology == TOPOLOGY_MESH);
+	assert(GlobalParams::topology == TOPOLOGY_MESH);
 
-    Coord my_coord = id2Coord(_id); 
+	Coord my_coord = id2Coord(_id); 
 
-    switch (direction) {
+	switch (direction) {
     case DIRECTION_NORTH:
-	if (my_coord.y == 0)
-	    return NOT_VALID;
-	my_coord.y--;
-	break;
-    case DIRECTION_SOUTH:
-	if (my_coord.y == GlobalParams::mesh_dim_y - 1)
-	    return NOT_VALID;
-	my_coord.y++;
-	break;
+			if (my_coord.y == 0)
+	    	return NOT_VALID;
+			my_coord.y--;
+			break;
+		case DIRECTION_SOUTH:
+			if (my_coord.y == GlobalParams::mesh_dim_y - 1)
+	    	return NOT_VALID;
+			my_coord.y++;
+			break;
     case DIRECTION_EAST:
-	if (my_coord.x == GlobalParams::mesh_dim_x - 1)
-	    return NOT_VALID;
-	my_coord.x++;
-	break;
+			if (my_coord.x == GlobalParams::mesh_dim_x - 1)
+	    	return NOT_VALID;
+			my_coord.x++;
+			break;
     case DIRECTION_WEST:
-	if (my_coord.x == 0)
-	    return NOT_VALID;
-	my_coord.x--;
-	break;
+			if (my_coord.x == 0)
+	    	return NOT_VALID;
+			my_coord.x--;
+			break;
     default:
-	LOG << "Direction not valid : " << direction;
-	assert(false);
+			LOG << "Direction not valid : " << direction;
+			assert(false);
     }
 
-    int neighbor_id = coord2Id(my_coord);
+	int neighbor_id = coord2Id(my_coord);
 
-    return neighbor_id;
+	return neighbor_id;
 }
 
 bool Router::inCongestion()
 {
-    for (int i = 0; i < DIRECTIONS; i++) {
+	for (int i = 0; i < DIRECTIONS; i++) {
 
-	if (free_slots_neighbor[i]==NOT_VALID) continue;
+		if (free_slots_neighbor[i]==NOT_VALID) continue;
 
-	int flits = GlobalParams::buffer_depth - free_slots_neighbor[i];
-	if (flits > (int) (GlobalParams::buffer_depth * GlobalParams::dyad_threshold))
+		int flits = GlobalParams::buffer_depth - free_slots_neighbor[i];
+		if (flits > (int) (GlobalParams::buffer_depth * GlobalParams::dyad_threshold))
 	    return true;
-    }
+	}
 
-    return false;
+	return false;
 }
 
 void Router::ShowBuffersStats(std::ostream & out)
 {
   for (int i=0; i<2*DIRECTIONS+1; i++)
-      for (int vc=0; vc<GlobalParams::n_virtual_channels;vc++)
-	    buffer[i][vc].ShowStats(out);
+		for (int vc=0; vc<GlobalParams::n_virtual_channels;vc++)
+			buffer[i][vc].ShowStats(out);
 }
 
 
 bool Router::connectedHubs(int src_hub, int dst_hub) {
-    vector<int> &first = GlobalParams::hub_configuration[src_hub].txChannels;
-    vector<int> &second = GlobalParams::hub_configuration[dst_hub].rxChannels;
+	vector<int> &first = GlobalParams::hub_configuration[src_hub].txChannels;
+	vector<int> &second = GlobalParams::hub_configuration[dst_hub].rxChannels;
 
-    vector<int> intersection;
+	vector<int> intersection;
 
-    for (unsigned int i = 0; i < first.size(); i++) {
-        for (unsigned int j = 0; j < second.size(); j++) {
-            if (first[i] == second[j])
-                intersection.push_back(first[i]);
-        }
-    }
+	for (unsigned int i = 0; i < first.size(); i++) {
+		for (unsigned int j = 0; j < second.size(); j++) {
+			if (first[i] == second[j])
+				intersection.push_back(first[i]);
+		}
+	}
 
-    if (intersection.size() == 0)
-        return false;
-    else
-        return true;
+	if (intersection.size() == 0)
+		return false;
+	else
+		return true;
 }

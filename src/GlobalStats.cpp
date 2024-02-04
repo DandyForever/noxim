@@ -527,8 +527,9 @@ void GlobalStats::showStats(std::ostream & out, bool detailed) {
 				file_name << "_sv_all_";
 			if (GlobalParams::switch_horizontal_masters)
 				file_name << "_sh_" << GlobalParams::switch_horizontal_masters;
-			file_name << "_pir_" << (int)(GlobalParams::packet_injection_rate * 100) << ".csv";
-		std::ofstream f_sent_flits (file_name.str(), std::ofstream::out);
+			file_name << "_pir_" << (int)(GlobalParams::packet_injection_rate * 100);
+		std::ofstream f_sent_flits (file_name.str() + ".csv", std::ofstream::out);
+		std::ofstream f_latencies (file_name.str() + "_latency.log", std::ofstream::out);
 
 		vector < char > directions;
 		directions.push_back('x');
@@ -791,6 +792,30 @@ void GlobalStats::showStats(std::ostream & out, bool detailed) {
 		// End Router buffers state for deadlock analysis
 		//-----------------------------------------------------------------------
 
+		//-----------------------------------------------------------------------
+		// Start PE flit request latency
+		//-----------------------------------------------------------------------
+		for (int x = 0; x < GlobalParams::mesh_dim_x; x++) {
+			for (int y = 0; y < GlobalParams::mesh_dim_y; y++) {
+				for (auto it = noc->t[x][y]->pe[0]->flit_latency_x.begin(); it != noc->t[x][y]->pe[0]->flit_latency_x.end(); it++) {
+					Coord dst_coord = id2Coord(it->second.dst_id);
+					int latency = it->second.latency;
+					if (it->second.is_back)
+						f_latencies << "[x][" << x << "][" << y << "] -> " << "[" << dst_coord.x << "][" << dst_coord.y << "]: " << latency << endl;
+				}
+				for (auto it = noc->t[x][y]->pe[0]->flit_latency_y.begin(); it != noc->t[x][y]->pe[0]->flit_latency_y.end(); it++) {
+					Coord dst_coord = id2Coord(it->second.dst_id);
+					int latency = it->second.latency;
+					if (it->second.is_back)
+						f_latencies << "[y][" << x << "][" << y << "] -> " << "[" << dst_coord.x << "][" << dst_coord.y << "]: " << latency << endl;
+				}
+			}
+		}
+
+		f_latencies.close();
+		//-----------------------------------------------------------------------
+		// End PE flit request latency
+		//-----------------------------------------------------------------------
 		showPowerBreakDown(out);
 		showPowerManagerStats(out);
   } // detailed stats

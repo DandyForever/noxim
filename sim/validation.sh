@@ -1,18 +1,18 @@
 ../bin/noxim \
-    -config ../config_examples/mesh_4x4_interleaving.yaml \
-    -pir 1.00 poisson \
-    -routing MOD_DOR \
+    -config ../config_examples/mesh_18x10_interliving.yaml \
+    -pir 0.50 poisson \
+    -routing DOR \
     -interliving_reps 0 \
-    -sim 10000 \
+    -sim 100000 \
     -detailed \
-    -mem_ports 1 \
-    -switch_horizontal_masters 1 \
+    -mem_ports 4 \
+    -switch_horizontal_masters 3 \
     -switch_vertical_masters 0 \
-    -switch_angle_masters 0 \
+    -switch_angle_masters 3 \
     -req_ack_mode 1 \
     -both_phys_req_mode 1 \
     -switch_debug 0 \
     -traffic_verbose 0 \
-    -flit_dump 1 \
+    -flit_dump 0 \
     -buffer_verbose 0 \
     -log_file_name ./results/validation
