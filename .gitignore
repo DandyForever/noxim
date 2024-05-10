@@ -2,3 +2,4 @@ bin/noxim
 bin/build
 sim/results*
 sim/python
+.vscode

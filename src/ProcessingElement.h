@@ -101,6 +101,7 @@ SC_MODULE(ProcessingElement)
     void ryProcess();
     void tyProcess();
     bool is_memory_pe(int id);
+    bool is_same_quadrant(int self_id, int id);
     bool is_angle_pe(int id);
     bool is_vertical_pe(int id);
     bool is_angle_special_pe(int id, int num);

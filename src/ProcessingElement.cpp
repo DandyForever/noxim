@@ -538,6 +538,40 @@ bool ProcessingElement::is_memory_pe(int id)
     return true;
 }
 
+bool ProcessingElement::is_same_quadrant(int self_id, int id)
+{
+    Coord self_coord = id2Coord(self_id);
+    Coord coord = id2Coord(id);
+
+    bool is_self_left = 2 * self_coord.x < GlobalParams::mesh_dim_x;
+    bool is_self_top  = 2 * self_coord.y < GlobalParams::mesh_dim_y;
+
+    bool is_left = 2 * coord.x < GlobalParams::mesh_dim_x;
+    bool is_top  = 2 * coord.y < GlobalParams::mesh_dim_y;
+
+    if (
+        is_self_left && is_self_top &&
+        is_left && is_top
+    ) return true;
+
+    if (
+        !is_self_left && is_self_top &&
+        !is_left && is_top
+    ) return true;
+
+    if (
+        is_self_left && !is_self_top &&
+        is_left && !is_top
+    ) return true;
+
+    if (
+        !is_self_left && !is_self_top &&
+        !is_left && !is_top
+    ) return true;
+
+    return false;
+}
+
 bool ProcessingElement::is_angle_pe(int id)
 {
     Coord coord = id2Coord(id);
@@ -841,6 +875,10 @@ Packet ProcessingElement::trafficRandom()
 
     } while (
         !is_memory_pe(p.dst_id)
+        //------------------------------
+        // Temporary for quadrant study
+        //------------------------------
+        // || !is_same_quadrant(local_id, p.dst_id)
         //------------------------------
         // Temporary for empty columns
         //------------------------------

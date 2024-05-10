@@ -9,10 +9,10 @@ eu_v = 4 * 2
 pir_list = [5, 10, 15, 20, 25, 30, 35, 40, 50, 60, 70, 80, 90, 100]
 
 path = "sim/results/"
-pref = "rw"
+pref = "quadrant"
 routing_list = ["DOR", "MOD_DOR"]
 mesh = 'x'.join([str(mesh_x), str(mesh_y)])
-suff_list = ["sv_3_sh_3"]
+suff_list = ["mp_4_sv_3_sh_3"]
 result_names = [0, mesh_y+1, 2*(mesh_y+1), 3*(mesh_y+1), 4*(mesh_y+1), 5*(mesh_y+1)]
 
 results = dict()

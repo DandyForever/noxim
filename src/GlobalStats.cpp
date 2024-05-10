@@ -518,7 +518,8 @@ void GlobalStats::showStats(std::ostream & out, bool detailed) {
 		file_name << GlobalParams::log_file_name <<
 			"_mesh_" << GlobalParams::mesh_dim_x << "x" <<
 			GlobalParams::mesh_dim_y << "_" <<
-			GlobalParams::routing_algorithm;
+			GlobalParams::routing_algorithm <<
+			"_mp_" << GlobalParams::mem_ports;
 			if (GlobalParams::interliving_reps)
 				file_name << "_il_" << GlobalParams::interliving_reps;
 			if (GlobalParams::GlobalParams::switch_angle_masters)
