@@ -528,7 +528,7 @@ void GlobalStats::showStats(std::ostream & out, bool detailed) {
 				file_name << "_sv_all_";
 			if (GlobalParams::switch_horizontal_masters)
 				file_name << "_sh_" << GlobalParams::switch_horizontal_masters;
-			file_name << "_pir_" << (int)(GlobalParams::packet_injection_rate * 100);
+			file_name << "_pir_" << (int)(GlobalParams::packet_injection_rate * 1000);
 		std::ofstream f_sent_flits (file_name.str() + ".csv", std::ofstream::out);
 		std::ofstream f_latencies (file_name.str() + "_latency.log", std::ofstream::out);
 

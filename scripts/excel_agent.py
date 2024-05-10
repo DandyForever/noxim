@@ -1,18 +1,19 @@
 import csv
 
-mesh_x = 18
+mesh_x = 10
 mesh_y = 10
 
-eu_h = 12 * 2
-eu_v = 4 * 2
+eu_h = 8 * 2
+eu_v = 8 * 2
+eu_a = 4
 
-pir_list = [5, 10, 15, 20, 25, 30, 35, 40, 50, 60, 70, 80, 90, 100]
+pir_list = [25, 50, 75, 100, 125, 150, 175, 200, 250, 300, 350, 400, 450, 500, 1000]
 
 path = "sim/results/"
-pref = "quadrant"
+pref = "collision_mitigation_paper"
 routing_list = ["DOR", "MOD_DOR"]
 mesh = 'x'.join([str(mesh_x), str(mesh_y)])
-suff_list = ["mp_4_sv_3_sh_3"]
+suff_list = ["mp_1_il_1", "mp_1", "mp_4_il_1", "mp_4"]
 result_names = [0, mesh_y+1, 2*(mesh_y+1), 3*(mesh_y+1), 4*(mesh_y+1), 5*(mesh_y+1)]
 
 results = dict()
@@ -50,21 +51,27 @@ for suff in suff_list:
         for j in range(mesh_x):
           data[6][i].append(data[2][i][j] + data[3][i][j])
       pir_map[pir] = {'x': data[2], 'y': data[3], 'all': data[6]}
-    for dir in pir_map[5]:
+    for dir in pir_map[25]:
       for key in pir_map:
         results['h'] = list()
         results['v'] = list()
         results['t'] = list()
+        results['a'] = list()
       for key in pir_map:
         total_horizontal = 0
         total_vertical = 0
+        total_angle = pir_map[key][dir][0][0] + pir_map[key][dir][0][mesh_x-1] + pir_map[key][dir][mesh_y-1][0] + pir_map[key][dir][mesh_y-1][mesh_x-1]
         for i in range(mesh_x):
           total_horizontal += pir_map[key][dir][0][i] + pir_map[key][dir][mesh_y-1][i]
         for i in range(mesh_y):
           total_vertical += pir_map[key][dir][i][0] + pir_map[key][dir][i][mesh_x-1]
-        results['t'].append((total_horizontal+total_vertical) / (eu_v + eu_h) / 100)
+        total_horizontal -= total_angle
+        total_vertical -= total_angle
+        results['t'].append((total_horizontal+total_vertical+total_angle) / (eu_v + eu_h + eu_a) / 100)
         results['h'].append(total_horizontal / eu_h / 100)
         results['v'].append(total_vertical / eu_v / 100)
+        if eu_a:
+          results['a'].append(total_angle / eu_a / 100)
       print(dir)
       with open(path + mesh + dir + suff + routing + '.csv', 'w', newline='') as csvfile:
         csv_writer = csv.writer(csvfile, delimiter=';',
