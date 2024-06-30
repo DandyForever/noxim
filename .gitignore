@@ -1,5 +1,10 @@
 bin/noxim
 bin/build
+build/*
 sim/results*
 sim/python
+CMakeFiles
+CMakeCache.txt
+cmake_install.cmake
+Makefile
 .vscode

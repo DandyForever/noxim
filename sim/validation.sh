@@ -1,9 +1,9 @@
-../bin/noxim \
+../build/noxim \
     -config ../config_examples/mesh_18x10_interliving.yaml \
     -pir 0.50 poisson \
     -routing DOR \
     -interliving_reps 0 \
-    -sim 100000 \
+    -sim 10000 \
     -detailed \
     -mem_ports 4 \
     -switch_horizontal_masters 3 \
