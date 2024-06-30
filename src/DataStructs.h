@@ -130,8 +130,8 @@ struct Flit {
   int phys_channel_id;
   int vc_id; // Virtual Channel
   int id;
-  // FlitType flit_type;	// The flit type (FLIT_TYPE_HEAD, FLIT_TYPE_BODY,
-  // FLIT_TYPE_TAIL)
+  // FlitType flit_type;	// The flit type (FLIT_TYPE_HEAD,
+  // FLIT_TYPE_BODY, FLIT_TYPE_TAIL)
   bool is_head = false;
   bool is_tail = false;
   int sequence_no; // The sequence number of the flit inside the packet
