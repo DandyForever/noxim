@@ -11,99 +11,99 @@
 #ifndef __NOXIMSTATS_H__
 #define __NOXIMSTATS_H__
 
-#include <iostream>
-#include <iomanip>
-#include <vector>
 #include "DataStructs.h"
 #include "Power.h"
+#include <iomanip>
+#include <iostream>
+#include <vector>
 using namespace std;
 
 struct CommHistory {
-    int src_id;
-     vector < double >delays;
-    unsigned int total_received_flits;
-    double last_received_flit_time;
+  int src_id;
+  vector<double> delays;
+  unsigned int total_received_flits;
+  double last_received_flit_time;
 };
 
 class Stats {
 
-  public:
+public:
+  Stats() {}
 
-    Stats() {
-    } 
+  void configure(const int node_id, const double _warm_up_time);
 
-    void configure(const int node_id, const double _warm_up_time);
+  // Access point for stats update
+  void receivedFlit(const double arrival_time, const Flit &flit);
 
-    // Access point for stats update
-    void receivedFlit(const double arrival_time, const Flit & flit);
+  // Returns the average delay (cycles) for the current node as
+  // regards to the communication whose source is src_id
+  double getAverageDelay(const int src_id);
 
-    // Returns the average delay (cycles) for the current node as
-    // regards to the communication whose source is src_id
-    double getAverageDelay(const int src_id);
+  // Returns the average delay (cycles) for the current node
+  double getAverageDelay();
 
-    // Returns the average delay (cycles) for the current node
-    double getAverageDelay();
+  // Returns the max delay for the current node as regards the
+  // communication whose source node is src_id
+  double getMaxDelay(const int src_id);
 
-    // Returns the max delay for the current node as regards the
-    // communication whose source node is src_id
-    double getMaxDelay(const int src_id);
+  // Returns the max delay (cycles) for the current node
+  double getMaxDelay();
 
-    // Returns the max delay (cycles) for the current node
-    double getMaxDelay();
+  // Returns the average throughput (flits/cycle) for the current node
+  // and for the communication whose source is src_id
+  double getAverageThroughput(const int src_id);
 
-    // Returns the average throughput (flits/cycle) for the current node
-    // and for the communication whose source is src_id
-    double getAverageThroughput(const int src_id);
+  // Returns the average throughput (flits/cycle) for the current node
+  double getAverageThroughput();
 
-    // Returns the average throughput (flits/cycle) for the current node
-    double getAverageThroughput();
+  // Returns the number of received packets from current node
+  unsigned int getReceivedPackets();
 
-    // Returns the number of received packets from current node
-    unsigned int getReceivedPackets();
+  // Returns the number of received flits from current node
+  unsigned int getReceivedFlits();
 
-    // Returns the number of received flits from current node
-    unsigned int getReceivedFlits();
+  // Returns the number of communications whose destination is the
+  // current node
+  unsigned int getTotalCommunications();
 
-    // Returns the number of communications whose destination is the
-    // current node
-    unsigned int getTotalCommunications();
+  // Returns the energy consumed for communication src_id-->dst_id
+  // under the following assumptions: (i) Minimal routing is
+  // considered, (ii) constant packet size is considered (as the
+  // average between the minimum and the maximum packet size).
+  double getCommunicationEnergy(int src_id, int dst_id);
 
-    // Returns the energy consumed for communication src_id-->dst_id
-    // under the following assumptions: (i) Minimal routing is
-    // considered, (ii) constant packet size is considered (as the
-    // average between the minimum and the maximum packet size).
-    double getCommunicationEnergy(int src_id, int dst_id);
+  // Shows statistics for the current node
+  void showStats(int curr_node, std::ostream &out = std::cout,
+                 bool header = false);
 
-    // Shows statistics for the current node
-    void showStats(int curr_node, std::ostream & out =
-		   std::cout, bool header = false);
+  int getFlitsSrcCount(int src) {
+    if (searchCommHistory(src) == -1)
+      return 0;
+    return chist[searchCommHistory(src)].total_received_flits;
 
-    int getFlitsSrcCount(int src) {
-      if (searchCommHistory(src) == -1) return 0;
-      return chist[searchCommHistory(src)].total_received_flits;
-      
-      // vector <int> flits_src_count(GlobalParams::mesh_dim_x*GlobalParams::mesh_dim_y);
+    // vector <int>
+    // flits_src_count(GlobalParams::mesh_dim_x*GlobalParams::mesh_dim_y);
 
-      // for (auto item : chist) {
-      //   std::cout << "For router " << id << " was src " << item.src_id << " with " << item.total_received_flits << std::endl;
-      //   flits_src_count[item.src_id] = item.total_received_flits;
-        
-      // }
-      // std::cout << "\t" << chist.size() << std::endl;
+    // for (auto item : chist) {
+    //   std::cout << "For router " << id << " was src " << item.src_id << "
+    //   with " << item.total_received_flits << std::endl;
+    //   flits_src_count[item.src_id] = item.total_received_flits;
 
-      // return flits_src_count;
-    }
+    // }
+    // std::cout << "\t" << chist.size() << std::endl;
 
+    // return flits_src_count;
+  }
 
-  private:
+private:
+  int id;
+  vector<CommHistory> chist;
+  double warm_up_time;
 
-    int id;
-    vector < CommHistory > chist;
-    double warm_up_time;
+  // vector < int >
+  // flits_src_count(GlobalParams::mesh_dim_x*GlobalParams::mesh_dim_y);
 
-    // vector < int > flits_src_count(GlobalParams::mesh_dim_x*GlobalParams::mesh_dim_y);
-
-    int searchCommHistory(int src_id);
+  int searchCommHistory(int src_id);
 };
 
 #endif

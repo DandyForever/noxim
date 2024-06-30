@@ -11,68 +11,64 @@
 #ifndef __NOXIMRESERVATIONTABLE_H__
 #define __NOXIMRESERVATIONTABLE_H__
 
-#include <cassert>
 #include "DataStructs.h"
 #include "Utils.h"
+#include <cassert>
 
 using namespace std;
 
-
-struct TReservation
-{
-    int input;
-    int vc;
-    inline bool operator ==(const TReservation & r) const
-    {
-	return (r.input==input && r.vc == vc);
-    }
+struct TReservation {
+  int input;
+  int vc;
+  inline bool operator==(const TReservation &r) const {
+    return (r.input == input && r.vc == vc);
+  }
 };
 
-typedef struct RTEntry
-{
-    vector<TReservation> reservations;
-    vector<TReservation>::size_type index;
+typedef struct RTEntry {
+  vector<TReservation> reservations;
+  vector<TReservation>::size_type index;
 } TRTEntry;
 
 class ReservationTable {
-  public:
+public:
+  ReservationTable();
 
-    ReservationTable();
+  inline string name() const { return "ReservationTable"; };
 
-    inline string name() const {return "ReservationTable";};
+  // check if the input/vc/output is a
+  int checkReservation(const TReservation r, const int port_out,
+                       const int vc_out);
 
-    // check if the input/vc/output is a
-    int checkReservation(const TReservation r, const int port_out, const int vc_out);
+  // Connects port_in with port_out. Asserts if port_out is reserved
+  void reserve(const TReservation r, const int port_out, const int vc_out);
 
-    // Connects port_in with port_out. Asserts if port_out is reserved
-    void reserve(const TReservation r, const int port_out, const int vc_out);
+  // Releases port_out connection.
+  // Asserts if port_out is not reserved or not valid
+  void release(const TReservation r, const int port_out, const int vc_out);
 
-    // Releases port_out connection. 
-    // Asserts if port_out is not reserved or not valid
-    void release(const TReservation r, const int port_out, const int vc_out);
+  // Returns the pairs of output port and virtual channel reserved by port_in
+  vector<pair<int, int>> getReservations(const int port_int);
 
-    // Returns the pairs of output port and virtual channel reserved by port_in
-    vector<pair<int,int> > getReservations(const int port_int);
+  vector<TReservation> getOutReservations(const int port_out, const int vc_out);
 
-    vector<TReservation> getOutReservations(const int port_out, const int vc_out);
+  // update the index of the reservation having highest priority in the current
+  // cycle
+  void updateIndex();
 
-    // update the index of the reservation having highest priority in the current cycle
-    void updateIndex();
+  // check whether port_out has no reservations
+  bool isNotReserved(const int port_out, const int vc_out);
 
-    // check whether port_out has no reservations
-    bool isNotReserved(const int port_out, const int vc_out);
+  void setSize(const int n_outputs, const int n_vc);
 
-    void setSize(const int n_outputs, const int n_vc);
+  void print();
 
-    void print();
+private:
+  TRTEntry **rtable; // reservation vector: rtable[i] gives a RTEntry containing
+                     // the set of input/VC which reserved output port
 
-  private:
-
-     TRTEntry **rtable;	// reservation vector: rtable[i] gives a RTEntry containing the set of input/VC 
-			// which reserved output port
-
-     int n_outputs;
-     int n_vc;
+  int n_outputs;
+  int n_vc;
 };
 
 #endif
