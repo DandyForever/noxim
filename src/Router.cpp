@@ -212,10 +212,8 @@ void Router::txProcess() {
         continue;
       }
 
-      int rnd_idx = 0;
-
-      int i = reservations[rnd_idx].input;
-      int vc = reservations[rnd_idx].vc;
+      int i = reservations[0].input;
+      int vc = reservations[0].vc;
 
       assert(vc == vc_o);
 
