@@ -82,12 +82,15 @@ void ProcessingElement::rxProcess() {
   if (GlobalParams::req_ack_mode && is_memory_pe(local_id)) {
     // Slave AXIS valid & ready handshake
     if (req_rx.read() && ack_rx.read()) {
-      Flit flit_tmp = flit_rx.read();
-      flit_tmp.vc_id = 3 - flit_tmp.vc_id; // Switching virtual channel
-      swap(flit_tmp.src_id, flit_tmp.dst_id);
-      flit_tmp.local_direction_id = DIRECTION_LOCAL_NORTH;
-      flit_tmp.phys_channel_id = 1 - flit_tmp.phys_channel_id;
-      in_flit_queue_x[flit_tmp.vc_id].push(flit_tmp);
+      if (flit_rx.read().flit_type(FLIT_TYPE_TAIL)) {
+        Flit flit_tmp = flit_rx.read();
+        flit_tmp.vc_id = 3 - flit_tmp.vc_id; // Switching virtual channel
+        flit_tmp.is_head = true;
+        swap(flit_tmp.src_id, flit_tmp.dst_id);
+        flit_tmp.local_direction_id = DIRECTION_LOCAL_NORTH;
+        flit_tmp.phys_channel_id = 1 - flit_tmp.phys_channel_id;
+        in_flit_queue_x[flit_tmp.vc_id].push(flit_tmp);
+      }
     }
   }
   //!---------------------------------------------------------------------
@@ -318,12 +321,15 @@ void ProcessingElement::ryProcess() {
       is_memory_pe(local_id)) {
     // Slave AXIS valid & ready handshake
     if (req_ry.read() && ack_ry.read()) {
-      Flit flit_tmp = flit_ry.read();
-      flit_tmp.vc_id = 3 - flit_tmp.vc_id; // Switching virtual channel
-      swap(flit_tmp.src_id, flit_tmp.dst_id);
-      flit_tmp.local_direction_id = DIRECTION_LOCAL_NORTH;
-      flit_tmp.phys_channel_id = 1 - flit_tmp.phys_channel_id;
-      in_flit_queue_y[flit_tmp.vc_id].push(flit_tmp);
+      if (flit_ry.read().flit_type(FLIT_TYPE_TAIL)) {
+        Flit flit_tmp = flit_ry.read();
+        flit_tmp.vc_id = 3 - flit_tmp.vc_id; // Switching virtual channel
+        flit_tmp.is_head = true;
+        swap(flit_tmp.src_id, flit_tmp.dst_id);
+        flit_tmp.local_direction_id = DIRECTION_LOCAL_NORTH;
+        flit_tmp.phys_channel_id = 1 - flit_tmp.phys_channel_id;
+        in_flit_queue_y[flit_tmp.vc_id].push(flit_tmp);
+      }
     }
   }
   //!---------------------------------------------------------------------
@@ -944,7 +950,7 @@ Packet ProcessingElement::trafficRandom() {
   //-----------------------------------
 
   p.timestamp = sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
-  p.size = p.flit_left = getRandomSize();
+  p.size = p.flit_left = GlobalParams::max_packet_size;
   if (GlobalParams::routing_algorithm == "MOD_DOR") {
     p.vc_id = (int)is_vertical_pe(local_id);
   } else {
