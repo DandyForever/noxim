@@ -1,6 +1,6 @@
 ../build/noxim \
     -config ../config_examples/mesh_10x10_interliving.yaml \
-    -pir 0.50 poisson \
+    -pir 0.25 poisson \
     -routing MOD_DOR \
     -interliving_reps 0 \
     -sim 10000 \

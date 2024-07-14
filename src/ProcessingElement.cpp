@@ -39,10 +39,13 @@ void ProcessingElement::rxProcess() {
   // Start collect stats
   //---------------------------------------------------------------------
   if (req_rx.read() && ack_rx.read()) {
+    Flit flit = flit_rx.read();
     flits_recv_x++;
+    if (flit.flit_type(FLIT_TYPE_TAIL)) {
+      packets_recv_x++;
+    }
 
-    if (!is_memory_pe(local_id)) {
-      Flit flit = flit_rx.read();
+    if (!is_memory_pe(local_id) && flit.flit_type(FLIT_TYPE_TAIL)) {
       int send_timestamp = flit_latency_y[flit.id].latency;
       int recv_timestamp =
           (int)sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
@@ -83,13 +86,18 @@ void ProcessingElement::rxProcess() {
     // Slave AXIS valid & ready handshake
     if (req_rx.read() && ack_rx.read()) {
       if (flit_rx.read().flit_type(FLIT_TYPE_TAIL)) {
+        // Flit flit_tmp = flit_rx.read();
+        // flit_tmp.vc_id = 3 - flit_tmp.vc_id; // Switching virtual channel
+        // flit_tmp.is_head = true;
+        // swap(flit_tmp.src_id, flit_tmp.dst_id);
+        // flit_tmp.local_direction_id = DIRECTION_LOCAL_NORTH;
+        // flit_tmp.phys_channel_id = 1 - flit_tmp.phys_channel_id;
+        // in_flit_queue_x[flit_tmp.vc_id].push(flit_tmp);
+
         Flit flit_tmp = flit_rx.read();
-        flit_tmp.vc_id = 3 - flit_tmp.vc_id; // Switching virtual channel
-        flit_tmp.is_head = true;
-        swap(flit_tmp.src_id, flit_tmp.dst_id);
-        flit_tmp.local_direction_id = DIRECTION_LOCAL_NORTH;
-        flit_tmp.phys_channel_id = 1 - flit_tmp.phys_channel_id;
-        in_flit_queue_x[flit_tmp.vc_id].push(flit_tmp);
+        int vc_id = 3 - flit_tmp.vc_id;
+        Packet p = generateResponse(flit_tmp, RequestType::WRITE);
+        in_packet_queue_x[vc_id].push(p);
       }
     }
   }
@@ -101,7 +109,9 @@ void ProcessingElement::rxProcess() {
   // Start managing ack_rx
   //---------------------------------------------------------------------
   if (is_memory_pe(local_id)) {
-    ack_rx.write(in_flit_queue_x[free_slots_neighbor].size() <
+    // ack_rx.write(in_flit_queue_x[free_slots_neighbor].size() <
+    //              GlobalParams::buffer_depth);
+    ack_rx.write(in_packet_queue_x[free_slots_neighbor].size() <
                  GlobalParams::buffer_depth);
   } else {
     // PE is always ready to recieve packets
@@ -124,9 +134,9 @@ void ProcessingElement::txProcess() {
   // Start collect stats
   //---------------------------------------------------------------------
   if (req_tx.read() && ack_tx.read()) {
+    Flit flit = flit_tx.read();
 
-    if (!is_memory_pe(local_id)) {
-      Flit flit = flit_tx.read();
+    if (!is_memory_pe(local_id) && flit.flit_type(FLIT_TYPE_HEAD)) {
       int timestamp =
           (int)sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
       int dst_id = flit.dst_id;
@@ -134,6 +144,9 @@ void ProcessingElement::txProcess() {
     }
 
     flits_sent_x++;
+    if (flit.flit_type(FLIT_TYPE_TAIL)) {
+      packets_sent_x++;
+    }
   }
   //!---------------------------------------------------------------------
   //! End collect stats
@@ -159,12 +172,15 @@ void ProcessingElement::txProcess() {
   //---------------------------------------------------------------------
   if (is_memory_pe(local_id)) {
     if (req_tx.read() && ack_tx.read()) {
-      assert(!in_flit_queue_y[cur_out_vc_x].empty());
-      in_flit_queue_y[cur_out_vc_x].pop();
+      // assert(!in_flit_queue_y[cur_out_vc_x].empty());
+      // in_flit_queue_y[cur_out_vc_x].pop();
+      assert(!in_packet_queue_y[cur_out_vc_x].empty());
+      nextFlit(in_packet_queue_y[cur_out_vc_x], true);
     }
 
     for (int vc = 0; vc < GlobalParams::n_virtual_channels; vc++) {
-      if (!in_flit_queue_y[vc].empty() && !out_reservation_status_x[vc]) {
+      // if (!in_flit_queue_y[vc].empty() && !out_reservation_status_x[vc]) {
+      if (!in_packet_queue_y[vc].empty() && !out_reservation_status_x[vc]) {
         out_reservation_queue_x.push(vc);
         out_reservation_status_x[vc] = true;
       }
@@ -180,11 +196,14 @@ void ProcessingElement::txProcess() {
       req_tx.write(1);
       int vc = out_reservation_queue_x.front();
       cur_out_vc_x = vc;
-      flit_tx->write(in_flit_queue_y[vc].front());
+      // flit_tx->write(in_flit_queue_y[vc].front());
+      Flit flit = nextFlit(in_packet_queue_y[vc], false);
+      flit_tx->write(flit);
       out_reservation_status_x[vc] = false;
       out_reservation_queue_x.pop();
       if (out_reservation_queue_x.empty()) {
-        if (in_flit_queue_y[vc].size() > 1) {
+        // if (in_flit_queue_y[vc].size() > 1) {
+        if (in_packet_queue_y[vc].size() > 1) {
           free_slots.write(vc);
           out_reservation_queue_x.push(vc);
           out_reservation_status_x[vc] = true;
@@ -223,8 +242,8 @@ void ProcessingElement::txProcess() {
         !req_tx.read()                      // Not started sending
     ) {
       if (!packet_queue_x.empty()) {
-        Flit flit = nextFlit(packet_queue_x);
-        flit.id = flits_sent_x;
+        Flit flit = nextFlit(packet_queue_x, true);
+        flit.id = packets_sent_x;
         flit_tx->write(flit);
         req_tx.write(1);
       } else {
@@ -253,7 +272,8 @@ void ProcessingElement::txProcess() {
   }
   if (!GlobalParams::req_ack_mode) {
     for (int vc = 0; vc < GlobalParams::n_virtual_channels; vc++) {
-      assert(in_flit_queue_y[vc].empty());
+      // assert(in_flit_queue_y[vc].empty());
+      assert(in_packet_queue_y[vc].empty());
     }
   }
   //!---------------------------------------------------------------------
@@ -283,10 +303,13 @@ void ProcessingElement::ryProcess() {
   // Start collect stats
   //---------------------------------------------------------------------
   if (req_ry.read() && ack_ry.read()) {
+    Flit flit = flit_ry.read();
     flits_recv_y++;
+    if (flit.flit_type(FLIT_TYPE_TAIL)) {
+      packets_recv_y++;
+    }
 
-    if (!is_memory_pe(local_id)) {
-      Flit flit = flit_ry.read();
+    if (!is_memory_pe(local_id) && flit.flit_type(FLIT_TYPE_TAIL)) {
       int send_timestamp = flit_latency_x[flit.id].latency;
       int recv_timestamp =
           (int)sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
@@ -322,13 +345,17 @@ void ProcessingElement::ryProcess() {
     // Slave AXIS valid & ready handshake
     if (req_ry.read() && ack_ry.read()) {
       if (flit_ry.read().flit_type(FLIT_TYPE_TAIL)) {
+        // Flit flit_tmp = flit_ry.read();
+        // flit_tmp.vc_id = 3 - flit_tmp.vc_id; // Switching virtual channel
+        // flit_tmp.is_head = true;
+        // swap(flit_tmp.src_id, flit_tmp.dst_id);
+        // flit_tmp.local_direction_id = DIRECTION_LOCAL_NORTH;
+        // flit_tmp.phys_channel_id = 1 - flit_tmp.phys_channel_id;
+        // in_flit_queue_y[flit_tmp.vc_id].push(flit_tmp);
         Flit flit_tmp = flit_ry.read();
-        flit_tmp.vc_id = 3 - flit_tmp.vc_id; // Switching virtual channel
-        flit_tmp.is_head = true;
-        swap(flit_tmp.src_id, flit_tmp.dst_id);
-        flit_tmp.local_direction_id = DIRECTION_LOCAL_NORTH;
-        flit_tmp.phys_channel_id = 1 - flit_tmp.phys_channel_id;
-        in_flit_queue_y[flit_tmp.vc_id].push(flit_tmp);
+        int vc_id = 3 - flit_tmp.vc_id;
+        Packet p = generateResponse(flit_ry.read(), RequestType::READ);
+        in_packet_queue_y[vc_id].push(p);
       }
     }
   }
@@ -340,7 +367,9 @@ void ProcessingElement::ryProcess() {
   // Start managing ack_ry
   //---------------------------------------------------------------------
   if (is_memory_pe(local_id)) {
-    ack_ry.write(in_flit_queue_y[free_slots_neighbor_y].size() <
+    // ack_ry.write(in_flit_queue_y[free_slots_neighbor_y].size() <
+    //              GlobalParams::buffer_depth);
+    ack_ry.write(in_packet_queue_y[free_slots_neighbor_y].size() <
                  GlobalParams::buffer_depth);
   } else {
     // PE is always ready to recieve packets
@@ -361,15 +390,18 @@ void ProcessingElement::tyProcess() {
   // Start collect stats
   //---------------------------------------------------------------------
   if (req_ty.read() && ack_ty.read()) {
+    Flit flit = flit_ty.read();
 
-    if (!is_memory_pe(local_id)) {
-      Flit flit = flit_ty.read();
+    if (!is_memory_pe(local_id) && flit.flit_type(FLIT_TYPE_HEAD)) {
       int timestamp =
           (int)sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
       int dst_id = flit.dst_id;
       flit_latency_y[flit.id] = {0, dst_id, timestamp};
     }
 
+    if (flit.flit_type(FLIT_TYPE_TAIL)) {
+      packets_sent_y++;
+    }
     flits_sent_y++;
   }
   //!---------------------------------------------------------------------
@@ -396,12 +428,15 @@ void ProcessingElement::tyProcess() {
   //---------------------------------------------------------------------
   if (is_memory_pe(local_id)) {
     if (req_ty.read() && ack_ty.read()) {
-      assert(!in_flit_queue_x[cur_out_vc_y].empty());
-      in_flit_queue_x[cur_out_vc_y].pop();
+      // assert(!in_flit_queue_x[cur_out_vc_y].empty());
+      // in_flit_queue_x[cur_out_vc_y].pop();
+      assert(!in_packet_queue_x[cur_out_vc_y].empty());
+      nextFlit(in_packet_queue_x[cur_out_vc_y], true);
     }
 
     for (int vc = 0; vc < GlobalParams::n_virtual_channels; vc++) {
-      if (!in_flit_queue_x[vc].empty() && !out_reservation_status_y[vc]) {
+      // if (!in_flit_queue_x[vc].empty() && !out_reservation_status_y[vc]) {
+      if (!in_packet_queue_x[vc].empty() && !out_reservation_status_y[vc]) {
         out_reservation_queue_y.push(vc);
         out_reservation_status_y[vc] = true;
       }
@@ -417,11 +452,14 @@ void ProcessingElement::tyProcess() {
       req_ty.write(1);
       int vc = out_reservation_queue_y.front();
       cur_out_vc_y = vc;
-      flit_ty->write(in_flit_queue_x[vc].front());
+      // flit_ty->write(in_flit_queue_x[vc].front());
+      Flit flit = nextFlit(in_packet_queue_x[vc], false);
+      flit_ty->write(flit);
       out_reservation_status_y[vc] = false;
       out_reservation_queue_y.pop();
       if (out_reservation_queue_y.empty()) {
-        if (in_flit_queue_x[vc].size() > 1) {
+        // if (in_flit_queue_x[vc].size() > 1) {
+        if (in_packet_queue_x[vc].size() > 1) {
           free_slots_y.write(vc);
           out_reservation_queue_y.push(vc);
           out_reservation_status_y[vc] = true;
@@ -460,8 +498,8 @@ void ProcessingElement::tyProcess() {
         !req_ty.read()                      // Not started sending
     ) {
       if (!packet_queue_y.empty()) {
-        Flit flit = nextFlit(packet_queue_y);
-        flit.id = flits_sent_y;
+        Flit flit = nextFlit(packet_queue_y, true);
+        flit.id = packets_sent_y;
         flit_ty->write(flit);
         req_ty.write(1);
       } else { // Packet queue is empty
@@ -491,7 +529,8 @@ void ProcessingElement::tyProcess() {
   }
   if (!GlobalParams::req_ack_mode) {
     for (int vc = 0; vc < GlobalParams::n_virtual_channels; vc++) {
-      assert(in_flit_queue_x[vc].empty());
+      // assert(in_flit_queue_x[vc].empty());
+      assert(in_packet_queue_x[vc].empty());
     }
   }
   //!---------------------------------------------------------------------
@@ -499,7 +538,7 @@ void ProcessingElement::tyProcess() {
   //!---------------------------------------------------------------------
 }
 
-Flit ProcessingElement::nextFlit(queue<Packet> &packet_queue) {
+Flit ProcessingElement::nextFlit(queue<Packet> &packet_queue, bool is_update) {
   Flit flit;
   Packet packet = packet_queue.front();
 
@@ -520,6 +559,9 @@ Flit ProcessingElement::nextFlit(queue<Packet> &packet_queue) {
     flit.is_head = true;
   if (packet.flit_left == 1)
     flit.is_tail = true;
+
+  if (!is_update)
+    return flit;
 
   packet_queue.front().flit_left--;
   if (packet_queue.front().flit_left == 0)
@@ -690,10 +732,23 @@ bool ProcessingElement::canShot(Packet &packet, RequestType request_type) {
   double now = sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
 
   if (GlobalParams::traffic_distribution != TRAFFIC_TABLE_BASED) {
-    if (!transmittedAtPreviousCycle)
+    // if (!transmittedAtPreviousCycle)
+    //   threshold = GlobalParams::packet_injection_rate;
+    // else
+    //   threshold = GlobalParams::probability_of_retransmission;
+    switch (request_type) {
+    case READ:
+      threshold =
+          GlobalParams::packet_injection_rate / GlobalParams::max_packet_size;
+      break;
+    case WRITE:
+      threshold =
+          GlobalParams::packet_injection_rate / GlobalParams::max_packet_size;
+      break;
+    default:
       threshold = GlobalParams::packet_injection_rate;
-    else
-      threshold = GlobalParams::probability_of_retransmission;
+      break;
+    }
 
     shot = (((double)rand()) / RAND_MAX < threshold);
     if (shot) {
@@ -835,6 +890,30 @@ Packet ProcessingElement::trafficULocal() {
   p.size = p.flit_left = getRandomSize();
   p.vc_id = randInt(0, GlobalParams::n_virtual_channels - 1);
 
+  return p;
+}
+
+Packet ProcessingElement::generateResponse(Flit flit,
+                                           RequestType request_type) {
+  Packet p;
+  p.src_id = flit.dst_id;
+  p.dst_id = flit.src_id;
+  p.id = flit.id;
+  p.vc_id = 3 - flit.vc_id;
+  p.local_direction_id = DIRECTION_LOCAL_NORTH;
+  p.phys_channel_id = 1 - flit.phys_channel_id;
+  p.timestamp = sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
+  switch (request_type) {
+  case RequestType::READ:
+    p.size = p.flit_left = GlobalParams::max_packet_size;
+    break;
+  case RequestType::WRITE:
+    p.size = p.flit_left = 1;
+    break;
+  default:
+    p.size = p.flit_left = 1;
+    break;
+  }
   return p;
 }
 

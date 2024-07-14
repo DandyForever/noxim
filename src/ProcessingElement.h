@@ -75,9 +75,15 @@ SC_MODULE(ProcessingElement) {
   queue<Packet> packet_queue_x; // Local queue of packets for x channel
   queue<Flit> in_flit_queue_x[MAX_VIRTUAL_CHANNELS]; // Queue of incoming flits
                                                      // for x channel
+  queue<Packet>
+      in_packet_queue_x[MAX_VIRTUAL_CHANNELS]; // Queue of incoming packets
+                                               // for x channel
   queue<Packet> packet_queue_y; // Local queue of packets for y channel
   queue<Flit> in_flit_queue_y[MAX_VIRTUAL_CHANNELS]; // Queue of incoming flits
                                                      // for y channel
+  queue<Packet>
+      in_packet_queue_y[MAX_VIRTUAL_CHANNELS]; // Queue of incoming packets
+                                               // for y channel
 
   int cur_out_vc_x;
   queue<int> out_reservation_queue_x;
@@ -102,6 +108,11 @@ SC_MODULE(ProcessingElement) {
   unsigned long flits_sent_y = 0;
   unsigned long flits_recv_y = 0;
 
+  unsigned long packets_sent_x = 0;
+  unsigned long packets_recv_x = 0;
+  unsigned long packets_sent_y = 0;
+  unsigned long packets_recv_y = 0;
+
   map<int, FlitLatencyInfo> flit_latency_x;
   map<int, FlitLatencyInfo> flit_latency_y;
 
@@ -118,8 +129,8 @@ SC_MODULE(ProcessingElement) {
   bool is_horizontal_special_pe(int id, int num);
   bool canShot(Packet & packet,
                RequestType); // True when the packet must be shot
-  Flit nextFlit(queue<Packet> &
-                packet_queue);       // Take the next flit of the current packet
+  Flit nextFlit(queue<Packet> & packet_queue,
+                bool);               // Take the next flit of the current packet
   Packet trafficTest();              // used for testing traffic
   Packet trafficRandom(RequestType); // Random destination distribution
   Packet trafficTranspose1();        // Transpose 1 destination distribution
@@ -129,6 +140,8 @@ SC_MODULE(ProcessingElement) {
   Packet trafficButterfly();         // Butterfly destination distribution
   Packet trafficLocal();             // Random with locality
   Packet trafficULocal();            // Random with locality
+
+  Packet generateResponse(Flit, RequestType);
 
   GlobalTrafficTable *traffic_table; // Reference to the Global traffic Table
   bool never_transmit; // true if the PE does not transmit any packet

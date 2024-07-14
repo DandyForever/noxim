@@ -148,7 +148,7 @@ trace_mode: false
 trace_filename: ""
 
 min_packet_size: 1
-max_packet_size: 4
+max_packet_size: 2
 packet_injection_rate: 1
 probability_of_retransmission: 0.01
 
