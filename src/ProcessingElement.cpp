@@ -206,7 +206,7 @@ void ProcessingElement::txProcess() {
   if (!is_memory_pe(local_id)) {
     // Generate packet and add to packet queue
     Packet packet;
-    if ((packet_queue_x.size() < 2) && canShot(packet)) {
+    if ((packet_queue_x.size() < 2) && canShot(packet, RequestType::WRITE)) {
       packet_queue_x.push(packet);
       transmittedAtPreviousCycle = true;
     } else {
@@ -443,7 +443,7 @@ void ProcessingElement::tyProcess() {
   if (GlobalParams::both_phys_req_mode && !is_memory_pe(local_id)) {
     // Generate packet and add to packet queue
     Packet packet;
-    if ((packet_queue_y.size() < 2) && canShot(packet)) {
+    if ((packet_queue_y.size() < 2) && canShot(packet, RequestType::READ)) {
       packet_queue_y.push(packet);
       transmittedAtPreviousCycle = true;
     } else {
@@ -612,7 +612,7 @@ bool ProcessingElement::is_vertical_pe(int id) {
   return (coord.x == 0) || (coord.x == GlobalParams::mesh_dim_x - 1);
 }
 
-bool ProcessingElement::canShot(Packet &packet) {
+bool ProcessingElement::canShot(Packet &packet, RequestType request_type) {
   if (never_transmit)
     return false;
 
@@ -698,7 +698,7 @@ bool ProcessingElement::canShot(Packet &packet) {
     shot = (((double)rand()) / RAND_MAX < threshold);
     if (shot) {
       if (GlobalParams::traffic_distribution == TRAFFIC_RANDOM)
-        packet = trafficRandom();
+        packet = trafficRandom(request_type);
       else if (GlobalParams::traffic_distribution == TRAFFIC_TRANSPOSE1)
         packet = trafficTranspose1();
       else if (GlobalParams::traffic_distribution == TRAFFIC_TRANSPOSE2)
@@ -838,7 +838,7 @@ Packet ProcessingElement::trafficULocal() {
   return p;
 }
 
-Packet ProcessingElement::trafficRandom() {
+Packet ProcessingElement::trafficRandom(RequestType request_type) {
   Packet p;
   p.src_id = local_id;
   p.phys_channel_id = 0;
@@ -950,7 +950,17 @@ Packet ProcessingElement::trafficRandom() {
   //-----------------------------------
 
   p.timestamp = sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
-  p.size = p.flit_left = GlobalParams::max_packet_size;
+  switch (request_type) {
+  case RequestType::READ:
+    p.size = p.flit_left = 1;
+    break;
+  case RequestType::WRITE:
+    p.size = p.flit_left = GlobalParams::max_packet_size;
+    break;
+  default:
+    p.size = p.flit_left = 1;
+    break;
+  }
   if (GlobalParams::routing_algorithm == "MOD_DOR") {
     p.vc_id = (int)is_vertical_pe(local_id);
   } else {
@@ -962,6 +972,7 @@ Packet ProcessingElement::trafficRandom() {
          << p.local_direction_id << endl;
   return p;
 }
+
 // TODO: for testing only
 Packet ProcessingElement::trafficTest() {
   Packet p;

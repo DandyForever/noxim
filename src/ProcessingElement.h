@@ -20,6 +20,11 @@
 
 using namespace std;
 
+enum RequestType {
+  WRITE,
+  READ,
+};
+
 SC_MODULE(ProcessingElement) {
 
   // I/O Ports
@@ -111,18 +116,19 @@ SC_MODULE(ProcessingElement) {
   bool is_vertical_pe(int id);
   bool is_angle_special_pe(int id, int num);
   bool is_horizontal_special_pe(int id, int num);
-  bool canShot(Packet & packet); // True when the packet must be shot
+  bool canShot(Packet & packet,
+               RequestType); // True when the packet must be shot
   Flit nextFlit(queue<Packet> &
-                packet_queue); // Take the next flit of the current packet
-  Packet trafficTest();        // used for testing traffic
-  Packet trafficRandom();      // Random destination distribution
-  Packet trafficTranspose1();  // Transpose 1 destination distribution
-  Packet trafficTranspose2();  // Transpose 2 destination distribution
-  Packet trafficBitReversal(); // Bit-reversal destination distribution
-  Packet trafficShuffle();     // Shuffle destination distribution
-  Packet trafficButterfly();   // Butterfly destination distribution
-  Packet trafficLocal();       // Random with locality
-  Packet trafficULocal();      // Random with locality
+                packet_queue);       // Take the next flit of the current packet
+  Packet trafficTest();              // used for testing traffic
+  Packet trafficRandom(RequestType); // Random destination distribution
+  Packet trafficTranspose1();        // Transpose 1 destination distribution
+  Packet trafficTranspose2();        // Transpose 2 destination distribution
+  Packet trafficBitReversal();       // Bit-reversal destination distribution
+  Packet trafficShuffle();           // Shuffle destination distribution
+  Packet trafficButterfly();         // Butterfly destination distribution
+  Packet trafficLocal();             // Random with locality
+  Packet trafficULocal();            // Random with locality
 
   GlobalTrafficTable *traffic_table; // Reference to the Global traffic Table
   bool never_transmit; // true if the PE does not transmit any packet
