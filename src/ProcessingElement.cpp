@@ -20,92 +20,93 @@ int ProcessingElement::randInt(int min, int max) {
 void ProcessingElement::rxProcess() {
   if (reset.read()) {
     ack_rx.write(1);
-  } else {
-    //---------------------------------------------------------------------
-    // Start checks
-    //---------------------------------------------------------------------
-    if (!GlobalParams::both_phys_req_mode) {
-      if (!is_memory_pe(local_id)) {
-        assert(!req_rx.read());
-      }
-    }
-    //!---------------------------------------------------------------------
-    //! End checks
-    //!---------------------------------------------------------------------
-
-    //---------------------------------------------------------------------
-    // Start collect stats
-    //---------------------------------------------------------------------
-    if (req_rx.read() && ack_rx.read()) {
-      flits_recv_x++;
-
-      if (!is_memory_pe(local_id)) {
-        Flit flit = flit_rx.read();
-        int send_timestamp = flit_latency_y[flit.id].latency;
-        int recv_timestamp =
-            (int)sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
-        int latency = recv_timestamp - send_timestamp;
-        // if (local_id == 3) {
-        //     if (latency > 500)  {
-        //         cout << flit.src_id << " sent " << send_timestamp << " recv "
-        //         << recv_timestamp << endl;
-        //     }
-        // }
-        flit_latency_y[flit.id] = {1, flit.src_id, latency};
-      }
-    }
-    //!---------------------------------------------------------------------
-    //! End collect stats
-    //!---------------------------------------------------------------------
-
-    //---------------------------------------------------------------------
-    // Start dump info
-    //---------------------------------------------------------------------
-    if (req_rx.read() && ack_rx.read()) {
-      if (GlobalParams::flit_dump) {
-        cout << "X Recv Info: Cycle["
-             << sc_time_stamp().to_double() / GlobalParams::clock_period_ps
-             << "] flit " << flit_rx.read().src_id << " -> "
-             << flit_rx.read().dst_id << endl;
-      }
-    }
-    //!---------------------------------------------------------------------
-    //! End dump info
-    //!---------------------------------------------------------------------
-
-    //---------------------------------------------------------------------
-    // Start managing flit recieved
-    //---------------------------------------------------------------------
-    // Only memory PEs are required to send response back
-    if (GlobalParams::req_ack_mode && is_memory_pe(local_id)) {
-      // Slave AXIS valid & ready handshake
-      if (req_rx.read() && ack_rx.read()) {
-        Flit flit_tmp = flit_rx.read();
-        flit_tmp.vc_id = 3 - flit_tmp.vc_id; // Switching virtual channel
-        swap(flit_tmp.src_id, flit_tmp.dst_id);
-        flit_tmp.local_direction_id = DIRECTION_LOCAL_NORTH;
-        flit_tmp.phys_channel_id = 1 - flit_tmp.phys_channel_id;
-        in_flit_queue_x[flit_tmp.vc_id].push(flit_tmp);
-      }
-    }
-    //!---------------------------------------------------------------------
-    //! End managing flit recieved
-    //!---------------------------------------------------------------------
-
-    //---------------------------------------------------------------------
-    // Start managing ack_rx
-    //---------------------------------------------------------------------
-    if (is_memory_pe(local_id)) {
-      ack_rx.write(in_flit_queue_x[free_slots_neighbor].size() <
-                   GlobalParams::buffer_depth);
-    } else {
-      // PE is always ready to recieve packets
-      ack_rx.write(1);
-    }
-    //!---------------------------------------------------------------------
-    //! End managing ack_rx
-    //!---------------------------------------------------------------------
+    return;
   }
+
+  //---------------------------------------------------------------------
+  // Start checks
+  //---------------------------------------------------------------------
+  if (!GlobalParams::both_phys_req_mode) {
+    if (!is_memory_pe(local_id)) {
+      assert(!req_rx.read());
+    }
+  }
+  //!---------------------------------------------------------------------
+  //! End checks
+  //!---------------------------------------------------------------------
+
+  //---------------------------------------------------------------------
+  // Start collect stats
+  //---------------------------------------------------------------------
+  if (req_rx.read() && ack_rx.read()) {
+    flits_recv_x++;
+
+    if (!is_memory_pe(local_id)) {
+      Flit flit = flit_rx.read();
+      int send_timestamp = flit_latency_y[flit.id].latency;
+      int recv_timestamp =
+          (int)sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
+      int latency = recv_timestamp - send_timestamp;
+      // if (local_id == 3) {
+      //     if (latency > 500)  {
+      //         cout << flit.src_id << " sent " << send_timestamp << " recv "
+      //         << recv_timestamp << endl;
+      //     }
+      // }
+      flit_latency_y[flit.id] = {1, flit.src_id, latency};
+    }
+  }
+  //!---------------------------------------------------------------------
+  //! End collect stats
+  //!---------------------------------------------------------------------
+
+  //---------------------------------------------------------------------
+  // Start dump info
+  //---------------------------------------------------------------------
+  if (req_rx.read() && ack_rx.read()) {
+    if (GlobalParams::flit_dump) {
+      cout << "X Recv Info: Cycle["
+           << sc_time_stamp().to_double() / GlobalParams::clock_period_ps
+           << "] flit " << flit_rx.read().src_id << " -> "
+           << flit_rx.read().dst_id << endl;
+    }
+  }
+  //!---------------------------------------------------------------------
+  //! End dump info
+  //!---------------------------------------------------------------------
+
+  //---------------------------------------------------------------------
+  // Start managing flit recieved
+  //---------------------------------------------------------------------
+  // Only memory PEs are required to send response back
+  if (GlobalParams::req_ack_mode && is_memory_pe(local_id)) {
+    // Slave AXIS valid & ready handshake
+    if (req_rx.read() && ack_rx.read()) {
+      Flit flit_tmp = flit_rx.read();
+      flit_tmp.vc_id = 3 - flit_tmp.vc_id; // Switching virtual channel
+      swap(flit_tmp.src_id, flit_tmp.dst_id);
+      flit_tmp.local_direction_id = DIRECTION_LOCAL_NORTH;
+      flit_tmp.phys_channel_id = 1 - flit_tmp.phys_channel_id;
+      in_flit_queue_x[flit_tmp.vc_id].push(flit_tmp);
+    }
+  }
+  //!---------------------------------------------------------------------
+  //! End managing flit recieved
+  //!---------------------------------------------------------------------
+
+  //---------------------------------------------------------------------
+  // Start managing ack_rx
+  //---------------------------------------------------------------------
+  if (is_memory_pe(local_id)) {
+    ack_rx.write(in_flit_queue_x[free_slots_neighbor].size() <
+                 GlobalParams::buffer_depth);
+  } else {
+    // PE is always ready to recieve packets
+    ack_rx.write(1);
+  }
+  //!---------------------------------------------------------------------
+  //! End managing ack_rx
+  //!---------------------------------------------------------------------
 }
 
 void ProcessingElement::txProcess() {
@@ -113,380 +114,383 @@ void ProcessingElement::txProcess() {
     // Not valid on reset
     req_tx.write(0);
     transmittedAtPreviousCycle = false;
-  } else {
-    //---------------------------------------------------------------------
-    // Start collect stats
-    //---------------------------------------------------------------------
-    if (req_tx.read() && ack_tx.read()) {
+    return;
+  }
 
-      if (!is_memory_pe(local_id)) {
-        Flit flit = flit_tx.read();
-        int timestamp =
-            (int)sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
-        int dst_id = flit.dst_id;
-        flit_latency_x[flit.id] = {0, dst_id, timestamp};
-      }
+  //---------------------------------------------------------------------
+  // Start collect stats
+  //---------------------------------------------------------------------
+  if (req_tx.read() && ack_tx.read()) {
 
-      flits_sent_x++;
+    if (!is_memory_pe(local_id)) {
+      Flit flit = flit_tx.read();
+      int timestamp =
+          (int)sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
+      int dst_id = flit.dst_id;
+      flit_latency_x[flit.id] = {0, dst_id, timestamp};
     }
-    //!---------------------------------------------------------------------
-    //! End collect stats
-    //!---------------------------------------------------------------------
 
-    //---------------------------------------------------------------------
-    // Start dump info
-    //---------------------------------------------------------------------
+    flits_sent_x++;
+  }
+  //!---------------------------------------------------------------------
+  //! End collect stats
+  //!---------------------------------------------------------------------
+
+  //---------------------------------------------------------------------
+  // Start dump info
+  //---------------------------------------------------------------------
+  if (req_tx.read() && ack_tx.read()) {
+    if (GlobalParams::flit_dump) {
+      cout << "X Send Info: Cycle["
+           << sc_time_stamp().to_double() / GlobalParams::clock_period_ps
+           << "] flit " << flit_tx.read().src_id << " -> "
+           << flit_tx.read().dst_id << endl;
+    }
+  }
+  //!---------------------------------------------------------------------
+  //! End dump info
+  //!---------------------------------------------------------------------
+
+  //---------------------------------------------------------------------
+  // Start managing memory PE
+  //---------------------------------------------------------------------
+  if (is_memory_pe(local_id)) {
     if (req_tx.read() && ack_tx.read()) {
-      if (GlobalParams::flit_dump) {
-        cout << "X Send Info: Cycle["
-             << sc_time_stamp().to_double() / GlobalParams::clock_period_ps
-             << "] flit " << flit_tx.read().src_id << " -> "
-             << flit_tx.read().dst_id << endl;
+      assert(!in_flit_queue_y[cur_out_vc_x].empty());
+      in_flit_queue_y[cur_out_vc_x].pop();
+    }
+
+    for (int vc = 0; vc < GlobalParams::n_virtual_channels; vc++) {
+      if (!in_flit_queue_y[vc].empty() && !out_reservation_status_x[vc]) {
+        out_reservation_queue_x.push(vc);
+        out_reservation_status_x[vc] = true;
       }
     }
-    //!---------------------------------------------------------------------
-    //! End dump info
-    //!---------------------------------------------------------------------
 
-    //---------------------------------------------------------------------
-    // Start managing memory PE
-    //---------------------------------------------------------------------
-    if (is_memory_pe(local_id)) {
-      if (req_tx.read() && ack_tx.read()) {
-        assert(!in_flit_queue_y[cur_out_vc_x].empty());
-        in_flit_queue_y[cur_out_vc_x].pop();
+    if (!is_vc_set_x) {
+      req_tx.write(0);
+      if (!out_reservation_queue_x.empty()) {
+        free_slots.write(out_reservation_queue_x.front());
+        is_vc_set_x = true;
       }
-
-      for (int vc = 0; vc < GlobalParams::n_virtual_channels; vc++) {
-        if (!in_flit_queue_y[vc].empty() && !out_reservation_status_x[vc]) {
+    } else {
+      req_tx.write(1);
+      int vc = out_reservation_queue_x.front();
+      cur_out_vc_x = vc;
+      flit_tx->write(in_flit_queue_y[vc].front());
+      out_reservation_status_x[vc] = false;
+      out_reservation_queue_x.pop();
+      if (out_reservation_queue_x.empty()) {
+        if (in_flit_queue_y[vc].size() > 1) {
+          free_slots.write(vc);
           out_reservation_queue_x.push(vc);
           out_reservation_status_x[vc] = true;
-        }
-      }
-
-      if (!is_vc_set_x) {
-        req_tx.write(0);
-        if (!out_reservation_queue_x.empty()) {
-          free_slots.write(out_reservation_queue_x.front());
-          is_vc_set_x = true;
-        }
-      } else {
-        req_tx.write(1);
-        int vc = out_reservation_queue_x.front();
-        cur_out_vc_x = vc;
-        flit_tx->write(in_flit_queue_y[vc].front());
-        out_reservation_status_x[vc] = false;
-        out_reservation_queue_x.pop();
-        if (out_reservation_queue_x.empty()) {
-          if (in_flit_queue_y[vc].size() > 1) {
-            free_slots.write(vc);
-            out_reservation_queue_x.push(vc);
-            out_reservation_status_x[vc] = true;
-          } else {
-            is_vc_set_x = false;
-          }
         } else {
-          free_slots.write(out_reservation_queue_x.front());
+          is_vc_set_x = false;
         }
-      }
-    }
-    //!---------------------------------------------------------------------
-    //! End managing memory PE
-    //!---------------------------------------------------------------------
-
-    //---------------------------------------------------------------------
-    // Start managing EU PE
-    //---------------------------------------------------------------------
-    if (!is_memory_pe(local_id)) {
-      // Generate packet and add to packet queue
-      Packet packet;
-      if ((packet_queue_x.size() < 2) && canShot(packet)) {
-        packet_queue_x.push(packet);
-        transmittedAtPreviousCycle = true;
       } else {
-        transmittedAtPreviousCycle = false;
-      }
-      // Tell the router VC to recieve flits
-      if (GlobalParams::routing_algorithm == "MOD_DOR") {
-        free_slots.write(is_vertical_pe(local_id));
-      } else {
-        free_slots.write(0);
-      }
-      // Handle AXIS
-      if ((req_tx.read() && ack_tx.read()) || // Handshake happened
-          !req_tx.read()                      // Not started sending
-      ) {
-        if (!packet_queue_x.empty()) {
-          Flit flit = nextFlit(packet_queue_x);
-          flit.id = flits_sent_x;
-          flit_tx->write(flit);
-          req_tx.write(1);
-        } else {
-          req_tx.write(0);
-        }
-      } else if (req_tx.read() && !ack_tx.read()) {
-        req_tx.write(1);
+        free_slots.write(out_reservation_queue_x.front());
       }
     }
-    //!---------------------------------------------------------------------
-    //! End managing EU PE
-    //!---------------------------------------------------------------------
-
-    //---------------------------------------------------------------------
-    // Start checks
-    //---------------------------------------------------------------------
-    if (!GlobalParams::both_phys_req_mode) {
-      if (is_memory_pe(local_id)) {
-        assert(!req_tx.read());
-      }
-    }
-    if (!GlobalParams::req_ack_mode) {
-      if (is_memory_pe(local_id)) {
-        assert(!req_tx.read());
-      }
-    }
-    if (!GlobalParams::req_ack_mode) {
-      for (int vc = 0; vc < GlobalParams::n_virtual_channels; vc++) {
-        assert(in_flit_queue_y[vc].empty());
-      }
-    }
-    //!---------------------------------------------------------------------
-    //! End checks
-    //!---------------------------------------------------------------------
   }
+  //!---------------------------------------------------------------------
+  //! End managing memory PE
+  //!---------------------------------------------------------------------
+
+  //---------------------------------------------------------------------
+  // Start managing EU PE
+  //---------------------------------------------------------------------
+  if (!is_memory_pe(local_id)) {
+    // Generate packet and add to packet queue
+    Packet packet;
+    if ((packet_queue_x.size() < 2) && canShot(packet)) {
+      packet_queue_x.push(packet);
+      transmittedAtPreviousCycle = true;
+    } else {
+      transmittedAtPreviousCycle = false;
+    }
+    // Tell the router VC to recieve flits
+    if (GlobalParams::routing_algorithm == "MOD_DOR") {
+      free_slots.write(is_vertical_pe(local_id));
+    } else {
+      free_slots.write(0);
+    }
+    // Handle AXIS
+    if ((req_tx.read() && ack_tx.read()) || // Handshake happened
+        !req_tx.read()                      // Not started sending
+    ) {
+      if (!packet_queue_x.empty()) {
+        Flit flit = nextFlit(packet_queue_x);
+        flit.id = flits_sent_x;
+        flit_tx->write(flit);
+        req_tx.write(1);
+      } else {
+        req_tx.write(0);
+      }
+    } else if (req_tx.read() && !ack_tx.read()) {
+      req_tx.write(1);
+    }
+  }
+  //!---------------------------------------------------------------------
+  //! End managing EU PE
+  //!---------------------------------------------------------------------
+
+  //---------------------------------------------------------------------
+  // Start checks
+  //---------------------------------------------------------------------
+  if (!GlobalParams::both_phys_req_mode) {
+    if (is_memory_pe(local_id)) {
+      assert(!req_tx.read());
+    }
+  }
+  if (!GlobalParams::req_ack_mode) {
+    if (is_memory_pe(local_id)) {
+      assert(!req_tx.read());
+    }
+  }
+  if (!GlobalParams::req_ack_mode) {
+    for (int vc = 0; vc < GlobalParams::n_virtual_channels; vc++) {
+      assert(in_flit_queue_y[vc].empty());
+    }
+  }
+  //!---------------------------------------------------------------------
+  //! End checks
+  //!---------------------------------------------------------------------
 }
 
 void ProcessingElement::ryProcess() {
   if (reset.read()) {
     ack_ry.write(1);
-  } else {
-    //---------------------------------------------------------------------
-    // Start checks
-    //---------------------------------------------------------------------
-    if (!GlobalParams::both_phys_req_mode) {
-      if (is_memory_pe(local_id)) {
-        assert(!req_ry.read());
-      }
-    }
-    //!---------------------------------------------------------------------
-    //! End checks
-    //!---------------------------------------------------------------------
-
-    //---------------------------------------------------------------------
-    // Start collect stats
-    //---------------------------------------------------------------------
-    if (req_ry.read() && ack_ry.read()) {
-      flits_recv_y++;
-
-      if (!is_memory_pe(local_id)) {
-        Flit flit = flit_ry.read();
-        int send_timestamp = flit_latency_x[flit.id].latency;
-        int recv_timestamp =
-            (int)sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
-        int latency = recv_timestamp - send_timestamp;
-        flit_latency_x[flit.id] = {1, flit.src_id, latency};
-      }
-    }
-    //!---------------------------------------------------------------------
-    //! End collect stats
-    //!---------------------------------------------------------------------
-
-    //---------------------------------------------------------------------
-    // Start dump info
-    //---------------------------------------------------------------------
-    if (req_ry.read() && ack_ry.read()) {
-      if (GlobalParams::flit_dump) {
-        cout << "Y Recv Info: Cycle["
-             << sc_time_stamp().to_double() / GlobalParams::clock_period_ps
-             << "] flit " << flit_ry.read().src_id << " -> "
-             << flit_ry.read().dst_id << endl;
-      }
-    }
-    //!---------------------------------------------------------------------
-    //! End dump info
-    //!---------------------------------------------------------------------
-
-    //---------------------------------------------------------------------
-    // Start managing flit recieved
-    //---------------------------------------------------------------------
-    // Only memory PEs are required to send response back
-    if (GlobalParams::both_phys_req_mode && GlobalParams::req_ack_mode &&
-        is_memory_pe(local_id)) {
-      // Slave AXIS valid & ready handshake
-      if (req_ry.read() && ack_ry.read()) {
-        Flit flit_tmp = flit_ry.read();
-        flit_tmp.vc_id = 3 - flit_tmp.vc_id; // Switching virtual channel
-        swap(flit_tmp.src_id, flit_tmp.dst_id);
-        flit_tmp.local_direction_id = DIRECTION_LOCAL_NORTH;
-        flit_tmp.phys_channel_id = 1 - flit_tmp.phys_channel_id;
-        in_flit_queue_y[flit_tmp.vc_id].push(flit_tmp);
-      }
-    }
-    //!---------------------------------------------------------------------
-    //! End managing flit recieved
-    //!---------------------------------------------------------------------
-
-    //---------------------------------------------------------------------
-    // Start managing ack_ry
-    //---------------------------------------------------------------------
-    if (is_memory_pe(local_id)) {
-      ack_ry.write(in_flit_queue_y[free_slots_neighbor_y].size() <
-                   GlobalParams::buffer_depth);
-    } else {
-      // PE is always ready to recieve packets
-      ack_ry.write(1);
-    }
-    //---------------------------------------------------------------------
-    // End managing ack_ry
-    //---------------------------------------------------------------------
+    return;
   }
+
+  //---------------------------------------------------------------------
+  // Start checks
+  //---------------------------------------------------------------------
+  if (!GlobalParams::both_phys_req_mode) {
+    if (is_memory_pe(local_id)) {
+      assert(!req_ry.read());
+    }
+  }
+  //!---------------------------------------------------------------------
+  //! End checks
+  //!---------------------------------------------------------------------
+
+  //---------------------------------------------------------------------
+  // Start collect stats
+  //---------------------------------------------------------------------
+  if (req_ry.read() && ack_ry.read()) {
+    flits_recv_y++;
+
+    if (!is_memory_pe(local_id)) {
+      Flit flit = flit_ry.read();
+      int send_timestamp = flit_latency_x[flit.id].latency;
+      int recv_timestamp =
+          (int)sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
+      int latency = recv_timestamp - send_timestamp;
+      flit_latency_x[flit.id] = {1, flit.src_id, latency};
+    }
+  }
+  //!---------------------------------------------------------------------
+  //! End collect stats
+  //!---------------------------------------------------------------------
+
+  //---------------------------------------------------------------------
+  // Start dump info
+  //---------------------------------------------------------------------
+  if (req_ry.read() && ack_ry.read()) {
+    if (GlobalParams::flit_dump) {
+      cout << "Y Recv Info: Cycle["
+           << sc_time_stamp().to_double() / GlobalParams::clock_period_ps
+           << "] flit " << flit_ry.read().src_id << " -> "
+           << flit_ry.read().dst_id << endl;
+    }
+  }
+  //!---------------------------------------------------------------------
+  //! End dump info
+  //!---------------------------------------------------------------------
+
+  //---------------------------------------------------------------------
+  // Start managing flit recieved
+  //---------------------------------------------------------------------
+  // Only memory PEs are required to send response back
+  if (GlobalParams::both_phys_req_mode && GlobalParams::req_ack_mode &&
+      is_memory_pe(local_id)) {
+    // Slave AXIS valid & ready handshake
+    if (req_ry.read() && ack_ry.read()) {
+      Flit flit_tmp = flit_ry.read();
+      flit_tmp.vc_id = 3 - flit_tmp.vc_id; // Switching virtual channel
+      swap(flit_tmp.src_id, flit_tmp.dst_id);
+      flit_tmp.local_direction_id = DIRECTION_LOCAL_NORTH;
+      flit_tmp.phys_channel_id = 1 - flit_tmp.phys_channel_id;
+      in_flit_queue_y[flit_tmp.vc_id].push(flit_tmp);
+    }
+  }
+  //!---------------------------------------------------------------------
+  //! End managing flit recieved
+  //!---------------------------------------------------------------------
+
+  //---------------------------------------------------------------------
+  // Start managing ack_ry
+  //---------------------------------------------------------------------
+  if (is_memory_pe(local_id)) {
+    ack_ry.write(in_flit_queue_y[free_slots_neighbor_y].size() <
+                 GlobalParams::buffer_depth);
+  } else {
+    // PE is always ready to recieve packets
+    ack_ry.write(1);
+  }
+  //---------------------------------------------------------------------
+  // End managing ack_ry
+  //---------------------------------------------------------------------
 }
 
 void ProcessingElement::tyProcess() {
   if (reset.read()) {
     req_ty.write(0);
-  } else {
-    //---------------------------------------------------------------------
-    // Start collect stats
-    //---------------------------------------------------------------------
-    if (req_ty.read() && ack_ty.read()) {
+    return;
+  }
 
-      if (!is_memory_pe(local_id)) {
-        Flit flit = flit_ty.read();
-        int timestamp =
-            (int)sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
-        int dst_id = flit.dst_id;
-        flit_latency_y[flit.id] = {0, dst_id, timestamp};
-      }
+  //---------------------------------------------------------------------
+  // Start collect stats
+  //---------------------------------------------------------------------
+  if (req_ty.read() && ack_ty.read()) {
 
-      flits_sent_y++;
+    if (!is_memory_pe(local_id)) {
+      Flit flit = flit_ty.read();
+      int timestamp =
+          (int)sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
+      int dst_id = flit.dst_id;
+      flit_latency_y[flit.id] = {0, dst_id, timestamp};
     }
-    //!---------------------------------------------------------------------
-    //! End collect stats
-    //!---------------------------------------------------------------------
 
-    //---------------------------------------------------------------------
-    // Start dump info
-    //---------------------------------------------------------------------
+    flits_sent_y++;
+  }
+  //!---------------------------------------------------------------------
+  //! End collect stats
+  //!---------------------------------------------------------------------
+
+  //---------------------------------------------------------------------
+  // Start dump info
+  //---------------------------------------------------------------------
+  if (req_ty.read() && ack_ty.read()) {
+    if (GlobalParams::flit_dump) {
+      cout << "Y Send Info: Cycle["
+           << sc_time_stamp().to_double() / GlobalParams::clock_period_ps
+           << "] flit " << flit_ty.read().src_id << " -> "
+           << flit_ty.read().dst_id << endl;
+    }
+  }
+  //!---------------------------------------------------------------------
+  //! End dump info
+  //!---------------------------------------------------------------------
+
+  //---------------------------------------------------------------------
+  // Start managing memory PE
+  //---------------------------------------------------------------------
+  if (is_memory_pe(local_id)) {
     if (req_ty.read() && ack_ty.read()) {
-      if (GlobalParams::flit_dump) {
-        cout << "Y Send Info: Cycle["
-             << sc_time_stamp().to_double() / GlobalParams::clock_period_ps
-             << "] flit " << flit_ty.read().src_id << " -> "
-             << flit_ty.read().dst_id << endl;
+      assert(!in_flit_queue_x[cur_out_vc_y].empty());
+      in_flit_queue_x[cur_out_vc_y].pop();
+    }
+
+    for (int vc = 0; vc < GlobalParams::n_virtual_channels; vc++) {
+      if (!in_flit_queue_x[vc].empty() && !out_reservation_status_y[vc]) {
+        out_reservation_queue_y.push(vc);
+        out_reservation_status_y[vc] = true;
       }
     }
-    //!---------------------------------------------------------------------
-    //! End dump info
-    //!---------------------------------------------------------------------
 
-    //---------------------------------------------------------------------
-    // Start managing memory PE
-    //---------------------------------------------------------------------
-    if (is_memory_pe(local_id)) {
-      if (req_ty.read() && ack_ty.read()) {
-        assert(!in_flit_queue_x[cur_out_vc_y].empty());
-        in_flit_queue_x[cur_out_vc_y].pop();
+    if (!is_vc_set_y) {
+      req_ty.write(0);
+      if (!out_reservation_queue_y.empty()) {
+        free_slots_y.write(out_reservation_queue_y.front());
+        is_vc_set_y = true;
       }
-
-      for (int vc = 0; vc < GlobalParams::n_virtual_channels; vc++) {
-        if (!in_flit_queue_x[vc].empty() && !out_reservation_status_y[vc]) {
+    } else {
+      req_ty.write(1);
+      int vc = out_reservation_queue_y.front();
+      cur_out_vc_y = vc;
+      flit_ty->write(in_flit_queue_x[vc].front());
+      out_reservation_status_y[vc] = false;
+      out_reservation_queue_y.pop();
+      if (out_reservation_queue_y.empty()) {
+        if (in_flit_queue_x[vc].size() > 1) {
+          free_slots_y.write(vc);
           out_reservation_queue_y.push(vc);
           out_reservation_status_y[vc] = true;
-        }
-      }
-
-      if (!is_vc_set_y) {
-        req_ty.write(0);
-        if (!out_reservation_queue_y.empty()) {
-          free_slots_y.write(out_reservation_queue_y.front());
-          is_vc_set_y = true;
-        }
-      } else {
-        req_ty.write(1);
-        int vc = out_reservation_queue_y.front();
-        cur_out_vc_y = vc;
-        flit_ty->write(in_flit_queue_x[vc].front());
-        out_reservation_status_y[vc] = false;
-        out_reservation_queue_y.pop();
-        if (out_reservation_queue_y.empty()) {
-          if (in_flit_queue_x[vc].size() > 1) {
-            free_slots_y.write(vc);
-            out_reservation_queue_y.push(vc);
-            out_reservation_status_y[vc] = true;
-          } else {
-            is_vc_set_y = false;
-          }
         } else {
-          free_slots_y.write(out_reservation_queue_y.front());
+          is_vc_set_y = false;
         }
-      }
-    }
-    //!---------------------------------------------------------------------
-    //! End managing memory PE
-    //!---------------------------------------------------------------------
-
-    //---------------------------------------------------------------------
-    // Start managing EU PE
-    //---------------------------------------------------------------------
-    if (GlobalParams::both_phys_req_mode && !is_memory_pe(local_id)) {
-      // Generate packet and add to packet queue
-      Packet packet;
-      if ((packet_queue_y.size() < 2) && canShot(packet)) {
-        packet_queue_y.push(packet);
-        transmittedAtPreviousCycle = true;
       } else {
-        transmittedAtPreviousCycle = false;
-      }
-      // Tell the router VC to recieve flits
-      if (GlobalParams::routing_algorithm == "MOD_DOR") {
-        free_slots_y.write(is_vertical_pe(local_id));
-      } else {
-        free_slots_y.write(0);
-      }
-      // Handle AXIS
-      if ((req_ty.read() && ack_ty.read()) || // Handshake happened
-          !req_ty.read()                      // Not started sending
-      ) {
-        if (!packet_queue_y.empty()) {
-          Flit flit = nextFlit(packet_queue_y);
-          flit.id = flits_sent_y;
-          flit_ty->write(flit);
-          req_ty.write(1);
-        } else { // Packet queue is empty
-          req_ty.write(0);
-        }
-      } else if (req_ty.read() && !ack_ty.read()) // Router not ready to recieve
-      {
-        req_ty.write(1);
+        free_slots_y.write(out_reservation_queue_y.front());
       }
     }
-    //!---------------------------------------------------------------------
-    //! End managing EU PE
-    //!---------------------------------------------------------------------
-
-    //---------------------------------------------------------------------
-    // Start checks
-    //---------------------------------------------------------------------
-    if (!GlobalParams::both_phys_req_mode) {
-      if (!is_memory_pe(local_id)) {
-        assert(!req_ty.read());
-      }
-    }
-    if (!GlobalParams::req_ack_mode) {
-      if (is_memory_pe(local_id)) {
-        assert(!req_ty.read());
-      }
-    }
-    if (!GlobalParams::req_ack_mode) {
-      for (int vc = 0; vc < GlobalParams::n_virtual_channels; vc++) {
-        assert(in_flit_queue_x[vc].empty());
-      }
-    }
-    //!---------------------------------------------------------------------
-    //! End checks
-    //!---------------------------------------------------------------------
   }
+  //!---------------------------------------------------------------------
+  //! End managing memory PE
+  //!---------------------------------------------------------------------
+
+  //---------------------------------------------------------------------
+  // Start managing EU PE
+  //---------------------------------------------------------------------
+  if (GlobalParams::both_phys_req_mode && !is_memory_pe(local_id)) {
+    // Generate packet and add to packet queue
+    Packet packet;
+    if ((packet_queue_y.size() < 2) && canShot(packet)) {
+      packet_queue_y.push(packet);
+      transmittedAtPreviousCycle = true;
+    } else {
+      transmittedAtPreviousCycle = false;
+    }
+    // Tell the router VC to recieve flits
+    if (GlobalParams::routing_algorithm == "MOD_DOR") {
+      free_slots_y.write(is_vertical_pe(local_id));
+    } else {
+      free_slots_y.write(0);
+    }
+    // Handle AXIS
+    if ((req_ty.read() && ack_ty.read()) || // Handshake happened
+        !req_ty.read()                      // Not started sending
+    ) {
+      if (!packet_queue_y.empty()) {
+        Flit flit = nextFlit(packet_queue_y);
+        flit.id = flits_sent_y;
+        flit_ty->write(flit);
+        req_ty.write(1);
+      } else { // Packet queue is empty
+        req_ty.write(0);
+      }
+    } else if (req_ty.read() && !ack_ty.read()) // Router not ready to recieve
+    {
+      req_ty.write(1);
+    }
+  }
+  //!---------------------------------------------------------------------
+  //! End managing EU PE
+  //!---------------------------------------------------------------------
+
+  //---------------------------------------------------------------------
+  // Start checks
+  //---------------------------------------------------------------------
+  if (!GlobalParams::both_phys_req_mode) {
+    if (!is_memory_pe(local_id)) {
+      assert(!req_ty.read());
+    }
+  }
+  if (!GlobalParams::req_ack_mode) {
+    if (is_memory_pe(local_id)) {
+      assert(!req_ty.read());
+    }
+  }
+  if (!GlobalParams::req_ack_mode) {
+    for (int vc = 0; vc < GlobalParams::n_virtual_channels; vc++) {
+      assert(in_flit_queue_x[vc].empty());
+    }
+  }
+  //!---------------------------------------------------------------------
+  //! End checks
+  //!---------------------------------------------------------------------
 }
 
 Flit ProcessingElement::nextFlit(queue<Packet> &packet_queue) {
