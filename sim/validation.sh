@@ -2,6 +2,7 @@
     -config ../config_examples/mesh_10x10_interliving.yaml \
     -pir 0.25 poisson \
     -routing MOD_DOR \
+    -size 1 2 \
     -interliving_reps 0 \
     -sim 10000 \
     -detailed \
