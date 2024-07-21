@@ -119,6 +119,17 @@ void Router::txProcess() {
     }
   }
 
+  if (GlobalParams::buffer_mid) {
+    // Pipeline: middle buffers -> output buffers
+    for (int i = 0; i < 2 * DIRECTIONS + 1; i++) {
+      for (int vc = 0; vc < GlobalParams::n_virtual_channels; vc++) {
+        if (!buffer_mid[i][vc].IsEmpty() && !buffer_out[i][vc].IsFull()) {
+          buffer_out[i][vc].Push(buffer_mid[i][vc].Pop());
+        }
+      }
+    }
+  }
+
   // 1st phase: Reservation
   vector<pair<int, int>> reservation_queue_cpy;
   for (auto item_i_vc : reservation_queue) {
@@ -225,7 +236,14 @@ void Router::txProcess() {
       // power contribution already computed in 1st phase
       Flit flit = buffer[i][vc].Front();
 
-      if (buffer_out[o][vc].IsFull()) {
+      Buffer *buffer_;
+      if (GlobalParams::buffer_mid) {
+        buffer_ = &buffer_mid[o][vc];
+      } else {
+        buffer_ = &buffer_out[o][vc];
+      }
+
+      if (buffer_->IsFull()) {
         // assert(0);
         LOG << " Cannot forward Input[" << i << "][" << vc << "] to Output["
             << o << "], flit: " << flit << endl;
@@ -240,7 +258,7 @@ void Router::txProcess() {
       reservation_status[i][vc] = false;
 
       buffer[i][vc].Pop();
-      buffer_out[o][vc].Push(flit);
+      buffer_->Push(flit);
 
       if (flit.flit_type(FLIT_TYPE_TAIL)) {
         TReservation r;
@@ -600,9 +618,12 @@ void Router::configure(const int _id, const double _warm_up_time,
   for (int i = 0; i < 2 * DIRECTIONS + 1; i++) {
     for (int vc = 0; vc < GlobalParams::n_virtual_channels; vc++) {
       buffer[i][vc].SetMaxBufferSize(_max_buffer_size);
+      buffer_mid[i][vc].SetMaxBufferSize(_max_buffer_size);
       buffer_out[i][vc].SetMaxBufferSize(_max_buffer_size);
       buffer[i][vc].setLabel(string(name()) + "->buffer[" + i_to_string(i) +
                              "]");
+      buffer_mid[i][vc].setLabel(string(name()) + "->buffer[" + i_to_string(i) +
+                                 "]");
       buffer_out[i][vc].setLabel(string(name()) + "->buffer[" + i_to_string(i) +
                                  "]");
     }
@@ -615,18 +636,22 @@ void Router::configure(const int _id, const double _warm_up_time,
     for (int vc = 0; vc < GlobalParams::n_virtual_channels; vc++) {
       if (row == 0) {
         buffer[DIRECTION_NORTH][vc].Disable();
+        buffer_mid[DIRECTION_NORTH][vc].Disable();
         buffer_out[DIRECTION_NORTH][vc].Disable();
       }
       if (row == GlobalParams::mesh_dim_y - 1) {
         buffer[DIRECTION_SOUTH][vc].Disable();
+        buffer_mid[DIRECTION_SOUTH][vc].Disable();
         buffer_out[DIRECTION_SOUTH][vc].Disable();
       }
       if (col == 0) {
         buffer[DIRECTION_WEST][vc].Disable();
+        buffer_mid[DIRECTION_WEST][vc].Disable();
         buffer_out[DIRECTION_WEST][vc].Disable();
       }
       if (col == GlobalParams::mesh_dim_x - 1) {
         buffer[DIRECTION_EAST][vc].Disable();
+        buffer_mid[DIRECTION_EAST][vc].Disable();
         buffer_out[DIRECTION_EAST][vc].Disable();
       }
     }

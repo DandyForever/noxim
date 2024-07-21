@@ -201,6 +201,7 @@ struct GlobalParams {
   static bool buffer_verbose;
   static bool flit_dump;
   static bool traffic_verbose;
+  static bool buffer_mid;
 };
 
 #endif

@@ -179,5 +179,6 @@ switch_debug: false
 buffer_verbose: false
 traffic_verbose: false
 flit_dump: false
+buffer_mid: false
 log_file_name: "./results/results.csv"
 

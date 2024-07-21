@@ -75,3 +75,4 @@ bool GlobalParams::both_phys_req_mode;
 bool GlobalParams::buffer_verbose;
 bool GlobalParams::flit_dump;
 bool GlobalParams::traffic_verbose;
+bool GlobalParams::buffer_mid;

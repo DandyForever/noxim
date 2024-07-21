@@ -130,6 +130,7 @@ void loadConfiguration() {
   GlobalParams::buffer_verbose = readParam<bool>(config, "buffer_verbose");
   GlobalParams::traffic_verbose = readParam<bool>(config, "traffic_verbose");
   GlobalParams::flit_dump = readParam<bool>(config, "flit_dump");
+  GlobalParams::buffer_mid = readParam<bool>(config, "buffer_mid");
 
   set<int> channelSet;
 
@@ -607,6 +608,8 @@ void parseCmdLine(int arg_num, char *arg_vet[]) {
         GlobalParams::buffer_verbose = atoi(arg_vet[++i]);
       } else if (!strcmp(arg_vet[i], "-traffic_verbose")) {
         GlobalParams::traffic_verbose = atoi(arg_vet[++i]);
+      } else if (!strcmp(arg_vet[i], "-buffer_mid")) {
+        GlobalParams::buffer_mid = atoi(arg_vet[++i]);
       } else if (!strcmp(arg_vet[i], "-flit_dump")) {
         GlobalParams::flit_dump = atoi(arg_vet[++i]);
       } else if (!strcmp(arg_vet[i], "-pir")) {

@@ -65,6 +65,7 @@ SC_MODULE(Router) {
   int routing_type; // Type of routing algorithm
   int selection_type;
   BufferBank buffer[2 * DIRECTIONS + 1]; // buffer[direction][virtual_channel]
+  BufferBank buffer_mid[2 * DIRECTIONS + 1];
   BufferBank buffer_out[2 * DIRECTIONS + 1];
   bool current_level_rx[2 * DIRECTIONS +
                         1]; // Current level for Alternating Bit Protocol (ABP)
