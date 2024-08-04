@@ -103,6 +103,12 @@ SC_MODULE(ProcessingElement) {
   int interliving_prev_reps;
   int interliving_local_dst;
 
+  // Traffic burst state
+  unsigned long traffic_burst_curr_x = 0;
+  unsigned long traffic_burst_curr_y = 0;
+  int traffic_burst_curr_dst_x;
+  int traffic_burst_curr_dst_y;
+
   // Metrics
   unsigned long flits_sent_x = 0;
   unsigned long flits_recv_x = 0;
@@ -114,8 +120,15 @@ SC_MODULE(ProcessingElement) {
   unsigned long packets_sent_y = 0;
   unsigned long packets_recv_y = 0;
 
+  unsigned long traffic_burst_packets_sent_x = 0;
+  unsigned long traffic_burst_packets_recv_x = 0;
+  unsigned long traffic_burst_packets_sent_y = 0;
+  unsigned long traffic_burst_packets_recv_y = 0;
+
   map<int, FlitLatencyInfo> flit_latency_x;
   map<int, FlitLatencyInfo> flit_latency_y;
+  map<int, FlitLatencyInfo> traffic_burst_flit_latency_x;
+  map<int, FlitLatencyInfo> traffic_burst_flit_latency_y;
 
   // Functions
   void rxProcess(); // The receiving process

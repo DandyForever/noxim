@@ -2,9 +2,10 @@
     -config ../config_examples/mesh_18x10_interliving.yaml \
     -pir 0.5 poisson \
     -routing DOR \
-    -size 1 1 \
+    -size 2 2 \
+    -traffic_burst_size 2 \
     -interliving_reps 0 \
-    -sim 100000 \
+    -sim 10000 \
     -detailed \
     -mem_ports 4 \
     -switch_horizontal_masters 3 \

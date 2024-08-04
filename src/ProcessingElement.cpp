@@ -45,6 +45,9 @@ void ProcessingElement::rxProcess() {
     flits_recv_x++;
     if (flit.flit_type(FLIT_TYPE_TAIL)) {
       packets_recv_x++;
+      if (flit.traffic_burst_is_tail) {
+        traffic_burst_packets_recv_x++;
+      }
     }
 
     if (!is_memory_pe && flit.flit_type(FLIT_TYPE_TAIL)) {
@@ -59,6 +62,14 @@ void ProcessingElement::rxProcess() {
       //     }
       // }
       flit_latency_y[flit.id] = {1, flit.src_id, latency};
+      if (flit.traffic_burst_is_tail) {
+        int traffic_burst_send_timestamp =
+            traffic_burst_flit_latency_y[flit.traffic_burst_id].latency;
+        int traffic_burst_latency =
+            recv_timestamp - traffic_burst_send_timestamp;
+        traffic_burst_flit_latency_y[flit.traffic_burst_id] = {
+            1, flit.src_id, traffic_burst_latency};
+      }
     }
   }
   //!---------------------------------------------------------------------
@@ -143,11 +154,18 @@ void ProcessingElement::txProcess() {
           (int)sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
       int dst_id = flit.dst_id;
       flit_latency_x[flit.id] = {0, dst_id, timestamp};
+      if (flit.traffic_burst_is_head) {
+        traffic_burst_flit_latency_x[flit.traffic_burst_id] = {0, dst_id,
+                                                               timestamp};
+      }
     }
 
     flits_sent_x++;
     if (flit.flit_type(FLIT_TYPE_TAIL)) {
       packets_sent_x++;
+      if (flit.traffic_burst_is_tail) {
+        traffic_burst_packets_sent_x++;
+      }
     }
   }
   //!---------------------------------------------------------------------
@@ -249,6 +267,7 @@ void ProcessingElement::txProcess() {
                              GlobalParams::max_packet_size) {
         Flit flit = nextFlit(packet_queue_x, true);
         flit.id = packets_sent_x;
+        flit.traffic_burst_id = traffic_burst_packets_sent_x;
         flit_tx->write(flit);
         req_tx.write(1);
       } else {
@@ -312,6 +331,9 @@ void ProcessingElement::ryProcess() {
     flits_recv_y++;
     if (flit.flit_type(FLIT_TYPE_TAIL)) {
       packets_recv_y++;
+      if (flit.traffic_burst_is_head) {
+        traffic_burst_packets_recv_y++;
+      }
     }
 
     if (!is_memory_pe && flit.flit_type(FLIT_TYPE_TAIL)) {
@@ -320,6 +342,14 @@ void ProcessingElement::ryProcess() {
           (int)sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
       int latency = recv_timestamp - send_timestamp;
       flit_latency_x[flit.id] = {1, flit.src_id, latency};
+      if (flit.traffic_burst_is_tail) {
+        int traffic_burst_send_timestamp =
+            traffic_burst_flit_latency_x[flit.traffic_burst_id].latency;
+        int traffic_burst_latency =
+            recv_timestamp - traffic_burst_send_timestamp;
+        traffic_burst_flit_latency_x[flit.traffic_burst_id] = {
+            1, flit.src_id, traffic_burst_latency};
+      }
     }
   }
   //!---------------------------------------------------------------------
@@ -402,12 +432,19 @@ void ProcessingElement::tyProcess() {
           (int)sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
       int dst_id = flit.dst_id;
       flit_latency_y[flit.id] = {0, dst_id, timestamp};
+      if (flit.traffic_burst_is_head) {
+        traffic_burst_flit_latency_y[flit.traffic_burst_id] = {0, dst_id,
+                                                               timestamp};
+      }
     }
 
+    flits_sent_y++;
     if (flit.flit_type(FLIT_TYPE_TAIL)) {
       packets_sent_y++;
+      if (flit.traffic_burst_is_tail) {
+        traffic_burst_packets_sent_y++;
+      }
     }
-    flits_sent_y++;
   }
   //!---------------------------------------------------------------------
   //! End collect stats
@@ -508,6 +545,7 @@ void ProcessingElement::tyProcess() {
                              GlobalParams::max_packet_size) {
         Flit flit = nextFlit(packet_queue_y, true);
         flit.id = packets_sent_y;
+        flit.traffic_burst_id = traffic_burst_packets_sent_y;
         flit_ty->write(flit);
         req_ty.write(1);
       } else { // Packet queue is empty
@@ -567,6 +605,10 @@ Flit ProcessingElement::nextFlit(queue<Packet> &packet_queue, bool is_update) {
     flit.is_head = true;
   if (packet.flit_left == 1)
     flit.is_tail = true;
+
+  flit.traffic_burst_is_head = packet.is_head;
+  flit.traffic_burst_is_tail = packet.is_tail;
+  flit.traffic_burst_id = packet.traffic_burst_id;
 
   if (!is_update)
     return flit;
@@ -731,12 +773,20 @@ bool ProcessingElement::canShot(Packet &packet, RequestType request_type) {
     //   threshold = GlobalParams::probability_of_retransmission;
     switch (request_type) {
     case READ:
-      threshold =
-          GlobalParams::packet_injection_rate / GlobalParams::max_packet_size;
+      if (traffic_burst_curr_y == 0) {
+        threshold = GlobalParams::packet_injection_rate /
+                    GlobalParams::traffic_burst_size;
+      } else {
+        threshold = 1.;
+      }
       break;
     case WRITE:
-      threshold =
-          GlobalParams::packet_injection_rate / GlobalParams::max_packet_size;
+      if (traffic_burst_curr_x == 0) {
+        threshold = GlobalParams::packet_injection_rate /
+                    GlobalParams::traffic_burst_size;
+      } else {
+        threshold = 1.;
+      }
       break;
     default:
       threshold = GlobalParams::packet_injection_rate;
@@ -783,7 +833,7 @@ bool ProcessingElement::canShot(Packet &packet, RequestType request_type) {
         if (prob < dst_prob[i].second) {
           int vc = randInt(0, GlobalParams::n_virtual_channels - 1);
           packet.make(local_id, dst_prob[i].first, vc, now, getRandomSize(),
-                      local_direction_id, 0, 0);
+                      local_direction_id, 0, 0, true, true, 0);
           break;
         }
       }
@@ -893,6 +943,9 @@ Packet ProcessingElement::generateResponse(Flit flit,
   p.dst_id = flit.src_id;
   p.id = flit.id;
   p.vc_id = 3 - flit.vc_id;
+  p.is_head = flit.traffic_burst_is_head;
+  p.is_tail = flit.traffic_burst_is_tail;
+  p.traffic_burst_id = flit.traffic_burst_id;
   p.local_direction_id = DIRECTION_LOCAL_NORTH;
   p.phys_channel_id = 1 - flit.phys_channel_id;
   p.timestamp = sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
@@ -915,6 +968,7 @@ Packet ProcessingElement::trafficRandom(RequestType request_type) {
   p.src_id = local_id;
   p.phys_channel_id = 0;
   p.id = 0;
+  p.traffic_burst_id = 0;
   p.local_direction_id =
       randInt(DIRECTION_LOCAL_NORTH,
               DIRECTION_LOCAL_NORTH - 1 + GlobalParams::mem_ports);
@@ -1022,12 +1076,38 @@ Packet ProcessingElement::trafficRandom(RequestType request_type) {
   //-----------------------------------
 
   p.timestamp = sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
+  p.is_head = false;
+  p.is_tail = false;
   switch (request_type) {
   case RequestType::READ:
     p.size = p.flit_left = 1;
+    if (traffic_burst_curr_y == 0) {
+      p.is_head = true;
+      traffic_burst_curr_dst_y = p.dst_id;
+    } else {
+      p.dst_id = traffic_burst_curr_dst_y;
+    }
+    traffic_burst_curr_y++;
+    if (traffic_burst_curr_y * GlobalParams::max_packet_size ==
+        GlobalParams::traffic_burst_size) {
+      p.is_tail = true;
+      traffic_burst_curr_y = 0;
+    }
     break;
   case RequestType::WRITE:
     p.size = p.flit_left = GlobalParams::max_packet_size;
+    if (traffic_burst_curr_x == 0) {
+      p.is_head = true;
+      traffic_burst_curr_dst_x = p.dst_id;
+    } else {
+      p.dst_id = traffic_burst_curr_dst_x;
+    }
+    traffic_burst_curr_x++;
+    if (traffic_burst_curr_x * GlobalParams::max_packet_size ==
+        GlobalParams::traffic_burst_size) {
+      p.is_tail = true;
+      traffic_burst_curr_x = 0;
+    }
     break;
   default:
     p.size = p.flit_left = 1;

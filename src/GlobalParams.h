@@ -203,6 +203,7 @@ struct GlobalParams {
   static bool traffic_verbose;
   static bool buffer_mid;
   static int pe_request_buffer_size;
+  static unsigned long traffic_burst_size;
 };
 
 #endif

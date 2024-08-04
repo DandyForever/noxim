@@ -77,3 +77,4 @@ bool GlobalParams::flit_dump;
 bool GlobalParams::traffic_verbose;
 bool GlobalParams::buffer_mid;
 int GlobalParams::pe_request_buffer_size;
+unsigned long GlobalParams::traffic_burst_size;

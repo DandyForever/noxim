@@ -12,12 +12,13 @@ pir_list = [50, 100, 150, 200, 250, 300,
 
 path = "sim/results/"
 pref = "burst"
-routing_list = ["MOD_DOR"]
+routing_list = ["DOR"]
 mesh = 'x'.join([str(mesh_x), str(mesh_y)])
 suff_list = ["mp_4_sv_3_sh_3"]
 result_names = [0, mesh_y+1, 2 *
                 (mesh_y+1), 3*(mesh_y+1), 4*(mesh_y+1), 5*(mesh_y+1)]
 burst_list = [1, 2, 4, 8, 16]
+traffic_burst = 16
 
 results = dict()
 
@@ -28,7 +29,7 @@ for burst in burst_list:
             pir_map = dict()
             for pir in pir_list:
                 file_name = '_'.join(
-                    [pref, "mesh", mesh, routing, suff, "pir", str(pir), "ps", str(burst)])
+                    [pref, "mesh", mesh, routing, suff, "pir", str(pir), "ps", str(burst), "bs", str(traffic_burst)])
 
                 data = list()
                 data.append(list())

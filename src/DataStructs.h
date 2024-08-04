@@ -45,6 +45,9 @@ struct Packet {
   int local_direction_id;
   int phys_channel_id;
   int vc_id;
+  bool is_head;
+  bool is_tail;
+  int traffic_burst_id;
   double timestamp; // SC timestamp at packet generation
   int size;
   int flit_left; // Number of remaining flits inside the packet
@@ -54,12 +57,14 @@ struct Packet {
   Packet() {}
 
   Packet(const int s, const int d, const int vc, const double ts, const int sz,
-         const int ldi, const int pci, const int pid) {
-    make(s, d, vc, ts, sz, ldi, pci, pid);
+         const int ldi, const int pci, const int pid, const bool head,
+         const bool tail, const int traff_burst_id) {
+    make(s, d, vc, ts, sz, ldi, pci, pid, head, tail, traff_burst_id);
   }
 
   void make(const int s, const int d, const int vc, const double ts,
-            const int sz, const int ldi, const int pci, const int pid) {
+            const int sz, const int ldi, const int pci, const int pid,
+            const bool head, const bool tail, const int traff_burst_id) {
     src_id = s;
     dst_id = d;
     id = pid;
@@ -70,6 +75,9 @@ struct Packet {
     size = sz;
     flit_left = sz;
     use_low_voltage_path = false;
+    is_head = head;
+    is_tail = tail;
+    traffic_burst_id = traff_burst_id;
   }
 };
 
@@ -134,6 +142,9 @@ struct Flit {
   // FLIT_TYPE_BODY, FLIT_TYPE_TAIL)
   bool is_head = false;
   bool is_tail = false;
+  bool traffic_burst_is_head = false;
+  bool traffic_burst_is_tail = false;
+  int traffic_burst_id;
   int sequence_no; // The sequence number of the flit inside the packet
   int sequence_length;
   Payload payload;  // Optional payload
