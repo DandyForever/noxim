@@ -1,7 +1,7 @@
 ../build/noxim \
     -config ../config_examples/mesh_18x10_interliving.yaml \
     -pir 0.5 poisson \
-    -routing MOD_DOR \
+    -routing DOR \
     -size 1 1 \
     -interliving_reps 0 \
     -sim 100000 \
@@ -16,5 +16,5 @@
     -traffic_verbose 0 \
     -flit_dump 0 \
     -buffer_verbose 0 \
-    -buffer_mid 1 \
-    -log_file_name ./results/validation_3clk
+    -buffer_mid 0 \
+    -log_file_name ./results/validation

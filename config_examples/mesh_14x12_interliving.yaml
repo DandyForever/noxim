@@ -180,5 +180,6 @@ buffer_verbose: false
 traffic_verbose: false
 flit_dump: false
 buffer_mid: false
+pe_request_buffer_size: 256
 log_file_name: "./results/results.csv"
 

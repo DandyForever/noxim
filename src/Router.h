@@ -61,7 +61,8 @@ SC_MODULE(Router) {
 
   // Registers
 
-  int local_id;     // Unique ID
+  int local_id; // Unique ID
+  bool is_memory_pe;
   int routing_type; // Type of routing algorithm
   int selection_type;
   BufferBank buffer[2 * DIRECTIONS + 1]; // buffer[direction][virtual_channel]
@@ -157,8 +158,6 @@ public:
   void ShowBuffersStats(std::ostream & out);
 
   bool connectedHubs(int src_hub, int dst_hub);
-
-  bool is_memory_pe(int id);
 };
 
 #endif

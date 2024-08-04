@@ -10,6 +10,8 @@
 
 #include "ProcessingElement.h"
 
+#define DEBUG if (0)
+
 int ProcessingElement::randInt(int min, int max) {
   return min + (int)((double)(max - min + 1) * rand() / (RAND_MAX + 1.0));
 }
@@ -26,8 +28,8 @@ void ProcessingElement::rxProcess() {
   //---------------------------------------------------------------------
   // Start checks
   //---------------------------------------------------------------------
-  if (!GlobalParams::both_phys_req_mode) {
-    if (!is_memory_pe(local_id)) {
+  DEBUG if (!GlobalParams::both_phys_req_mode) {
+    if (!is_memory_pe) {
       assert(!req_rx.read());
     }
   }
@@ -45,7 +47,7 @@ void ProcessingElement::rxProcess() {
       packets_recv_x++;
     }
 
-    if (!is_memory_pe(local_id) && flit.flit_type(FLIT_TYPE_TAIL)) {
+    if (!is_memory_pe && flit.flit_type(FLIT_TYPE_TAIL)) {
       int send_timestamp = flit_latency_y[flit.id].latency;
       int recv_timestamp =
           (int)sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
@@ -82,7 +84,7 @@ void ProcessingElement::rxProcess() {
   // Start managing flit recieved
   //---------------------------------------------------------------------
   // Only memory PEs are required to send response back
-  if (GlobalParams::req_ack_mode && is_memory_pe(local_id)) {
+  if (GlobalParams::req_ack_mode && is_memory_pe) {
     // Slave AXIS valid & ready handshake
     if (req_rx.read() && ack_rx.read()) {
       if (flit_rx.read().flit_type(FLIT_TYPE_TAIL)) {
@@ -108,7 +110,7 @@ void ProcessingElement::rxProcess() {
   //---------------------------------------------------------------------
   // Start managing ack_rx
   //---------------------------------------------------------------------
-  if (is_memory_pe(local_id)) {
+  if (is_memory_pe) {
     // ack_rx.write(in_flit_queue_x[free_slots_neighbor].size() <
     //              GlobalParams::buffer_depth);
     ack_rx.write(in_packet_queue_x[free_slots_neighbor].size() <
@@ -136,7 +138,7 @@ void ProcessingElement::txProcess() {
   if (req_tx.read() && ack_tx.read()) {
     Flit flit = flit_tx.read();
 
-    if (!is_memory_pe(local_id) && flit.flit_type(FLIT_TYPE_HEAD)) {
+    if (!is_memory_pe && flit.flit_type(FLIT_TYPE_HEAD)) {
       int timestamp =
           (int)sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
       int dst_id = flit.dst_id;
@@ -170,11 +172,11 @@ void ProcessingElement::txProcess() {
   //---------------------------------------------------------------------
   // Start managing memory PE
   //---------------------------------------------------------------------
-  if (is_memory_pe(local_id)) {
+  if (is_memory_pe) {
     if (req_tx.read() && ack_tx.read()) {
       // assert(!in_flit_queue_y[cur_out_vc_x].empty());
       // in_flit_queue_y[cur_out_vc_x].pop();
-      assert(!in_packet_queue_y[cur_out_vc_x].empty());
+      DEBUG assert(!in_packet_queue_y[cur_out_vc_x].empty());
       nextFlit(in_packet_queue_y[cur_out_vc_x], true);
     }
 
@@ -222,7 +224,7 @@ void ProcessingElement::txProcess() {
   //---------------------------------------------------------------------
   // Start managing EU PE
   //---------------------------------------------------------------------
-  if (!is_memory_pe(local_id)) {
+  if (!is_memory_pe) {
     // Generate packet and add to packet queue
     Packet packet;
     if ((packet_queue_x.size() < 2) && canShot(packet, RequestType::WRITE)) {
@@ -241,7 +243,10 @@ void ProcessingElement::txProcess() {
     if ((req_tx.read() && ack_tx.read()) || // Handshake happened
         !req_tx.read()                      // Not started sending
     ) {
-      if (!packet_queue_x.empty()) {
+      int on_the_fly_x = packets_sent_x - packets_recv_y;
+      if (!packet_queue_x.empty() &&
+          on_the_fly_x < GlobalParams::pe_request_buffer_size /
+                             GlobalParams::max_packet_size) {
         Flit flit = nextFlit(packet_queue_x, true);
         flit.id = packets_sent_x;
         flit_tx->write(flit);
@@ -260,17 +265,17 @@ void ProcessingElement::txProcess() {
   //---------------------------------------------------------------------
   // Start checks
   //---------------------------------------------------------------------
-  if (!GlobalParams::both_phys_req_mode) {
-    if (is_memory_pe(local_id)) {
+  DEBUG if (!GlobalParams::both_phys_req_mode) {
+    if (is_memory_pe) {
       assert(!req_tx.read());
     }
   }
-  if (!GlobalParams::req_ack_mode) {
-    if (is_memory_pe(local_id)) {
+  DEBUG if (!GlobalParams::req_ack_mode) {
+    if (is_memory_pe) {
       assert(!req_tx.read());
     }
   }
-  if (!GlobalParams::req_ack_mode) {
+  DEBUG if (!GlobalParams::req_ack_mode) {
     for (int vc = 0; vc < GlobalParams::n_virtual_channels; vc++) {
       // assert(in_flit_queue_y[vc].empty());
       assert(in_packet_queue_y[vc].empty());
@@ -290,8 +295,8 @@ void ProcessingElement::ryProcess() {
   //---------------------------------------------------------------------
   // Start checks
   //---------------------------------------------------------------------
-  if (!GlobalParams::both_phys_req_mode) {
-    if (is_memory_pe(local_id)) {
+  DEBUG if (!GlobalParams::both_phys_req_mode) {
+    if (is_memory_pe) {
       assert(!req_ry.read());
     }
   }
@@ -309,7 +314,7 @@ void ProcessingElement::ryProcess() {
       packets_recv_y++;
     }
 
-    if (!is_memory_pe(local_id) && flit.flit_type(FLIT_TYPE_TAIL)) {
+    if (!is_memory_pe && flit.flit_type(FLIT_TYPE_TAIL)) {
       int send_timestamp = flit_latency_x[flit.id].latency;
       int recv_timestamp =
           (int)sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
@@ -341,7 +346,7 @@ void ProcessingElement::ryProcess() {
   //---------------------------------------------------------------------
   // Only memory PEs are required to send response back
   if (GlobalParams::both_phys_req_mode && GlobalParams::req_ack_mode &&
-      is_memory_pe(local_id)) {
+      is_memory_pe) {
     // Slave AXIS valid & ready handshake
     if (req_ry.read() && ack_ry.read()) {
       if (flit_ry.read().flit_type(FLIT_TYPE_TAIL)) {
@@ -366,7 +371,7 @@ void ProcessingElement::ryProcess() {
   //---------------------------------------------------------------------
   // Start managing ack_ry
   //---------------------------------------------------------------------
-  if (is_memory_pe(local_id)) {
+  if (is_memory_pe) {
     // ack_ry.write(in_flit_queue_y[free_slots_neighbor_y].size() <
     //              GlobalParams::buffer_depth);
     ack_ry.write(in_packet_queue_y[free_slots_neighbor_y].size() <
@@ -392,7 +397,7 @@ void ProcessingElement::tyProcess() {
   if (req_ty.read() && ack_ty.read()) {
     Flit flit = flit_ty.read();
 
-    if (!is_memory_pe(local_id) && flit.flit_type(FLIT_TYPE_HEAD)) {
+    if (!is_memory_pe && flit.flit_type(FLIT_TYPE_HEAD)) {
       int timestamp =
           (int)sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
       int dst_id = flit.dst_id;
@@ -426,11 +431,11 @@ void ProcessingElement::tyProcess() {
   //---------------------------------------------------------------------
   // Start managing memory PE
   //---------------------------------------------------------------------
-  if (is_memory_pe(local_id)) {
+  if (is_memory_pe) {
     if (req_ty.read() && ack_ty.read()) {
       // assert(!in_flit_queue_x[cur_out_vc_y].empty());
       // in_flit_queue_x[cur_out_vc_y].pop();
-      assert(!in_packet_queue_x[cur_out_vc_y].empty());
+      DEBUG assert(!in_packet_queue_x[cur_out_vc_y].empty());
       nextFlit(in_packet_queue_x[cur_out_vc_y], true);
     }
 
@@ -478,7 +483,7 @@ void ProcessingElement::tyProcess() {
   //---------------------------------------------------------------------
   // Start managing EU PE
   //---------------------------------------------------------------------
-  if (GlobalParams::both_phys_req_mode && !is_memory_pe(local_id)) {
+  if (GlobalParams::both_phys_req_mode && !is_memory_pe) {
     // Generate packet and add to packet queue
     Packet packet;
     if ((packet_queue_y.size() < 2) && canShot(packet, RequestType::READ)) {
@@ -497,7 +502,10 @@ void ProcessingElement::tyProcess() {
     if ((req_ty.read() && ack_ty.read()) || // Handshake happened
         !req_ty.read()                      // Not started sending
     ) {
-      if (!packet_queue_y.empty()) {
+      int on_the_fly_y = packets_sent_y - packets_recv_x;
+      if (!packet_queue_y.empty() &&
+          on_the_fly_y < GlobalParams::pe_request_buffer_size /
+                             GlobalParams::max_packet_size) {
         Flit flit = nextFlit(packet_queue_y, true);
         flit.id = packets_sent_y;
         flit_ty->write(flit);
@@ -517,17 +525,17 @@ void ProcessingElement::tyProcess() {
   //---------------------------------------------------------------------
   // Start checks
   //---------------------------------------------------------------------
-  if (!GlobalParams::both_phys_req_mode) {
-    if (!is_memory_pe(local_id)) {
+  DEBUG if (!GlobalParams::both_phys_req_mode) {
+    if (!is_memory_pe) {
       assert(!req_ty.read());
     }
   }
-  if (!GlobalParams::req_ack_mode) {
-    if (is_memory_pe(local_id)) {
+  DEBUG if (!GlobalParams::req_ack_mode) {
+    if (is_memory_pe) {
       assert(!req_ty.read());
     }
   }
-  if (!GlobalParams::req_ack_mode) {
+  DEBUG if (!GlobalParams::req_ack_mode) {
     for (int vc = 0; vc < GlobalParams::n_virtual_channels; vc++) {
       // assert(in_flit_queue_x[vc].empty());
       assert(in_packet_queue_x[vc].empty());
@@ -568,21 +576,6 @@ Flit ProcessingElement::nextFlit(queue<Packet> &packet_queue, bool is_update) {
     packet_queue.pop();
 
   return flit;
-}
-
-bool ProcessingElement::is_memory_pe(int id) {
-  Coord coord = id2Coord(id);
-
-  if (coord.x == 0)
-    return false;
-  if (coord.y == 0)
-    return false;
-  if (coord.x == GlobalParams::mesh_dim_x - 1)
-    return false;
-  if (coord.y == GlobalParams::mesh_dim_y - 1)
-    return false;
-
-  return true;
 }
 
 bool ProcessingElement::is_same_quadrant(int self_id, int id) {
@@ -627,7 +620,7 @@ bool ProcessingElement::is_angle_pe(int id) {
 }
 
 bool ProcessingElement::is_angle_special_pe(int id, int num) {
-  assert(GlobalParams::mesh_dim_y >= 2 * num);
+  DEBUG assert(GlobalParams::mesh_dim_y >= 2 * num);
 
   Coord coord = id2Coord(id);
 
@@ -638,7 +631,7 @@ bool ProcessingElement::is_angle_special_pe(int id, int num) {
 }
 
 bool ProcessingElement::is_horizontal_special_pe(int id, int num) {
-  assert(GlobalParams::mesh_dim_x >= 2 * num);
+  DEBUG assert(GlobalParams::mesh_dim_x >= 2 * num);
 
   Coord coord = id2Coord(id);
 
@@ -659,7 +652,7 @@ bool ProcessingElement::canShot(Packet &packet, RequestType request_type) {
     return false;
 
   // Central tiles should not send packets
-  if (is_memory_pe(local_id))
+  if (is_memory_pe)
     return false;
 
   // Switching off some PEs
@@ -957,7 +950,7 @@ Packet ProcessingElement::trafficRandom(RequestType request_type) {
     }
 #endif
 
-  } while (!is_memory_pe(p.dst_id)
+  } while (!is_memory_node(p.dst_id)
            //------------------------------
            // Temporary for quadrant study
            //------------------------------

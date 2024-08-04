@@ -69,6 +69,7 @@ SC_MODULE(ProcessingElement) {
 
   // Registers
   int local_id; // Unique identification number
+  bool is_memory_pe;
   int local_direction_id;
   bool current_level_rx; // Current level for Alternating Bit Protocol (ABP)
   bool current_level_tx; // Current level for Alternating Bit Protocol (ABP)
@@ -121,7 +122,6 @@ SC_MODULE(ProcessingElement) {
   void txProcess(); // The transmitting process
   void ryProcess();
   void tyProcess();
-  bool is_memory_pe(int id);
   bool is_same_quadrant(int self_id, int id);
   bool is_angle_pe(int id);
   bool is_vertical_pe(int id);

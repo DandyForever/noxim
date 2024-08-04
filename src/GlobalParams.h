@@ -202,6 +202,7 @@ struct GlobalParams {
   static bool flit_dump;
   static bool traffic_verbose;
   static bool buffer_mid;
+  static int pe_request_buffer_size;
 };
 
 #endif

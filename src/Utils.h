@@ -176,6 +176,21 @@ inline int coord2Id(const Coord &coord) {
   return id;
 }
 
+inline bool is_memory_node(int id) {
+  Coord coord = id2Coord(id);
+
+  if (coord.x == 0)
+    return false;
+  if (coord.y == 0)
+    return false;
+  if (coord.x == GlobalParams::mesh_dim_x - 1)
+    return false;
+  if (coord.y == GlobalParams::mesh_dim_y - 1)
+    return false;
+
+  return true;
+}
+
 inline bool sameRadioHub(int id1, int id2) {
   map<int, int>::iterator it1 = GlobalParams::hub_for_tile.find(id1);
   map<int, int>::iterator it2 = GlobalParams::hub_for_tile.find(id2);

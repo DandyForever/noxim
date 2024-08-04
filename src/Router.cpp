@@ -10,6 +10,8 @@
 
 #include "Router.h"
 
+#define DEBUG if (0)
+
 inline int toggleKthBit(int n, int k) { return (n ^ (1 << (k - 1))); }
 
 void Router::process() {
@@ -39,8 +41,8 @@ void Router::rxProcess() {
     if (req_rx[i].read() && ack_rx[i].read()) {
       Flit received_flit = flit_rx[i].read();
 
-      if (received_flit.phys_channel_id == 1) {
-        assert(is_memory_pe(received_flit.src_id));
+      DEBUG if (received_flit.phys_channel_id == 1) {
+        assert(is_memory_node(received_flit.src_id));
       }
 
       int vc = received_flit.vc_id;
@@ -96,8 +98,8 @@ void Router::txProcess() {
     for (int vc = 0; vc < GlobalParams::n_virtual_channels; vc++) {
       if (buffer[i][vc].IsEmpty()) {
         reservation_status[i][vc] = false;
-        for (auto it = reservation_queue.begin(); it != reservation_queue.end();
-             it++) {
+        DEBUG for (auto it = reservation_queue.begin();
+                   it != reservation_queue.end(); it++) {
           if (it->first == i && it->second == vc)
             assert(0);
         }
@@ -114,7 +116,7 @@ void Router::txProcess() {
   // Updating out buffers
   for (int o = 0; o < 2 * DIRECTIONS + 1; o++) {
     if (req_tx[o].read() && ack_tx[o].read()) {
-      assert(!buffer_out[o][cur_out_vc[o]].IsEmpty());
+      DEBUG assert(!buffer_out[o][cur_out_vc[o]].IsEmpty());
       buffer_out[o][cur_out_vc[o]].Pop();
     }
   }
@@ -136,7 +138,7 @@ void Router::txProcess() {
     int i = item_i_vc.first;
     int vc = item_i_vc.second;
 
-    if (buffer[i][vc].IsEmpty()) {
+    DEBUG if (buffer[i][vc].IsEmpty()) {
       assert(0);
       continue;
     }
@@ -174,7 +176,7 @@ void Router::txProcess() {
     TReservation r;
     r.input = i;
     r.vc = vc;
-    assert(i != o);
+    DEBUG assert(i != o);
 
     LOG << " checking availability of Output[" << o << "] for Input[" << i
         << "][" << vc << "] flit " << flit << endl;
@@ -226,10 +228,10 @@ void Router::txProcess() {
       int i = reservations[0].input;
       int vc = reservations[0].vc;
 
-      assert(vc == vc_o);
+      DEBUG assert(vc == vc_o);
 
       if (buffer[i][vc].IsEmpty()) {
-        assert(GlobalParams::max_packet_size > 1);
+        DEBUG assert(GlobalParams::max_packet_size > 1);
         continue;
       }
 
@@ -244,7 +246,6 @@ void Router::txProcess() {
       }
 
       if (buffer_->IsFull()) {
-        // assert(0);
         LOG << " Cannot forward Input[" << i << "][" << vc << "] to Output["
             << o << "], flit: " << flit << endl;
         LOG << " **DEBUG buffer_full_status_tx "
@@ -266,7 +267,7 @@ void Router::txProcess() {
         r.vc = vc;
         reservation_table.release(r, o, vc);
       } else {
-        assert(GlobalParams::max_packet_size > 1);
+        DEBUG assert(GlobalParams::max_packet_size > 1);
       }
 
       // Power & Stats -------------------------------------------------
@@ -343,21 +344,6 @@ void Router::txProcess() {
     out_reservation_queue[o].push(vc);
     out_reservation_status[o][vc] = true;
   }
-}
-
-bool Router::is_memory_pe(int id) {
-  Coord coord = id2Coord(id);
-
-  if (coord.x == 0)
-    return false;
-  if (coord.y == 0)
-    return false;
-  if (coord.x == GlobalParams::mesh_dim_x)
-    return false;
-  if (coord.y == GlobalParams::mesh_dim_y)
-    return false;
-
-  return true;
 }
 
 NoP_data Router::getCurrentNoPData() {

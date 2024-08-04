@@ -285,7 +285,8 @@ SC_MODULE(Tile) {
     pe[DIRECTION_SOUTH] = new ProcessingElement("ProcessingElementSouth");
     pe[DIRECTION_WEST] = new ProcessingElement("ProcessingElementWest");
     for (int i = 0; i < DIRECTIONS; i++) {
-      // pe[i] = new ProcessingElement(pe_name[i]);
+      pe[i]->local_id = local_id;
+      pe[i]->is_memory_pe = is_memory_node(local_id);
       pe[i]->clock(clock);
       pe[i]->reset(reset);
 
