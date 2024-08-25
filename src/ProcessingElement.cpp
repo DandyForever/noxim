@@ -55,12 +55,6 @@ void ProcessingElement::rxProcess() {
       int recv_timestamp =
           (int)sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
       int latency = recv_timestamp - send_timestamp;
-      // if (local_id == 3) {
-      //     if (latency > 500)  {
-      //         cout << flit.src_id << " sent " << send_timestamp << " recv "
-      //         << recv_timestamp << endl;
-      //     }
-      // }
       flit_latency_y[flit.id] = {1, flit.src_id, latency};
       if (flit.traffic_burst_is_tail) {
         int traffic_burst_send_timestamp =
@@ -99,14 +93,6 @@ void ProcessingElement::rxProcess() {
     // Slave AXIS valid & ready handshake
     if (req_rx.read() && ack_rx.read()) {
       if (flit_rx.read().flit_type(FLIT_TYPE_TAIL)) {
-        // Flit flit_tmp = flit_rx.read();
-        // flit_tmp.vc_id = 3 - flit_tmp.vc_id; // Switching virtual channel
-        // flit_tmp.is_head = true;
-        // swap(flit_tmp.src_id, flit_tmp.dst_id);
-        // flit_tmp.local_direction_id = DIRECTION_LOCAL_NORTH;
-        // flit_tmp.phys_channel_id = 1 - flit_tmp.phys_channel_id;
-        // in_flit_queue_x[flit_tmp.vc_id].push(flit_tmp);
-
         Flit flit_tmp = flit_rx.read();
         int vc_id = GlobalParams::n_virtual_channels - 1 - flit_tmp.vc_id;
         Packet p = generateResponse(flit_tmp, RequestType::WRITE);
@@ -122,8 +108,6 @@ void ProcessingElement::rxProcess() {
   // Start managing ack_rx
   //---------------------------------------------------------------------
   if (is_memory_pe) {
-    // ack_rx.write(in_flit_queue_x[free_slots_neighbor].size() <
-    //              GlobalParams::buffer_depth);
     ack_rx.write(in_packet_queue_x[free_slots_neighbor].size() <
                  GlobalParams::buffer_depth);
   } else {
@@ -192,14 +176,11 @@ void ProcessingElement::txProcess() {
   //---------------------------------------------------------------------
   if (is_memory_pe) {
     if (req_tx.read() && ack_tx.read()) {
-      // assert(!in_flit_queue_y[cur_out_vc_x].empty());
-      // in_flit_queue_y[cur_out_vc_x].pop();
       DEBUG assert(!in_packet_queue_y[cur_out_vc_x].empty());
       nextFlit(in_packet_queue_y[cur_out_vc_x], true);
     }
 
     for (int vc = 0; vc < GlobalParams::n_virtual_channels; vc++) {
-      // if (!in_flit_queue_y[vc].empty() && !out_reservation_status_x[vc]) {
       if (!in_packet_queue_y[vc].empty() && !out_reservation_status_x[vc]) {
         out_reservation_queue_x.push(vc);
         out_reservation_status_x[vc] = true;
@@ -216,13 +197,11 @@ void ProcessingElement::txProcess() {
       req_tx.write(1);
       int vc = out_reservation_queue_x.front();
       cur_out_vc_x = vc;
-      // flit_tx->write(in_flit_queue_y[vc].front());
       Flit flit = nextFlit(in_packet_queue_y[vc], false);
       flit_tx->write(flit);
       out_reservation_status_x[vc] = false;
       out_reservation_queue_x.pop();
       if (out_reservation_queue_x.empty()) {
-        // if (in_flit_queue_y[vc].size() > 1) {
         if (in_packet_queue_y[vc].size() > 1) {
           free_slots.write(vc);
           out_reservation_queue_x.push(vc);
@@ -296,7 +275,6 @@ void ProcessingElement::txProcess() {
   }
   DEBUG if (!GlobalParams::req_ack_mode) {
     for (int vc = 0; vc < GlobalParams::n_virtual_channels; vc++) {
-      // assert(in_flit_queue_y[vc].empty());
       assert(in_packet_queue_y[vc].empty());
     }
   }
@@ -380,13 +358,6 @@ void ProcessingElement::ryProcess() {
     // Slave AXIS valid & ready handshake
     if (req_ry.read() && ack_ry.read()) {
       if (flit_ry.read().flit_type(FLIT_TYPE_TAIL)) {
-        // Flit flit_tmp = flit_ry.read();
-        // flit_tmp.vc_id = 3 - flit_tmp.vc_id; // Switching virtual channel
-        // flit_tmp.is_head = true;
-        // swap(flit_tmp.src_id, flit_tmp.dst_id);
-        // flit_tmp.local_direction_id = DIRECTION_LOCAL_NORTH;
-        // flit_tmp.phys_channel_id = 1 - flit_tmp.phys_channel_id;
-        // in_flit_queue_y[flit_tmp.vc_id].push(flit_tmp);
         Flit flit_tmp = flit_ry.read();
         int vc_id = GlobalParams::n_virtual_channels - 1 - flit_tmp.vc_id;
         Packet p = generateResponse(flit_ry.read(), RequestType::READ);
@@ -402,8 +373,6 @@ void ProcessingElement::ryProcess() {
   // Start managing ack_ry
   //---------------------------------------------------------------------
   if (is_memory_pe) {
-    // ack_ry.write(in_flit_queue_y[free_slots_neighbor_y].size() <
-    //              GlobalParams::buffer_depth);
     ack_ry.write(in_packet_queue_y[free_slots_neighbor_y].size() <
                  GlobalParams::buffer_depth);
   } else {
@@ -470,14 +439,11 @@ void ProcessingElement::tyProcess() {
   //---------------------------------------------------------------------
   if (is_memory_pe) {
     if (req_ty.read() && ack_ty.read()) {
-      // assert(!in_flit_queue_x[cur_out_vc_y].empty());
-      // in_flit_queue_x[cur_out_vc_y].pop();
       DEBUG assert(!in_packet_queue_x[cur_out_vc_y].empty());
       nextFlit(in_packet_queue_x[cur_out_vc_y], true);
     }
 
     for (int vc = 0; vc < GlobalParams::n_virtual_channels; vc++) {
-      // if (!in_flit_queue_x[vc].empty() && !out_reservation_status_y[vc]) {
       if (!in_packet_queue_x[vc].empty() && !out_reservation_status_y[vc]) {
         out_reservation_queue_y.push(vc);
         out_reservation_status_y[vc] = true;
@@ -494,13 +460,11 @@ void ProcessingElement::tyProcess() {
       req_ty.write(1);
       int vc = out_reservation_queue_y.front();
       cur_out_vc_y = vc;
-      // flit_ty->write(in_flit_queue_x[vc].front());
       Flit flit = nextFlit(in_packet_queue_x[vc], false);
       flit_ty->write(flit);
       out_reservation_status_y[vc] = false;
       out_reservation_queue_y.pop();
       if (out_reservation_queue_y.empty()) {
-        // if (in_flit_queue_x[vc].size() > 1) {
         if (in_packet_queue_x[vc].size() > 1) {
           free_slots_y.write(vc);
           out_reservation_queue_y.push(vc);
@@ -575,7 +539,6 @@ void ProcessingElement::tyProcess() {
   }
   DEBUG if (!GlobalParams::req_ack_mode) {
     for (int vc = 0; vc < GlobalParams::n_virtual_channels; vc++) {
-      // assert(in_flit_queue_x[vc].empty());
       assert(in_packet_queue_x[vc].empty());
     }
   }
@@ -767,10 +730,6 @@ bool ProcessingElement::canShot(Packet &packet, RequestType request_type) {
   double now = sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
 
   if (GlobalParams::traffic_distribution != TRAFFIC_TABLE_BASED) {
-    // if (!transmittedAtPreviousCycle)
-    //   threshold = GlobalParams::packet_injection_rate;
-    // else
-    //   threshold = GlobalParams::probability_of_retransmission;
     switch (request_type) {
     case READ:
       if (traffic_burst_curr_y == 0) {
