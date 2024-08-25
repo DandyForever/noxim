@@ -108,7 +108,7 @@ void ProcessingElement::rxProcess() {
         // in_flit_queue_x[flit_tmp.vc_id].push(flit_tmp);
 
         Flit flit_tmp = flit_rx.read();
-        int vc_id = 3 - flit_tmp.vc_id;
+        int vc_id = GlobalParams::n_virtual_channels - 1 - flit_tmp.vc_id;
         Packet p = generateResponse(flit_tmp, RequestType::WRITE);
         in_packet_queue_x[vc_id].push(p);
       }
@@ -262,9 +262,9 @@ void ProcessingElement::txProcess() {
         !req_tx.read()                      // Not started sending
     ) {
       int on_the_fly_x = packets_sent_x - packets_recv_y;
-      if (!packet_queue_x.empty() &&
+      if (!packet_queue_x.empty() && (!GlobalParams::req_ack_mode ||
           on_the_fly_x < GlobalParams::pe_request_buffer_size /
-                             GlobalParams::max_packet_size) {
+                             GlobalParams::max_packet_size)) {
         Flit flit = nextFlit(packet_queue_x, true);
         flit.id = packets_sent_x;
         flit.traffic_burst_id = traffic_burst_packets_sent_x;
@@ -388,7 +388,7 @@ void ProcessingElement::ryProcess() {
         // flit_tmp.phys_channel_id = 1 - flit_tmp.phys_channel_id;
         // in_flit_queue_y[flit_tmp.vc_id].push(flit_tmp);
         Flit flit_tmp = flit_ry.read();
-        int vc_id = 3 - flit_tmp.vc_id;
+        int vc_id = GlobalParams::n_virtual_channels - 1 - flit_tmp.vc_id;
         Packet p = generateResponse(flit_ry.read(), RequestType::READ);
         in_packet_queue_y[vc_id].push(p);
       }
@@ -540,9 +540,9 @@ void ProcessingElement::tyProcess() {
         !req_ty.read()                      // Not started sending
     ) {
       int on_the_fly_y = packets_sent_y - packets_recv_x;
-      if (!packet_queue_y.empty() &&
+      if (!packet_queue_y.empty() && (!GlobalParams::req_ack_mode ||
           on_the_fly_y < GlobalParams::pe_request_buffer_size /
-                             GlobalParams::max_packet_size) {
+                             GlobalParams::max_packet_size)) {
         Flit flit = nextFlit(packet_queue_y, true);
         flit.id = packets_sent_y;
         flit.traffic_burst_id = traffic_burst_packets_sent_y;
@@ -942,7 +942,7 @@ Packet ProcessingElement::generateResponse(Flit flit,
   p.src_id = flit.dst_id;
   p.dst_id = flit.src_id;
   p.id = flit.id;
-  p.vc_id = 3 - flit.vc_id;
+  p.vc_id = GlobalParams::n_virtual_channels - 1 - flit.vc_id;
   p.is_head = flit.traffic_burst_is_head;
   p.is_tail = flit.traffic_burst_is_tail;
   p.traffic_burst_id = flit.traffic_burst_id;
