@@ -63,12 +63,12 @@ void ProcessingElement::rxProcess() {
         traffic_burst_flit_latency_y[flit.traffic_burst_id] = {
             1, flit.src_id, traffic_burst_latency};
         int creation_timestamp =
-            traffic_burst_flit_latency_from_creation_y[flit.traffic_burst_id].latency;
+            traffic_burst_flit_latency_from_creation_y[flit.traffic_burst_id]
+                .latency;
         int traffic_burst_latency_from_creation =
             recv_timestamp - creation_timestamp;
         traffic_burst_flit_latency_from_creation_y[flit.traffic_burst_id] = {
-          1, flit.src_id, traffic_burst_latency_from_creation
-        };
+            1, flit.src_id, traffic_burst_latency_from_creation};
       }
     }
   }
@@ -81,10 +81,8 @@ void ProcessingElement::rxProcess() {
   //---------------------------------------------------------------------
   if (req_rx.read() && ack_rx.read()) {
     if (GlobalParams::flit_dump) {
-      cout << "X Recv Info: Cycle["
-           << timestamp()
-           << "] flit " << flit_rx.read().src_id << " -> "
-           << flit_rx.read().dst_id << endl;
+      cout << "X Recv Info: Cycle[" << timestamp() << "] flit "
+           << flit_rx.read().src_id << " -> " << flit_rx.read().dst_id << endl;
     }
   }
   //!---------------------------------------------------------------------
@@ -144,11 +142,10 @@ void ProcessingElement::txProcess() {
       int now = timestamp();
       flit_latency_x[flit.id] = {0, dst_id, now};
       if (flit.traffic_burst_is_head) {
-        traffic_burst_flit_latency_x[flit.traffic_burst_id] = {0, dst_id,
-                                                               now};
+        traffic_burst_flit_latency_x[flit.traffic_burst_id] = {0, dst_id, now};
         int creation_timestamp = (int)flit.timestamp;
-        traffic_burst_flit_latency_from_creation_x[flit.traffic_burst_id] =
-          {0, dst_id, creation_timestamp};
+        traffic_burst_flit_latency_from_creation_x[flit.traffic_burst_id] = {
+            0, dst_id, creation_timestamp};
       }
     }
 
@@ -169,10 +166,8 @@ void ProcessingElement::txProcess() {
   //---------------------------------------------------------------------
   if (req_tx.read() && ack_tx.read()) {
     if (GlobalParams::flit_dump) {
-      cout << "X Send Info: Cycle["
-           << timestamp()
-           << "] flit " << flit_tx.read().src_id << " -> "
-           << flit_tx.read().dst_id << endl;
+      cout << "X Send Info: Cycle[" << timestamp() << "] flit "
+           << flit_tx.read().src_id << " -> " << flit_tx.read().dst_id << endl;
     }
   }
   //!---------------------------------------------------------------------
@@ -230,9 +225,13 @@ void ProcessingElement::txProcess() {
   // Start managing EU PE
   //---------------------------------------------------------------------
   if (!is_memory_pe) {
+    int on_the_fly_x = packets_sent_x - packets_recv_y;
     // Generate packet and add to packet queue
     Packet packet;
-    if ((packet_queue_x.size() < 2) && canShot(packet, RequestType::WRITE)) {
+    if (((int)packet_queue_x.size() + on_the_fly_x <
+         GlobalParams::pe_request_buffer_size /
+             GlobalParams::max_packet_size) &&
+        canShot(packet, RequestType::WRITE)) {
       packet_queue_x.push(packet);
       transmittedAtPreviousCycle = true;
     } else {
@@ -248,10 +247,10 @@ void ProcessingElement::txProcess() {
     if ((req_tx.read() && ack_tx.read()) || // Handshake happened
         !req_tx.read()                      // Not started sending
     ) {
-      int on_the_fly_x = packets_sent_x - packets_recv_y;
-      if (!packet_queue_x.empty() && (!GlobalParams::req_ack_mode ||
-          on_the_fly_x < GlobalParams::pe_request_buffer_size /
-                             GlobalParams::max_packet_size)) {
+      if (!packet_queue_x.empty() &&
+          (!GlobalParams::req_ack_mode ||
+           on_the_fly_x < GlobalParams::pe_request_buffer_size /
+                              GlobalParams::max_packet_size)) {
         Flit flit = nextFlit(packet_queue_x, true);
         flit.id = packets_sent_x;
         flit.traffic_burst_id = traffic_burst_packets_sent_x;
@@ -335,12 +334,12 @@ void ProcessingElement::ryProcess() {
         traffic_burst_flit_latency_x[flit.traffic_burst_id] = {
             1, flit.src_id, traffic_burst_latency};
         int creation_timestamp =
-            traffic_burst_flit_latency_from_creation_x[flit.traffic_burst_id].latency;
+            traffic_burst_flit_latency_from_creation_x[flit.traffic_burst_id]
+                .latency;
         int traffic_burst_latency_from_creation =
             recv_timestamp - creation_timestamp;
         traffic_burst_flit_latency_from_creation_x[flit.traffic_burst_id] = {
-          1, flit.src_id, traffic_burst_latency_from_creation
-        };
+            1, flit.src_id, traffic_burst_latency_from_creation};
       }
     }
   }
@@ -353,10 +352,8 @@ void ProcessingElement::ryProcess() {
   //---------------------------------------------------------------------
   if (req_ry.read() && ack_ry.read()) {
     if (GlobalParams::flit_dump) {
-      cout << "Y Recv Info: Cycle["
-           << timestamp()
-           << "] flit " << flit_ry.read().src_id << " -> "
-           << flit_ry.read().dst_id << endl;
+      cout << "Y Recv Info: Cycle[" << timestamp() << "] flit "
+           << flit_ry.read().src_id << " -> " << flit_ry.read().dst_id << endl;
     }
   }
   //!---------------------------------------------------------------------
@@ -415,11 +412,10 @@ void ProcessingElement::tyProcess() {
       int dst_id = flit.dst_id;
       flit_latency_y[flit.id] = {0, dst_id, now};
       if (flit.traffic_burst_is_head) {
-        traffic_burst_flit_latency_y[flit.traffic_burst_id] = {0, dst_id,
-                                                               now};
+        traffic_burst_flit_latency_y[flit.traffic_burst_id] = {0, dst_id, now};
         int creation_timestamp = flit.timestamp;
-        traffic_burst_flit_latency_from_creation_y[flit.traffic_burst_id] =
-          {0, dst_id, creation_timestamp};
+        traffic_burst_flit_latency_from_creation_y[flit.traffic_burst_id] = {
+            0, dst_id, creation_timestamp};
       }
     }
 
@@ -440,10 +436,8 @@ void ProcessingElement::tyProcess() {
   //---------------------------------------------------------------------
   if (req_ty.read() && ack_ty.read()) {
     if (GlobalParams::flit_dump) {
-      cout << "Y Send Info: Cycle["
-           << timestamp()
-           << "] flit " << flit_ty.read().src_id << " -> "
-           << flit_ty.read().dst_id << endl;
+      cout << "Y Send Info: Cycle[" << timestamp() << "] flit "
+           << flit_ty.read().src_id << " -> " << flit_ty.read().dst_id << endl;
     }
   }
   //!---------------------------------------------------------------------
@@ -501,9 +495,13 @@ void ProcessingElement::tyProcess() {
   // Start managing EU PE
   //---------------------------------------------------------------------
   if (GlobalParams::both_phys_req_mode && !is_memory_pe) {
+    int on_the_fly_y = packets_sent_y - packets_recv_x;
     // Generate packet and add to packet queue
     Packet packet;
-    if ((packet_queue_y.size() < 2) && canShot(packet, RequestType::READ)) {
+    if (((int)packet_queue_y.size() + on_the_fly_y <
+         GlobalParams::pe_request_buffer_size /
+             GlobalParams::max_packet_size) &&
+        canShot(packet, RequestType::READ)) {
       packet_queue_y.push(packet);
       transmittedAtPreviousCycle = true;
     } else {
@@ -519,10 +517,10 @@ void ProcessingElement::tyProcess() {
     if ((req_ty.read() && ack_ty.read()) || // Handshake happened
         !req_ty.read()                      // Not started sending
     ) {
-      int on_the_fly_y = packets_sent_y - packets_recv_x;
-      if (!packet_queue_y.empty() && (!GlobalParams::req_ack_mode ||
-          on_the_fly_y < GlobalParams::pe_request_buffer_size /
-                             GlobalParams::max_packet_size)) {
+      if (!packet_queue_y.empty() &&
+          (!GlobalParams::req_ack_mode ||
+           on_the_fly_y < GlobalParams::pe_request_buffer_size /
+                              GlobalParams::max_packet_size)) {
         Flit flit = nextFlit(packet_queue_y, true);
         flit.id = packets_sent_y;
         flit.traffic_burst_id = traffic_burst_packets_sent_y;
