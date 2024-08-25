@@ -191,6 +191,10 @@ inline bool is_memory_node(int id) {
   return true;
 }
 
+inline int timestamp() {
+  return (int)sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
+}
+
 inline bool sameRadioHub(int id1, int id2) {
   map<int, int>::iterator it1 = GlobalParams::hub_for_tile.find(id1);
   map<int, int>::iterator it2 = GlobalParams::hub_for_tile.find(id2);

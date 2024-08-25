@@ -52,8 +52,7 @@ void ProcessingElement::rxProcess() {
 
     if (!is_memory_pe && flit.flit_type(FLIT_TYPE_TAIL)) {
       int send_timestamp = flit_latency_y[flit.id].latency;
-      int recv_timestamp =
-          (int)sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
+      int recv_timestamp = timestamp();
       int latency = recv_timestamp - send_timestamp;
       flit_latency_y[flit.id] = {1, flit.src_id, latency};
       if (flit.traffic_burst_is_tail) {
@@ -76,7 +75,7 @@ void ProcessingElement::rxProcess() {
   if (req_rx.read() && ack_rx.read()) {
     if (GlobalParams::flit_dump) {
       cout << "X Recv Info: Cycle["
-           << sc_time_stamp().to_double() / GlobalParams::clock_period_ps
+           << timestamp()
            << "] flit " << flit_rx.read().src_id << " -> "
            << flit_rx.read().dst_id << endl;
     }
@@ -134,13 +133,12 @@ void ProcessingElement::txProcess() {
     Flit flit = flit_tx.read();
 
     if (!is_memory_pe && flit.flit_type(FLIT_TYPE_HEAD)) {
-      int timestamp =
-          (int)sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
       int dst_id = flit.dst_id;
-      flit_latency_x[flit.id] = {0, dst_id, timestamp};
+      int now = timestamp();
+      flit_latency_x[flit.id] = {0, dst_id, now};
       if (flit.traffic_burst_is_head) {
         traffic_burst_flit_latency_x[flit.traffic_burst_id] = {0, dst_id,
-                                                               timestamp};
+                                                               now};
       }
     }
 
@@ -162,7 +160,7 @@ void ProcessingElement::txProcess() {
   if (req_tx.read() && ack_tx.read()) {
     if (GlobalParams::flit_dump) {
       cout << "X Send Info: Cycle["
-           << sc_time_stamp().to_double() / GlobalParams::clock_period_ps
+           << timestamp()
            << "] flit " << flit_tx.read().src_id << " -> "
            << flit_tx.read().dst_id << endl;
     }
@@ -316,8 +314,7 @@ void ProcessingElement::ryProcess() {
 
     if (!is_memory_pe && flit.flit_type(FLIT_TYPE_TAIL)) {
       int send_timestamp = flit_latency_x[flit.id].latency;
-      int recv_timestamp =
-          (int)sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
+      int recv_timestamp = timestamp();
       int latency = recv_timestamp - send_timestamp;
       flit_latency_x[flit.id] = {1, flit.src_id, latency};
       if (flit.traffic_burst_is_tail) {
@@ -340,7 +337,7 @@ void ProcessingElement::ryProcess() {
   if (req_ry.read() && ack_ry.read()) {
     if (GlobalParams::flit_dump) {
       cout << "Y Recv Info: Cycle["
-           << sc_time_stamp().to_double() / GlobalParams::clock_period_ps
+           << timestamp()
            << "] flit " << flit_ry.read().src_id << " -> "
            << flit_ry.read().dst_id << endl;
     }
@@ -397,13 +394,12 @@ void ProcessingElement::tyProcess() {
     Flit flit = flit_ty.read();
 
     if (!is_memory_pe && flit.flit_type(FLIT_TYPE_HEAD)) {
-      int timestamp =
-          (int)sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
+      int now = timestamp();
       int dst_id = flit.dst_id;
-      flit_latency_y[flit.id] = {0, dst_id, timestamp};
+      flit_latency_y[flit.id] = {0, dst_id, now};
       if (flit.traffic_burst_is_head) {
         traffic_burst_flit_latency_y[flit.traffic_burst_id] = {0, dst_id,
-                                                               timestamp};
+                                                               now};
       }
     }
 
@@ -425,7 +421,7 @@ void ProcessingElement::tyProcess() {
   if (req_ty.read() && ack_ty.read()) {
     if (GlobalParams::flit_dump) {
       cout << "Y Send Info: Cycle["
-           << sc_time_stamp().to_double() / GlobalParams::clock_period_ps
+           << timestamp()
            << "] flit " << flit_ty.read().src_id << " -> "
            << flit_ty.read().dst_id << endl;
     }
@@ -727,7 +723,7 @@ bool ProcessingElement::canShot(Packet &packet, RequestType request_type) {
   bool shot;
   double threshold;
 
-  double now = sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
+  double now = timestamp();
 
   if (GlobalParams::traffic_distribution != TRAFFIC_TABLE_BASED) {
     switch (request_type) {
@@ -825,7 +821,7 @@ Packet ProcessingElement::trafficLocal() {
   int i_rnd = rand() % dst_set.size();
 
   p.dst_id = dst_set[i_rnd];
-  p.timestamp = sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
+  p.timestamp = timestamp();
   p.size = p.flit_left = getRandomSize();
   p.vc_id = randInt(0, GlobalParams::n_virtual_channels - 1);
 
@@ -888,7 +884,7 @@ Packet ProcessingElement::trafficULocal() {
 
   p.dst_id = findRandomDestination(local_id, target_hops);
 
-  p.timestamp = sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
+  p.timestamp = timestamp();
   p.size = p.flit_left = getRandomSize();
   p.vc_id = randInt(0, GlobalParams::n_virtual_channels - 1);
 
@@ -907,7 +903,7 @@ Packet ProcessingElement::generateResponse(Flit flit,
   p.traffic_burst_id = flit.traffic_burst_id;
   p.local_direction_id = DIRECTION_LOCAL_NORTH;
   p.phys_channel_id = 1 - flit.phys_channel_id;
-  p.timestamp = sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
+  p.timestamp = timestamp();
   switch (request_type) {
   case RequestType::READ:
     p.size = p.flit_left = GlobalParams::max_packet_size;
@@ -1034,7 +1030,7 @@ Packet ProcessingElement::trafficRandom(RequestType request_type) {
   }
   //-----------------------------------
 
-  p.timestamp = sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
+  p.timestamp = timestamp();
   p.is_head = false;
   p.is_tail = false;
   switch (request_type) {
@@ -1090,7 +1086,7 @@ Packet ProcessingElement::trafficTest() {
   p.src_id = local_id;
   p.dst_id = 10;
 
-  p.timestamp = sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
+  p.timestamp = timestamp();
   p.size = p.flit_left = getRandomSize();
   p.vc_id = randInt(0, GlobalParams::n_virtual_channels - 1);
 
@@ -1112,7 +1108,7 @@ Packet ProcessingElement::trafficTranspose1() {
   p.dst_id = coord2Id(dst);
 
   p.vc_id = randInt(0, GlobalParams::n_virtual_channels - 1);
-  p.timestamp = sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
+  p.timestamp = timestamp();
   p.size = p.flit_left = getRandomSize();
 
   return p;
@@ -1133,7 +1129,7 @@ Packet ProcessingElement::trafficTranspose2() {
   p.dst_id = coord2Id(dst);
 
   p.vc_id = randInt(0, GlobalParams::n_virtual_channels - 1);
-  p.timestamp = sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
+  p.timestamp = timestamp();
   p.size = p.flit_left = getRandomSize();
 
   return p;
@@ -1169,7 +1165,7 @@ Packet ProcessingElement::trafficBitReversal() {
   p.dst_id = dnode;
 
   p.vc_id = randInt(0, GlobalParams::n_virtual_channels - 1);
-  p.timestamp = sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
+  p.timestamp = timestamp();
   p.size = p.flit_left = getRandomSize();
 
   return p;
@@ -1189,7 +1185,7 @@ Packet ProcessingElement::trafficShuffle() {
   p.dst_id = dnode;
 
   p.vc_id = randInt(0, GlobalParams::n_virtual_channels - 1);
-  p.timestamp = sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
+  p.timestamp = timestamp();
   p.size = p.flit_left = getRandomSize();
 
   return p;
@@ -1210,7 +1206,7 @@ Packet ProcessingElement::trafficButterfly() {
   p.dst_id = dnode;
 
   p.vc_id = randInt(0, GlobalParams::n_virtual_channels - 1);
-  p.timestamp = sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
+  p.timestamp = timestamp();
   p.size = p.flit_left = getRandomSize();
 
   return p;
