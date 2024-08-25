@@ -62,6 +62,13 @@ void ProcessingElement::rxProcess() {
             recv_timestamp - traffic_burst_send_timestamp;
         traffic_burst_flit_latency_y[flit.traffic_burst_id] = {
             1, flit.src_id, traffic_burst_latency};
+        int creation_timestamp =
+            traffic_burst_flit_latency_from_creation_y[flit.traffic_burst_id].latency;
+        int traffic_burst_latency_from_creation =
+            recv_timestamp - creation_timestamp;
+        traffic_burst_flit_latency_from_creation_y[flit.traffic_burst_id] = {
+          1, flit.src_id, traffic_burst_latency_from_creation
+        };
       }
     }
   }
@@ -139,6 +146,9 @@ void ProcessingElement::txProcess() {
       if (flit.traffic_burst_is_head) {
         traffic_burst_flit_latency_x[flit.traffic_burst_id] = {0, dst_id,
                                                                now};
+        int creation_timestamp = (int)flit.timestamp;
+        traffic_burst_flit_latency_from_creation_x[flit.traffic_burst_id] =
+          {0, dst_id, creation_timestamp};
       }
     }
 
@@ -324,6 +334,13 @@ void ProcessingElement::ryProcess() {
             recv_timestamp - traffic_burst_send_timestamp;
         traffic_burst_flit_latency_x[flit.traffic_burst_id] = {
             1, flit.src_id, traffic_burst_latency};
+        int creation_timestamp =
+            traffic_burst_flit_latency_from_creation_x[flit.traffic_burst_id].latency;
+        int traffic_burst_latency_from_creation =
+            recv_timestamp - creation_timestamp;
+        traffic_burst_flit_latency_from_creation_x[flit.traffic_burst_id] = {
+          1, flit.src_id, traffic_burst_latency_from_creation
+        };
       }
     }
   }
@@ -400,6 +417,9 @@ void ProcessingElement::tyProcess() {
       if (flit.traffic_burst_is_head) {
         traffic_burst_flit_latency_y[flit.traffic_burst_id] = {0, dst_id,
                                                                now};
+        int creation_timestamp = flit.timestamp;
+        traffic_burst_flit_latency_from_creation_y[flit.traffic_burst_id] =
+          {0, dst_id, creation_timestamp};
       }
     }
 

@@ -129,6 +129,8 @@ SC_MODULE(ProcessingElement) {
   map<int, FlitLatencyInfo> flit_latency_y;
   map<int, FlitLatencyInfo> traffic_burst_flit_latency_x;
   map<int, FlitLatencyInfo> traffic_burst_flit_latency_y;
+  map<int, FlitLatencyInfo> traffic_burst_flit_latency_from_creation_x;
+  map<int, FlitLatencyInfo> traffic_burst_flit_latency_from_creation_y;
 
   // Functions
   void rxProcess(); // The receiving process

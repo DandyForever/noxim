@@ -479,6 +479,8 @@ void GlobalStats::showStats(std::ostream &out, bool detailed) {
                               std::ofstream::out);
     std::ofstream f_latencies_burst(file_name.str() + "_latency_burst.log",
                                     std::ofstream::out);
+    std::ofstream f_latencies_creation_burst(file_name.str() + "_latency_creation_burst.log",
+                                    std::ofstream::out);
 
     vector<char> directions;
     directions.push_back('x');
@@ -820,8 +822,43 @@ void GlobalStats::showStats(std::ostream &out, bool detailed) {
 
     f_latencies_burst.close();
     //-----------------------------------------------------------------------
-    // End PE flit request latency
-    //-----------------------------------------
+    // End PE flit request latency burst
+    //-----------------------------------------------------------------------
+
+    //-----------------------------------------------------------------------
+    // Start PE flit request latency from creation burst
+    //-----------------------------------------------------------------------
+    for (int x = 0; x < GlobalParams::mesh_dim_x; x++) {
+      for (int y = 0; y < GlobalParams::mesh_dim_y; y++) {
+        for (auto it =
+                 noc->t[x][y]->pe[0]->traffic_burst_flit_latency_from_creation_x.begin();
+             it != noc->t[x][y]->pe[0]->traffic_burst_flit_latency_from_creation_x.end();
+             it++) {
+          Coord dst_coord = id2Coord(it->second.dst_id);
+          int latency = it->second.latency;
+          if (it->second.is_back)
+            f_latencies_creation_burst << "[x][" << x << "][" << y << "] -> "
+                              << "[" << dst_coord.x << "][" << dst_coord.y
+                              << "]: " << latency << endl;
+        }
+        for (auto it =
+                 noc->t[x][y]->pe[0]->traffic_burst_flit_latency_from_creation_y.begin();
+             it != noc->t[x][y]->pe[0]->traffic_burst_flit_latency_from_creation_y.end();
+             it++) {
+          Coord dst_coord = id2Coord(it->second.dst_id);
+          int latency = it->second.latency;
+          if (it->second.is_back)
+            f_latencies_creation_burst << "[y][" << x << "][" << y << "] -> "
+                              << "[" << dst_coord.x << "][" << dst_coord.y
+                              << "]: " << latency << endl;
+        }
+      }
+    }
+
+    f_latencies_creation_burst.close();
+    //-----------------------------------------------------------------------
+    // End PE flit request latency from creation burst
+    //-----------------------------------------------------------------------
     showPowerBreakDown(out);
     showPowerManagerStats(out);
   } // detailed stats
