@@ -17,8 +17,8 @@ mesh = 'x'.join([str(mesh_x), str(mesh_y)])
 suff_list = ["mp_4_sv_3_sh_3"]
 result_names = [0, mesh_y+1, 2 *
                 (mesh_y+1), 3*(mesh_y+1), 4*(mesh_y+1), 5*(mesh_y+1)]
-burst_list = [1, 2, 4, 8, 16]
-traffic_burst = 16
+burst_list = [1, 2]
+traffic_burst = 2
 
 results = dict()
 

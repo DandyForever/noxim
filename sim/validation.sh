@@ -2,8 +2,8 @@
     -config ../config_examples/mesh_4x4_interleaving.yaml \
     -pir 0.5 poisson \
     -routing DOR \
-    -size 1 1 \
-    -traffic_burst_size 1 \
+    -size 2 2 \
+    -traffic_burst_size 2 \
     -interliving_reps 0 \
     -sim 10000 \
     -detailed \

@@ -373,6 +373,8 @@ void ProcessingElement::ryProcess() {
         int vc_id = GlobalParams::n_virtual_channels - 1 - flit_tmp.vc_id;
         Packet p = generateResponse(flit_ry.read(), RequestType::READ);
         in_packet_queue_y[vc_id].push(p);
+      } else {
+        assert(0);
       }
     }
   }
