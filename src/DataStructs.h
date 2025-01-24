@@ -14,31 +14,28 @@
 #include "GlobalParams.h"
 #include <systemc.h>
 
-// Coord -- XY coordinates type of the Tile inside the Mesh
-class Coord {
-public:
-  int x; // X coordinate
-  int y; // Y coordinate
-
-  inline bool operator==(const Coord &coord) const {
-    return (coord.x == x && coord.y == y);
-  }
+// FlitType -- Flit type enumeration
+enum FlitType
+{
+  FLIT_TYPE_HEAD,
+  FLIT_TYPE_BODY,
+  FLIT_TYPE_TAIL
 };
 
-// FlitType -- Flit type enumeration
-enum FlitType { FLIT_TYPE_HEAD, FLIT_TYPE_BODY, FLIT_TYPE_TAIL };
-
 // Payload -- Payload definition
-struct Payload {
+struct Payload
+{
   sc_uint<32> data; // Bus for the data to be exchanged
 
-  inline bool operator==(const Payload &payload) const {
+  inline bool operator==(const Payload &payload) const
+  {
     return (payload.data == data);
   }
 };
 
 // Packet -- Packet definition
-struct Packet {
+struct Packet
+{
   int src_id;
   int dst_id;
   int id;
@@ -58,13 +55,15 @@ struct Packet {
 
   Packet(const int s, const int d, const int vc, const double ts, const int sz,
          const int ldi, const int pci, const int pid, const bool head,
-         const bool tail, const int traff_burst_id) {
+         const bool tail, const int traff_burst_id)
+  {
     make(s, d, vc, ts, sz, ldi, pci, pid, head, tail, traff_burst_id);
   }
 
   void make(const int s, const int d, const int vc, const double ts,
             const int sz, const int ldi, const int pci, const int pid,
-            const bool head, const bool tail, const int traff_burst_id) {
+            const bool head, const bool tail, const int traff_burst_id)
+  {
     src_id = s;
     dst_id = d;
     id = pid;
@@ -82,7 +81,8 @@ struct Packet {
 };
 
 // RouteData -- data required to perform routing
-struct RouteData {
+struct RouteData
+{
   int current_id;
   int src_id;
   int dst_id;
@@ -92,20 +92,24 @@ struct RouteData {
   int vc_id;
 };
 
-struct ChannelStatus {
+struct ChannelStatus
+{
   int free_slots; // occupied buffer slots
   bool available; //
-  inline bool operator==(const ChannelStatus &bs) const {
+  inline bool operator==(const ChannelStatus &bs) const
+  {
     return (free_slots == bs.free_slots && available == bs.available);
   };
 };
 
 // NoP_data -- NoP Data definition
-struct NoP_data {
+struct NoP_data
+{
   int sender_id;
   ChannelStatus channel_status_neighbor[DIRECTIONS];
 
-  inline bool operator==(const NoP_data &nop_data) const {
+  inline bool operator==(const NoP_data &nop_data) const
+  {
     return (sender_id == nop_data.sender_id &&
             nop_data.channel_status_neighbor[0] == channel_status_neighbor[0] &&
             nop_data.channel_status_neighbor[1] == channel_status_neighbor[1] &&
@@ -114,12 +118,15 @@ struct NoP_data {
   };
 };
 
-struct TBufferFullStatus {
-  TBufferFullStatus() {
+struct TBufferFullStatus
+{
+  TBufferFullStatus()
+  {
     for (int i = 0; i < MAX_VIRTUAL_CHANNELS; i++)
       mask[i] = false;
   };
-  inline bool operator==(const TBufferFullStatus &bfs) const {
+  inline bool operator==(const TBufferFullStatus &bfs) const
+  {
     for (int i = 0; i < MAX_VIRTUAL_CHANNELS; i++)
       if (mask[i] != bfs.mask[i])
         return false;
@@ -131,7 +138,8 @@ struct TBufferFullStatus {
 };
 
 // Flit -- Flit definition
-struct Flit {
+struct Flit
+{
   int src_id;
   int dst_id;
   int local_direction_id;
@@ -154,7 +162,8 @@ struct Flit {
 
   int hub_relay_node;
 
-  inline bool operator==(const Flit &flit) const {
+  inline bool operator==(const Flit &flit) const
+  {
     return (flit.src_id == src_id && flit.dst_id == dst_id &&
             flit.id == id
             // && flit.flit_type == flit_type
@@ -167,7 +176,8 @@ struct Flit {
             flit.hop_no == hop_no &&
             flit.use_low_voltage_path == use_low_voltage_path);
   }
-  bool flit_type(FlitType is_flit_type) const {
+  bool flit_type(FlitType is_flit_type) const
+  {
     if (is_flit_type == FLIT_TYPE_HEAD)
       return is_head;
     if (is_flit_type == FLIT_TYPE_TAIL)
@@ -178,12 +188,14 @@ struct Flit {
   }
 };
 
-typedef struct {
+typedef struct
+{
   string label;
   double value;
 } PowerBreakdownEntry;
 
-enum {
+enum
+{
   BUFFER_PUSH_PWR_D,
   BUFFER_POP_PWR_D,
   BUFFER_FRONT_PWR_D,
@@ -208,7 +220,8 @@ enum {
   NO_BREAKDOWN_ENTRIES_D
 };
 
-enum {
+enum
+{
   TRANSCEIVER_RX_PWR_BIASING,
   TRANSCEIVER_TX_PWR_BIASING,
   BUFFER_ROUTER_PWR_S,
@@ -225,13 +238,15 @@ enum {
   NO_BREAKDOWN_ENTRIES_S
 };
 
-typedef struct {
+typedef struct
+{
   int size;
   PowerBreakdownEntry
       breakdown[NO_BREAKDOWN_ENTRIES_D + NO_BREAKDOWN_ENTRIES_S];
 } PowerBreakdown;
 
-struct FlitLatencyInfo {
+struct FlitLatencyInfo
+{
   bool is_back;
   int dst_id;
   int latency;

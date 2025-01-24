@@ -16,7 +16,8 @@
 #include <systemc.h>
 using namespace std;
 
-SC_MODULE(Tile) {
+SC_MODULE(Tile)
+{
   SC_HAS_PROCESS(Tile);
 
   // I/O Ports
@@ -30,14 +31,14 @@ SC_MODULE(Tile) {
   //-------------------------------------------------------------------------
   sc_in<Flit> flit_rx[DIRECTIONS]; // The input channels
   sc_in<bool>
-      req_rx[DIRECTIONS]; // The requests associated with the input channels
+      req_rx[DIRECTIONS];          // The requests associated with the input channels
   sc_out<bool> ack_rx[DIRECTIONS]; // The outgoing ack signals associated with
                                    // the input channels
   sc_out<TBufferFullStatus> buffer_full_status_rx[DIRECTIONS];
 
   sc_out<Flit> flit_tx[DIRECTIONS]; // The output channels
   sc_out<bool>
-      req_tx[DIRECTIONS]; // The requests associated with the output channels
+      req_tx[DIRECTIONS];         // The requests associated with the output channels
   sc_in<bool> ack_tx[DIRECTIONS]; // The outgoing ack signals associated with
                                   // the output channels
   sc_in<TBufferFullStatus> buffer_full_status_tx[DIRECTIONS];
@@ -48,14 +49,14 @@ SC_MODULE(Tile) {
   //-------------------------------------------------------------------------
   sc_in<Flit> flit_ry[DIRECTIONS]; // The input channels
   sc_in<bool>
-      req_ry[DIRECTIONS]; // The requests associated with the input channels
+      req_ry[DIRECTIONS];          // The requests associated with the input channels
   sc_out<bool> ack_ry[DIRECTIONS]; // The outgoing ack signals associated with
                                    // the input channels
   sc_out<TBufferFullStatus> buffer_full_status_ry[DIRECTIONS];
 
   sc_out<Flit> flit_ty[DIRECTIONS]; // The output channels
   sc_out<bool>
-      req_ty[DIRECTIONS]; // The requests associated with the output channels
+      req_ty[DIRECTIONS];         // The requests associated with the output channels
   sc_in<bool> ack_ty[DIRECTIONS]; // The outgoing ack signals associated with
                                   // the output channels
   sc_in<TBufferFullStatus> buffer_full_status_ty[DIRECTIONS];
@@ -73,8 +74,8 @@ SC_MODULE(Tile) {
 
   sc_out<Flit> hub_flit_tx; // The output channels
   sc_out<bool> hub_req_tx;  // The requests associated with the output channels
-  sc_in<bool> hub_ack_tx; // The outgoing ack signals associated with the output
-                          // channels
+  sc_in<bool> hub_ack_tx;   // The outgoing ack signals associated with the output
+                            // channels
   sc_in<TBufferFullStatus> hub_buffer_full_status_tx;
   //-------------------------------------------------------------------------
 
@@ -90,8 +91,8 @@ SC_MODULE(Tile) {
 
   sc_out<Flit> hub_flit_ty; // The output channels
   sc_out<bool> hub_req_ty;  // The requests associated with the output channels
-  sc_in<bool> hub_ack_ty; // The outgoing ack signals associated with the output
-                          // channels
+  sc_in<bool> hub_ack_ty;   // The outgoing ack signals associated with the output
+                            // channels
   sc_in<TBufferFullStatus> hub_buffer_full_status_ty;
   //-------------------------------------------------------------------------
 
@@ -158,7 +159,8 @@ SC_MODULE(Tile) {
 
   // Constructor
 
-  Tile(sc_module_name nm, int id) : sc_module(nm) {
+  Tile(sc_module_name nm, int id) : sc_module(nm)
+  {
     local_id = id;
 
     //-------------------------------------------------------------------------
@@ -170,7 +172,8 @@ SC_MODULE(Tile) {
     r->clock(clock);
     r->reset(reset);
 
-    for (int i = 0; i < DIRECTIONS; i++) {
+    for (int i = 0; i < DIRECTIONS; i++)
+    {
       r->flit_rx[i](flit_rx[i]);
       r->req_rx[i](req_rx[i]);
       r->ack_rx[i](ack_rx[i]);
@@ -190,7 +193,8 @@ SC_MODULE(Tile) {
     }
 
     // local
-    for (int i = 0; i < DIRECTIONS; i++) {
+    for (int i = 0; i < DIRECTIONS; i++)
+    {
       r->flit_rx[DIRECTIONS + i](flit_tx_local[i]);
       r->req_rx[DIRECTIONS + i](req_tx_local[i]);
       r->ack_rx[DIRECTIONS + i](ack_tx_local[i]);
@@ -226,7 +230,8 @@ SC_MODULE(Tile) {
     r_req->clock(clock);
     r_req->reset(reset);
 
-    for (int i = 0; i < DIRECTIONS; i++) {
+    for (int i = 0; i < DIRECTIONS; i++)
+    {
       r_req->flit_rx[i](flit_ry[i]);
       r_req->req_rx[i](req_ry[i]);
       r_req->ack_rx[i](ack_ry[i]);
@@ -246,7 +251,8 @@ SC_MODULE(Tile) {
     }
 
     // local
-    for (int i = 0; i < DIRECTIONS; i++) {
+    for (int i = 0; i < DIRECTIONS; i++)
+    {
       r_req->flit_rx[DIRECTIONS + i](flit_ty_local[i]);
       r_req->req_rx[DIRECTIONS + i](req_ty_local[i]);
       r_req->ack_rx[DIRECTIONS + i](ack_ty_local[i]);
@@ -284,9 +290,11 @@ SC_MODULE(Tile) {
     pe[DIRECTION_EAST] = new ProcessingElement("ProcessingElementEast");
     pe[DIRECTION_SOUTH] = new ProcessingElement("ProcessingElementSouth");
     pe[DIRECTION_WEST] = new ProcessingElement("ProcessingElementWest");
-    for (int i = 0; i < DIRECTIONS; i++) {
+    for (int i = 0; i < DIRECTIONS; i++)
+    {
       pe[i]->local_id = local_id;
       pe[i]->is_memory_pe = is_memory_node(local_id);
+      pe[i]->is_master = is_master_node(local_id);
       pe[i]->clock(clock);
       pe[i]->reset(reset);
 

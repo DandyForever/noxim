@@ -29,7 +29,8 @@ using namespace std;
 
 extern unsigned int drained_volume;
 
-SC_MODULE(Router) {
+SC_MODULE(Router)
+{
   friend class Selection_NOP;
   friend class Selection_BUFFER_LEVEL;
 
@@ -40,14 +41,14 @@ SC_MODULE(Router) {
   // number of ports: 4 mesh directions + 4xlocal + wireless
   sc_in<Flit> flit_rx[2 * DIRECTIONS + 1]; // The input channels
   sc_in<bool> req_rx[2 * DIRECTIONS +
-                     1]; // The requests associated with the input channels
+                     1];                   // The requests associated with the input channels
   sc_out<bool> ack_rx[2 * DIRECTIONS + 1]; // The outgoing ack signals
                                            // associated with the input channels
   sc_out<TBufferFullStatus> buffer_full_status_rx[2 * DIRECTIONS + 1];
 
   sc_out<Flit> flit_tx[2 * DIRECTIONS + 1]; // The output channels
   sc_out<bool> req_tx[2 * DIRECTIONS +
-                      1]; // The requests associated with the output channels
+                      1];                 // The requests associated with the output channels
   sc_in<bool> ack_tx[2 * DIRECTIONS + 1]; // The outgoing ack signals associated
                                           // with the output channels
   sc_in<TBufferFullStatus> buffer_full_status_tx[2 * DIRECTIONS + 1];
@@ -93,7 +94,8 @@ SC_MODULE(Router) {
 
   // Constructor
 
-  SC_CTOR(Router) {
+  SC_CTOR(Router)
+  {
     SC_METHOD(process);
     sensitive << reset;
     sensitive << clock.pos();
@@ -104,7 +106,8 @@ SC_MODULE(Router) {
 
     routingAlgorithm = RoutingAlgorithms::get(GlobalParams::routing_algorithm);
 
-    if (routingAlgorithm == 0) {
+    if (routingAlgorithm == 0)
+    {
       cerr << " FATAL: invalid routing -routing "
            << GlobalParams::routing_algorithm << ", check with noxim -help"
            << endl;
@@ -114,7 +117,8 @@ SC_MODULE(Router) {
     selectionStrategy =
         SelectionStrategies::get(GlobalParams::selection_strategy);
 
-    if (selectionStrategy == 0) {
+    if (selectionStrategy == 0)
+    {
       cerr << " FATAL: invalid selection strategy -sel "
            << GlobalParams::selection_strategy << ", check with noxim -help"
            << endl;
