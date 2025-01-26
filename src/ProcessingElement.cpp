@@ -29,7 +29,7 @@ void ProcessingElement::rxProcess() {
   // Start checks
   //---------------------------------------------------------------------
   DEBUG if (!GlobalParams::both_phys_req_mode) {
-    if (!is_memory_pe) {
+    if (is_master) {
       assert(!req_rx.read());
     }
   }
@@ -50,7 +50,7 @@ void ProcessingElement::rxProcess() {
       }
     }
 
-    if (!is_memory_pe && flit.flit_type(FLIT_TYPE_TAIL)) {
+    if (is_master && flit.flit_type(FLIT_TYPE_TAIL)) {
       int send_timestamp = flit_latency_y[flit.id].latency;
       int recv_timestamp = timestamp();
       int latency = recv_timestamp - send_timestamp;
@@ -137,7 +137,7 @@ void ProcessingElement::txProcess() {
   if (req_tx.read() && ack_tx.read()) {
     Flit flit = flit_tx.read();
 
-    if (!is_memory_pe && flit.flit_type(FLIT_TYPE_HEAD)) {
+    if (is_master && flit.flit_type(FLIT_TYPE_HEAD)) {
       int dst_id = flit.dst_id;
       int now = timestamp();
       flit_latency_x[flit.id] = {0, dst_id, now};
@@ -224,7 +224,7 @@ void ProcessingElement::txProcess() {
   //---------------------------------------------------------------------
   // Start managing EU PE
   //---------------------------------------------------------------------
-  if (!is_memory_pe) {
+  if (is_master) {
     int on_the_fly_x = packets_sent_x - packets_recv_y;
     // Generate packet and add to packet queue
     Packet packet;
@@ -323,7 +323,7 @@ void ProcessingElement::ryProcess() {
       }
     }
 
-    if (!is_memory_pe && flit.flit_type(FLIT_TYPE_TAIL)) {
+    if (is_master && flit.flit_type(FLIT_TYPE_TAIL)) {
       int send_timestamp = flit_latency_x[flit.id].latency;
       int recv_timestamp = timestamp();
       int latency = recv_timestamp - send_timestamp;
@@ -411,7 +411,7 @@ void ProcessingElement::tyProcess() {
   if (req_ty.read() && ack_ty.read()) {
     Flit flit = flit_ty.read();
 
-    if (!is_memory_pe && flit.flit_type(FLIT_TYPE_HEAD)) {
+    if (is_master && flit.flit_type(FLIT_TYPE_HEAD)) {
       int now = timestamp();
       int dst_id = flit.dst_id;
       flit_latency_y[flit.id] = {0, dst_id, now};
@@ -498,7 +498,7 @@ void ProcessingElement::tyProcess() {
   //---------------------------------------------------------------------
   // Start managing EU PE
   //---------------------------------------------------------------------
-  if (GlobalParams::both_phys_req_mode && !is_memory_pe) {
+  if (GlobalParams::both_phys_req_mode && is_master) {
     int on_the_fly_y = packets_sent_y - packets_recv_x;
     // Generate packet and add to packet queue
     Packet packet;
@@ -548,7 +548,7 @@ void ProcessingElement::tyProcess() {
   // Start checks
   //---------------------------------------------------------------------
   DEBUG if (!GlobalParams::both_phys_req_mode) {
-    if (!is_memory_pe) {
+    if (is_master) {
       assert(!req_ty.read());
     }
   }
@@ -677,7 +677,7 @@ bool ProcessingElement::canShot(Packet &packet, RequestType request_type) {
     return false;
 
   // Central tiles should not send packets
-  if (is_memory_pe)
+  if (!is_master)
     return false;
 
   // Switching off some PEs
