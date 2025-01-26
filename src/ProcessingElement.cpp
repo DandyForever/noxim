@@ -228,10 +228,11 @@ void ProcessingElement::txProcess() {
     int on_the_fly_x = packets_sent_x - packets_recv_y;
     // Generate packet and add to packet queue
     Packet packet;
-    if (((int)packet_queue_x.size() + on_the_fly_x <
-         GlobalParams::pe_request_buffer_size /
-             GlobalParams::max_packet_size) &&
-        canShot(packet, RequestType::WRITE)) {
+    bool request_buffer_cond =
+        !GlobalParams::req_ack_mode ||
+        ((int)packet_queue_x.size() + on_the_fly_x <
+         GlobalParams::pe_request_buffer_size / GlobalParams::max_packet_size);
+    if (request_buffer_cond && canShot(packet, RequestType::WRITE)) {
       packet_queue_x.push(packet);
       transmittedAtPreviousCycle = true;
     } else {
@@ -247,10 +248,11 @@ void ProcessingElement::txProcess() {
     if ((req_tx.read() && ack_tx.read()) || // Handshake happened
         !req_tx.read()                      // Not started sending
     ) {
-      if (!packet_queue_x.empty() &&
-          (!GlobalParams::req_ack_mode ||
-           on_the_fly_x < GlobalParams::pe_request_buffer_size /
-                              GlobalParams::max_packet_size)) {
+      bool request_buffer_cond =
+          !GlobalParams::req_ack_mode ||
+          (on_the_fly_x < GlobalParams::pe_request_buffer_size /
+                              GlobalParams::max_packet_size);
+      if (!packet_queue_x.empty() && request_buffer_cond) {
         Flit flit = nextFlit(packet_queue_x, true);
         flit.id = packets_sent_x;
         flit.traffic_burst_id = traffic_burst_packets_sent_x;
@@ -500,10 +502,11 @@ void ProcessingElement::tyProcess() {
     int on_the_fly_y = packets_sent_y - packets_recv_x;
     // Generate packet and add to packet queue
     Packet packet;
-    if (((int)packet_queue_y.size() + on_the_fly_y <
-         GlobalParams::pe_request_buffer_size /
-             GlobalParams::max_packet_size) &&
-        canShot(packet, RequestType::READ)) {
+    bool request_buffer_cond =
+        !GlobalParams::req_ack_mode ||
+        ((int)packet_queue_y.size() + on_the_fly_y <
+         GlobalParams::pe_request_buffer_size / GlobalParams::max_packet_size);
+    if (request_buffer_cond && canShot(packet, RequestType::READ)) {
       packet_queue_y.push(packet);
       transmittedAtPreviousCycle = true;
     } else {
@@ -519,10 +522,11 @@ void ProcessingElement::tyProcess() {
     if ((req_ty.read() && ack_ty.read()) || // Handshake happened
         !req_ty.read()                      // Not started sending
     ) {
-      if (!packet_queue_y.empty() &&
-          (!GlobalParams::req_ack_mode ||
-           on_the_fly_y < GlobalParams::pe_request_buffer_size /
-                              GlobalParams::max_packet_size)) {
+      bool request_buffer_cond =
+          !GlobalParams::req_ack_mode ||
+          (on_the_fly_y < GlobalParams::pe_request_buffer_size /
+                              GlobalParams::max_packet_size);
+      if (!packet_queue_y.empty() && request_buffer_cond) {
         Flit flit = nextFlit(packet_queue_y, true);
         flit.id = packets_sent_y;
         flit.traffic_burst_id = traffic_burst_packets_sent_y;
