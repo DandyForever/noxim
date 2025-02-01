@@ -1,24 +1,24 @@
 import csv
 
-mesh_x = 18
+mesh_x = 24
 mesh_y = 10
 
-eu_h = 12 * 2
-eu_v = 4 * 2
+eu_h = 16 * 2
+eu_v = 8 * 2
 eu_a = 0
 
 pir_list = [50, 100, 150, 200, 250, 300,
             350, 400, 500, 600, 700, 800, 900, 1000]
 
-path = "sim/results/"
-pref = "burst"
+path = "sim/results/task_3804/"
+pref = "stair"
 routing_list = ["DOR"]
 mesh = 'x'.join([str(mesh_x), str(mesh_y)])
-suff_list = ["mp_4_sv_3_sh_3"]
+suff_list = ["mp_1"]
 result_names = [0, mesh_y+1, 2 *
                 (mesh_y+1), 3*(mesh_y+1), 4*(mesh_y+1), 5*(mesh_y+1)]
-burst_list = [1, 2]
-traffic_burst = 2
+burst_list = [1]
+traffic_burst = 1
 
 results = dict()
 
@@ -74,8 +74,10 @@ for burst in burst_list:
                         total_horizontal += pir_map[key][dir][0][i] + \
                             pir_map[key][dir][mesh_y-1][i]
                     for i in range(mesh_y):
-                        total_vertical += pir_map[key][dir][i][0] + \
-                            pir_map[key][dir][i][mesh_x-1]
+                        total_vertical += pir_map[key][dir][i][0] + pir_map[key][dir][i][1] + pir_map[key][dir][i][2] + pir_map[key][dir][i][3] + \
+                            pir_map[key][dir][i][mesh_x-1] + pir_map[key][dir][i][mesh_x-2] + \
+                            pir_map[key][dir][i][mesh_x-3] + \
+                            pir_map[key][dir][i][mesh_x-4]
                     total_horizontal -= total_angle
                     total_vertical -= total_angle
                     results['t'].append(
@@ -85,7 +87,7 @@ for burst in burst_list:
                     if eu_a:
                         results['a'].append(total_angle / eu_a / 100)
                 # print(dir)
-                with open(path + mesh + dir + suff + routing + str(burst) + '.csv', 'w', newline='') as csvfile:
+                with open(path + pref + mesh + dir + suff + routing + str(burst) + '.csv', 'w', newline='') as csvfile:
                     csv_writer = csv.writer(csvfile, delimiter=';',
                                             quotechar='|', quoting=csv.QUOTE_MINIMAL)
                     for key in results:

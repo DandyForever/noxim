@@ -21,28 +21,19 @@
 #     -log_file_name ./results/validation
 
 ../build/noxim \
-    -config ../config_examples/task_3804/mesh_18x10_dor.yaml \
+    -config ../config_examples/perfect_routing/mesh_18x10_dor.yaml \
     -pir 0.1 poisson \
     -sim 10000 \
     -detailed \
     -req_ack_mode 1 \
     -both_phys_req_mode 1 \
-    -log_file_name ./results/task_3804/validation
+    -log_file_name ./results/perfect_routing/validation
 
 ../build/noxim \
-    -config ../config_examples/task_3804/mesh_18x10_mod_dor.yaml \
+    -config ../config_examples/perfect_routing/mesh_18x10_xy.yaml \
     -pir 0.1 poisson \
     -sim 10000 \
     -detailed \
     -req_ack_mode 1 \
     -both_phys_req_mode 1 \
-    -log_file_name ./results/task_3804/validation
-
-../build/noxim \
-    -config ../config_examples/task_3804/mesh_24x10_dor.yaml \
-    -pir 0.1 poisson \
-    -sim 10000 \
-    -detailed \
-    -req_ack_mode 1 \
-    -both_phys_req_mode 1 \
-    -log_file_name ./results/task_3804/validation
+    -log_file_name ./results/perfect_routing/validation
