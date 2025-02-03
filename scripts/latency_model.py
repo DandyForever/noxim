@@ -127,7 +127,7 @@ for r in range(tile_num):
 print(router_input_payload_tensor[45])
 
 
-def d_ijc(F, i, j, c):
+def calc_blocking_possibility_internal(request_possibility, i, o, other_num):
     """
     Compute d(i, j, c) for the current F.
     F is a 5x5 array (F[i][j] for i,j=0..4).
@@ -147,7 +147,7 @@ def d_ijc(F, i, j, c):
         for bit_idx in range(4):
             # k_t is either 0 or 1
             k_t = (mask >> bit_idx) & 1
-            p = F[others[bit_idx]][j]
+            p = request_possibility[others[bit_idx]][o]
             if k_t == 1:
                 prob_product *= p
                 ksum += 1
@@ -155,20 +155,20 @@ def d_ijc(F, i, j, c):
                 prob_product *= (1 - p)
 
         # If k_1 + k_2 + k_3 + k_4 = c, add to sum
-        if ksum == c:
+        if ksum == other_num:
             total += prob_product
     return total
 
 
-def D_ij(F, i, j):
-    D_val = 0.0
-    for c in range(1, 5):
-        d_val = d_ijc(F, i, j, c)
-        D_val += d_val * (c / (c + 1))
-    return D_val
+def calc_blocking_possibility(request_possibility, i, o):
+    blocking_possibility = 0.0
+    for other_num in range(1, 5):
+        blocking_possibility_internal = calc_blocking_possibility_internal(request_possibility, i, o, other_num)
+        blocking_possibility += blocking_possibility_internal * (other_num / (other_num + 1))
+    return blocking_possibility
 
 
-def solve_F(a, max_iter=1000, tol=1e-8):
+def solve_request_possibility(payload_tensor, max_iter=1000, tol=1e-8):
     """
     Solve for F using the fixed-point iteration:
        F[i][j] = a[i][j] / (1 - D[i][j]),
@@ -180,36 +180,39 @@ def solve_F(a, max_iter=1000, tol=1e-8):
     :return: F as a 5x5 numpy array
     """
     # 1) Initialize F (for example, uniform 0.5)
-    F = np.full((5, 5), 0.5)
+    request_possibility = payload_tensor.copy()
 
     for it in range(max_iter):
-        F_old = F.copy()
+        request_possibility_old = request_possibility.copy()
 
         for i in range(5):
-            for j in range(5):
-                # Compute D[i][j]
-                Dij = D_ij(F_old, i, j)
+            for o in range(5):
+                blocking_possibility = calc_blocking_possibility(request_possibility, i, o)
 
-                denom = 1.0 - Dij
+                denom = 1.0 - blocking_possibility
                 if abs(denom) < 1e-14:
                     # Avoid dividing by zero.
                     # Could set F[i][j] to some fallback value.
-                    F[i][j] = 0.999999 if denom < 0 else 0.0
+                    request_possibility[i][o] = 0.999999 if denom < 0 else 0.0
                 else:
-                    F[i][j] = a[i][j] / denom
+                    request_possibility[i][o] = payload_tensor[i][o] / denom
 
         # Check for convergence
-        diff = np.linalg.norm(F - F_old)
+        diff = np.linalg.norm(request_possibility - request_possibility_old)
         if diff < tol:
-            print(f"Converged in {it+1} iterations with diff={diff}")
             break
 
-    return F
+    print(f"Finished in {it+1} iterations with diff={diff}")
+    return request_possibility
 
 
-if __name__ == "__main__":
-    np.random.seed(0)
-    a = np.random.rand(5, 5)  # Example known array
+request_possibility_solution = solve_request_possibility(router_payload_tensor[45], max_iter=500, tol=1e-10)
+print("Solution request possibility:\n", request_possibility_solution)
 
-    F_solution = solve_F(a, max_iter=500, tol=1e-10)
-    print("Solution F:\n", F_solution)
+blocking_possibility = np.zeros((direction_num, direction_num))
+
+for i in range(direction_num):
+    for o in range(direction_num):
+        blocking_possibility[i][o] = calc_blocking_possibility(request_possibility_solution, i, o)
+
+print("Solution blocking possibility:\n", blocking_possibility)
