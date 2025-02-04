@@ -85,6 +85,8 @@ for s in range(tile_num):
             i_cur_dir = i_nxt_dir
         routing_tensor[s][d][d][i_cur_dir][LOCAL_IDX] = 1
 
+print("Routing tensor done")
+
 # 1 dim - s - source tile
 # 2 dim - d - destination tile
 traffic_matrix = np.zeros((tile_num, tile_num))
@@ -99,6 +101,7 @@ for s in range(tile_num):
             continue
         traffic_matrix[s][d] = pir_per_mem_tile
 
+print("Traffic matrix done")
 
 # 1 dim - r - router tile
 # 2 dim - i - router input channel
@@ -113,7 +116,7 @@ for s in range(tile_num):
                     router_payload_tensor[r][i][o] += traffic_matrix[s][d] * \
                         routing_tensor[s][d][r][i][o]
 
-print(router_payload_tensor[45])
+print("Router payload tensor done")
 
 # 1 dim - r - router tile
 # 2 dim - i - router input channel
@@ -124,7 +127,7 @@ for r in range(tile_num):
         router_input_payload_tensor[r][i] += np.sum(
             router_payload_tensor[r][i])
 
-print(router_input_payload_tensor[45])
+print("Router input payload tensor done")
 
 
 def calc_blocking_possibility_internal(request_possibility, i, o, other_num):
@@ -163,8 +166,10 @@ def calc_blocking_possibility_internal(request_possibility, i, o, other_num):
 def calc_blocking_possibility(request_possibility, i, o):
     blocking_possibility = 0.0
     for other_num in range(1, 5):
-        blocking_possibility_internal = calc_blocking_possibility_internal(request_possibility, i, o, other_num)
-        blocking_possibility += blocking_possibility_internal * (other_num / (other_num + 1))
+        blocking_possibility_internal = calc_blocking_possibility_internal(
+            request_possibility, i, o, other_num)
+        blocking_possibility += blocking_possibility_internal * \
+            (other_num / (other_num + 1))
     return blocking_possibility
 
 
@@ -187,7 +192,8 @@ def solve_request_possibility(payload_tensor, max_iter=1000, tol=1e-8):
 
         for i in range(5):
             for o in range(5):
-                blocking_possibility = calc_blocking_possibility(request_possibility, i, o)
+                blocking_possibility = calc_blocking_possibility(
+                    request_possibility, i, o)
 
                 denom = 1.0 - blocking_possibility
                 if abs(denom) < 1e-14:
@@ -206,13 +212,60 @@ def solve_request_possibility(payload_tensor, max_iter=1000, tol=1e-8):
     return request_possibility
 
 
-request_possibility_solution = solve_request_possibility(router_payload_tensor[45], max_iter=500, tol=1e-10)
-print("Solution request possibility:\n", request_possibility_solution)
+blocking_possibility = np.zeros((tile_num, direction_num, direction_num))
 
-blocking_possibility = np.zeros((direction_num, direction_num))
+for r in range(tile_num):
+    for i in range(direction_num):
+        for o in range(direction_num):
+            request_possibility_solution = solve_request_possibility(
+                router_payload_tensor[r], max_iter=500, tol=1e-10)
+            blocking_possibility[r][i][o] = calc_blocking_possibility(
+                request_possibility_solution, i, o)
 
-for i in range(direction_num):
-    for o in range(direction_num):
-        blocking_possibility[i][o] = calc_blocking_possibility(request_possibility_solution, i, o)
+print("Blocking possibility done")
 
-print("Solution blocking possibility:\n", blocking_possibility)
+blocking_time = blocking_possibility.copy()
+
+for r in range(tile_num):
+    for i in range(direction_num):
+        for o in range(direction_num):
+            blocking_time[r][i][o] /= (1 - blocking_time[r][i][o])
+
+print("Blocking time done")
+
+request_handle_time = blocking_time.copy()
+
+for r in range(tile_num):
+    for i in range(direction_num):
+        for o in range(direction_num):
+            request_handle_time[r][i][o] += 1.
+
+print("Request handle time done")
+
+mean_input_handle_time = np.zeros((tile_num, direction_num))
+
+for r in range(tile_num):
+    for i in range(direction_num):
+        sum_input_handle_time = 0.
+        for o in range(direction_num):
+            sum_input_handle_time += router_payload_tensor[r][i][o] * \
+                request_handle_time[r][i][o]
+        mean_input_handle_time[r][i] = 0. if (abs(sum_input_handle_time) < 1e-9) else sum_input_handle_time / \
+            router_input_payload_tensor[r][i]
+
+print("Mean request handle time done")
+
+variance_input_handle_time = np.zeros((tile_num, direction_num))
+
+for r in range(tile_num):
+    for i in range(direction_num):
+        sum_input_handle_time = 0.
+        for o in range(direction_num):
+            deviation = (request_handle_time[r][i]
+                         [o] - mean_input_handle_time[r][i])
+            sum_input_handle_time += router_payload_tensor[r][i][o] * \
+                deviation * deviation
+        variance_input_handle_time[r][i] = 0. if (abs(sum_input_handle_time) < 1e-9) else sum_input_handle_time / \
+            router_input_payload_tensor[r][i]
+
+print("Variance request handle time done")
