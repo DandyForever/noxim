@@ -243,15 +243,21 @@ for r in range(tile_num):
 print("Request handle time done")
 
 mean_input_handle_time = np.zeros((tile_num, direction_num))
+mean_sqr_input_handle_time = np.zeros((tile_num, direction_num))
 
 for r in range(tile_num):
     for i in range(direction_num):
         sum_input_handle_time = 0.
+        sum_sqr_input_handle_time = 0.
         for o in range(direction_num):
             sum_input_handle_time += router_payload_tensor[r][i][o] * \
                 request_handle_time[r][i][o]
+            sum_sqr_input_handle_time += router_payload_tensor[r][i][o] * \
+                request_handle_time[r][i][o]**2
         mean_input_handle_time[r][i] = 0. if (abs(sum_input_handle_time) < 1e-9) else sum_input_handle_time / \
             router_input_payload_tensor[r][i]
+        mean_sqr_input_handle_time[r][i] = 0. if (abs(
+            sum_sqr_input_handle_time) < 1e-9) else sum_sqr_input_handle_time / router_input_payload_tensor[r][i]
 
 print("Mean request handle time done")
 
@@ -269,3 +275,122 @@ for r in range(tile_num):
             router_input_payload_tensor[r][i]
 
 print("Variance request handle time done")
+
+
+def mg1n_queue(lambda_arrival, E_T, D_T, N, E_T2):
+    """
+    Computes key performance metrics for an M/G/1/N queue.
+
+    :param lambda_arrival: Arrival rate (Poisson process)
+    :param E_T: Expected service time E(T)
+    :param D_T: Variance of service time D(T)
+    :param N: System capacity (including server)
+    :return: Dictionary with performance metrics
+    """
+
+    utilization = lambda_arrival * E_T  # Utilization factor
+
+    print("utilization: ", utilization)
+
+    if abs(utilization) < 1e-9:
+        return (0.0, 0.0)
+
+    # Probability of k packets in an infinite buffer M/G/1 system
+    chi = np.exp(2 * (lambda_arrival - utilization) /
+                 (lambda_arrival + D_T * E_T**3))
+
+    print("chi: ", chi)
+
+    def pk_star(k):
+        """ Probability of k packets in an M/G/1/∞ system """
+        if k == 0:
+            return 1 - utilization
+        else:
+            return utilization * (1 - chi) * chi**(k - 1)
+
+    # Compute pk* for all k
+    pk_star_values = [pk_star(k) for k in range(N)]
+
+    print("pk_star_values: ", pk_star_values)
+
+    # Compute normalizing factor c
+    c = (1 - utilization * (1 - sum(pk_star_values)))**-1
+
+    print("c: ", c)
+
+    # Compute pk for the finite queue M/G/1/N
+    pk_values = [c * pk_star_values[k] for k in range(N)]
+    pk_values.append(1 - (1 - c * (1 - utilization))
+                     / utilization)  # p_N
+
+    print("pk_values: ", pk_values)
+
+    # Compute average number of packets in system
+    mean_depth = sum((k - 1) * pk_values[k] for k in range(1, N+1))
+
+    print("mean_depth: ", mean_depth)
+
+    # Compute mean waiting time in queue
+    W_s = sum(k * pk_values[k]
+              for k in range(N+1)) / (lambda_arrival * (1 - pk_values[N]))
+    print("W_s: ", W_s)
+    W_q = W_s - E_T
+
+    print("W_q: ", W_q)
+    # Compute residual service time
+    mean_residual_time = E_T2 / (2. * E_T)
+    print("mean_residual_time: ", mean_residual_time)
+
+    return (mean_depth, mean_residual_time)
+
+
+def mm1n_queue(lambda_arrival, E_T, N):
+    utilization = lambda_arrival * E_T
+    pk_values = [(1 - utilization) * utilization**k / (1 - utilization**(N+1))
+                 for k in range(N+1)]
+    mean_depth = sum((k - 1) * pk_values[k] for k in range(1, N+1))
+    return mean_depth
+
+
+mean_input_queue_depth = np.zeros((tile_num, direction_num))
+mean_input_residual_time = np.zeros((tile_num, direction_num))
+
+for r in range(tile_num):
+    for i in range(direction_num):
+        (mean_input_queue_depth[r][i], mean_input_residual_time[r][i]) = mg1n_queue(
+            router_input_payload_tensor[r][i], mean_input_handle_time[r][i], variance_input_handle_time[r][i], 2, mean_sqr_input_handle_time[r][i])
+
+print("M/G/1/N queues done")
+
+mean_input_queue_depth = np.zeros((tile_num, direction_num))
+
+for r in range(tile_num):
+    for i in range(direction_num):
+        mean_input_queue_depth[r][i] = mm1n_queue(
+            router_input_payload_tensor[r][i], mean_input_handle_time[r][i], 2)
+
+
+def calc_average_latency(routing_tensor, mean_input_queue_depth, mean_input_handle_time):
+    average_latency = 0.0
+    for r in range(tile_num):
+        for i in range(direction_num):
+            if abs(routing_tensor[r][i].sum()) > 1e-9:
+                average_latency += (mean_input_queue_depth[r][i] + 1.) * \
+                    mean_input_handle_time[r][i] + 1.
+    return average_latency
+
+
+average_latency = np.zeros((tile_num, tile_num))
+count = 0.
+
+for s in range(tile_num):
+    for d in range(tile_num):
+        if Coord(s).is_perimeter() and not Coord(d).is_perimeter():
+            average_latency[s][d] = calc_average_latency(
+                routing_tensor[s][d], mean_input_queue_depth, mean_input_handle_time)
+            count += 1
+            print(Coord(s), Coord(d), average_latency[s][d])
+
+print("Average latency done")
+
+print("Average latency: ", average_latency.sum() / count)
