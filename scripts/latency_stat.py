@@ -5,18 +5,19 @@ from collections import Counter
 
 path = "../sim/results/latencies/"
 latency_types = ["latency"]
-pir_list = [25, 50, 75, 100, 125, 150, 175, 200, 225, 250, 275, 300, 325,
-            350, 375, 400, 425, 450, 475, 500, 600, 700, 800, 900, 1000]
+# pir_list = [25, 50, 75, 100, 125, 150, 175, 200, 225, 250, 275, 300, 325,
+#             350, 375, 400, 425, 450, 475, 500, 600, 700, 800, 900, 1000]
+pir_list = [500]
 burst_list = [1]
 # pir_list = [500]
 # burst_list = [1, 2]
 traffic_burst = 1
-most_common_percentage_threshold = 0.01
+most_common_percentage_threshold = 0.0015
 
 mean_latencies_burst = list()
 disp_latencies_burst = list()
 
-file_prefix = "dor_mesh_10x10_DOR_mp_1"
+file_prefix = "mod_dor_mesh_10x10_MOD_DOR_mp_1"
 
 for latency_type in latency_types:
     for burst in burst_list:

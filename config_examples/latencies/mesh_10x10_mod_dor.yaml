@@ -23,7 +23,7 @@ flit_size: 64
 r2h_link_length: 2.0
 # lenght in mm of router to router connection
 r2r_link_length: 1.0
-n_virtual_channels: 2
+n_virtual_channels: 4
 
 # Routing algorithms:
 #   XY
@@ -37,7 +37,7 @@ n_virtual_channels: 2
 #   TABLE_BASED
 # Each of the above labels should match a corresponding
 # implementation in the routingAlgorithms source code directory
-routing_algorithm: DOR
+routing_algorithm: MOD_DOR
 routing_table_filename: ""
 
 # Routing specific parameters
