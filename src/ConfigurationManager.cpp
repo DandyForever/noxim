@@ -148,6 +148,7 @@ void loadConfiguration()
       readParam<int>(config, "pe_request_buffer_size");
   GlobalParams::traffic_burst_size =
       readParam<int>(config, "traffic_burst_size");
+  GlobalParams::six_channel_traffic = readParam<bool>(config, "six_channel_traffic");
 
   if (config["master_connections"])
   {

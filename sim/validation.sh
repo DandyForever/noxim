@@ -20,20 +20,28 @@
 #     -buffer_mid 0 \
 #     -log_file_name ./results/validation
 
-../build/noxim \
-    -config ../config_examples/latencies/mesh_10x10_dor.yaml \
-    -pir 0.7 poisson \
-    -sim 10000 \
-    -detailed \
-    -req_ack_mode 1 \
-    -both_phys_req_mode 1 \
-    -log_file_name ./results/latencies/validation_short
+# ../build/noxim \
+#     -config ../config_examples/latencies/mesh_10x10_dor.yaml \
+#     -pir 0.7 poisson \
+#     -sim 10000 \
+#     -detailed \
+#     -req_ack_mode 1 \
+#     -both_phys_req_mode 1 \
+#     -log_file_name ./results/latencies/validation_short
+
+# ../build/noxim \
+#     -config ../config_examples/latencies/mesh_10x10_dor.yaml \
+#     -pir 0.7 poisson \
+#     -sim 100000 \
+#     -detailed \
+#     -req_ack_mode 1 \
+#     -both_phys_req_mode 1 \
+#     -log_file_name ./results/latencies/validation_long
 
 ../build/noxim \
-    -config ../config_examples/latencies/mesh_10x10_dor.yaml \
-    -pir 0.7 poisson \
-    -sim 100000 \
+    -config ../config_examples/strawman/mesh_18x18_6ch_dor.yaml \
+    -pir 1.0 poisson \
     -detailed \
     -req_ack_mode 1 \
     -both_phys_req_mode 1 \
-    -log_file_name ./results/latencies/validation_long
+    -log_file_name ./results/strawman/validation_6ch
