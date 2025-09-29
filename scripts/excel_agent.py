@@ -1,20 +1,20 @@
 import csv
 
-mesh_x = 24
-mesh_y = 10
+mesh_x = 10
+mesh_y = 6
 
-eu_h = 16 * 2
-eu_v = 8 * 2
+eu_h = 8 * 2
+eu_v = 4 * 2
 eu_a = 0
 
 pir_list = [50, 100, 150, 200, 250, 300,
             350, 400, 500, 600, 700, 800, 900, 1000]
 
-path = "sim/results/task_3804/"
-pref = "stair"
-routing_list = ["DOR"]
+path = "sim/results/phd_4/"
+pref = "8"
+routing_list = ["MOD_DOR"]
 mesh = 'x'.join([str(mesh_x), str(mesh_y)])
-suff_list = ["mp_1"]
+suff_list = ["mp_1_sv_1_sh_1"]
 result_names = [0, mesh_y+1, 2 *
                 (mesh_y+1), 3*(mesh_y+1), 4*(mesh_y+1), 5*(mesh_y+1)]
 burst_list = [1]
@@ -29,7 +29,7 @@ for burst in burst_list:
             pir_map = dict()
             for pir in pir_list:
                 file_name = '_'.join(
-                    [pref, "mesh", mesh, routing, suff, "pir", str(pir), "ps", str(burst), "bs", str(traffic_burst)])
+                    [pref, "mesh", mesh, routing, suff, "pir", str(pir//2), "ps", str(burst), "bs", str(traffic_burst)])
 
                 data = list()
                 data.append(list())
@@ -74,18 +74,15 @@ for burst in burst_list:
                         total_horizontal += pir_map[key][dir][0][i] + \
                             pir_map[key][dir][mesh_y-1][i]
                     for i in range(mesh_y):
-                        total_vertical += pir_map[key][dir][i][0] + pir_map[key][dir][i][1] + pir_map[key][dir][i][2] + pir_map[key][dir][i][3] + \
-                            pir_map[key][dir][i][mesh_x-1] + pir_map[key][dir][i][mesh_x-2] + \
-                            pir_map[key][dir][i][mesh_x-3] + \
-                            pir_map[key][dir][i][mesh_x-4]
+                        total_vertical += pir_map[key][dir][i][0] + pir_map[key][dir][i][mesh_x-1]
                     total_horizontal -= total_angle
                     total_vertical -= total_angle
                     results['t'].append(
-                        (total_horizontal+total_vertical+total_angle) / (eu_v + eu_h + eu_a) / 100)
-                    results['h'].append(total_horizontal / eu_h / 100)
-                    results['v'].append(total_vertical / eu_v / 100)
+                        (total_horizontal+total_vertical+total_angle) / (eu_v + eu_h + eu_a) / 50)
+                    results['h'].append(total_horizontal / eu_h / 50)
+                    results['v'].append(total_vertical / eu_v / 50)
                     if eu_a:
-                        results['a'].append(total_angle / eu_a / 100)
+                        results['a'].append(total_angle / eu_a / 50)
                 # print(dir)
                 with open(path + pref + mesh + dir + suff + routing + str(burst) + '.csv', 'w', newline='') as csvfile:
                     csv_writer = csv.writer(csvfile, delimiter=';',
