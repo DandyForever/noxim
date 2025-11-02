@@ -7,10 +7,12 @@ eu_h = 8 * 2
 eu_v = 4 * 2
 eu_a = 0
 
+mem = (mesh_x - 2) * (mesh_y - 2)
+
 pir_list = [50, 100, 150, 200, 250, 300,
             350, 400, 500, 600, 700, 800, 900, 1000]
 
-path = "sim/results/phd_4/"
+path = "sim/results/phd_4/8/"
 pref = "8"
 routing_list = ["MOD_DOR"]
 mesh = 'x'.join([str(mesh_x), str(mesh_y)])
@@ -44,7 +46,7 @@ for burst in burst_list:
 
                 with open(path + file_name + ".csv", newline='') as csvfile:
                     spamreader = csv.reader(
-                        csvfile, delimiter=';', quotechar=';')
+                        csvfile, delimiter=';')
                     for row in spamreader:
                         if row_idx not in result_names:
                             data[data_idx].append(list(map(int, row[:-1])))
@@ -64,9 +66,11 @@ for burst in burst_list:
                     results['v'] = list()
                     results['t'] = list()
                     results['a'] = list()
+                    results['m'] = list()
                 for key in pir_map:
                     total_horizontal = 0
                     total_vertical = 0
+                    total_mem = 0
                     total_angle = pir_map[key][dir][0][0] + pir_map[key][dir][0][mesh_x-1] + \
                         pir_map[key][dir][mesh_y-1][0] + \
                         pir_map[key][dir][mesh_y-1][mesh_x-1]
@@ -77,12 +81,16 @@ for burst in burst_list:
                         total_vertical += pir_map[key][dir][i][0] + pir_map[key][dir][i][mesh_x-1]
                     total_horizontal -= total_angle
                     total_vertical -= total_angle
+                    for i in range(1, mesh_x-1):
+                        for j in range(1, mesh_y-1):
+                            total_mem += pir_map[key][dir][j][i]
                     results['t'].append(
                         (total_horizontal+total_vertical+total_angle) / (eu_v + eu_h + eu_a) / 50)
                     results['h'].append(total_horizontal / eu_h / 50)
                     results['v'].append(total_vertical / eu_v / 50)
                     if eu_a:
                         results['a'].append(total_angle / eu_a / 50)
+                    results['m'].append(total_mem / mem / 100)
                 # print(dir)
                 with open(path + pref + mesh + dir + suff + routing + str(burst) + '.csv', 'w', newline='') as csvfile:
                     csv_writer = csv.writer(csvfile, delimiter=';',
