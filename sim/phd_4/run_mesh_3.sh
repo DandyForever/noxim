@@ -1,10 +1,10 @@
-# ../../build/noxim -config ../../config_examples/phd_4/mesh_10x10_dor.yaml -pir 0.05 poisson -req_ack_mode 1 -both_phys_req_mode 1 -sim 10000 -detailed -log_file_name ../results/phd_4/3
-# ../../build/noxim -config ../../config_examples/phd_4/mesh_10x10_dor.yaml -pir 0.10 poisson -req_ack_mode 1 -both_phys_req_mode 1 -sim 10000 -detailed -log_file_name ../results/phd_4/3
-# ../../build/noxim -config ../../config_examples/phd_4/mesh_10x10_dor.yaml -pir 0.15 poisson -req_ack_mode 1 -both_phys_req_mode 1 -sim 10000 -detailed -log_file_name ../results/phd_4/3
-# ../../build/noxim -config ../../config_examples/phd_4/mesh_10x10_dor.yaml -pir 0.20 poisson -req_ack_mode 1 -both_phys_req_mode 1 -sim 10000 -detailed -log_file_name ../results/phd_4/3
-# ../../build/noxim -config ../../config_examples/phd_4/mesh_10x10_dor.yaml -pir 0.25 poisson -req_ack_mode 1 -both_phys_req_mode 1 -sim 10000 -detailed -log_file_name ../results/phd_4/3
-# ../../build/noxim -config ../../config_examples/phd_4/mesh_10x10_dor.yaml -pir 0.30 poisson -req_ack_mode 1 -both_phys_req_mode 1 -sim 10000 -detailed -log_file_name ../results/phd_4/3
-# ../../build/noxim -config ../../config_examples/phd_4/mesh_10x10_dor.yaml -pir 0.35 poisson -req_ack_mode 1 -both_phys_req_mode 1 -sim 10000 -detailed -log_file_name ../results/phd_4/3
+../../build/noxim -config ../../config_examples/phd_4/mesh_10x10_dor.yaml -pir 0.05 poisson -req_ack_mode 1 -both_phys_req_mode 1 -sim 10000 -detailed -log_file_name ../results/phd_4/3
+../../build/noxim -config ../../config_examples/phd_4/mesh_10x10_dor.yaml -pir 0.10 poisson -req_ack_mode 1 -both_phys_req_mode 1 -sim 10000 -detailed -log_file_name ../results/phd_4/3
+../../build/noxim -config ../../config_examples/phd_4/mesh_10x10_dor.yaml -pir 0.15 poisson -req_ack_mode 1 -both_phys_req_mode 1 -sim 10000 -detailed -log_file_name ../results/phd_4/3
+../../build/noxim -config ../../config_examples/phd_4/mesh_10x10_dor.yaml -pir 0.20 poisson -req_ack_mode 1 -both_phys_req_mode 1 -sim 10000 -detailed -log_file_name ../results/phd_4/3
+../../build/noxim -config ../../config_examples/phd_4/mesh_10x10_dor.yaml -pir 0.25 poisson -req_ack_mode 1 -both_phys_req_mode 1 -sim 10000 -detailed -log_file_name ../results/phd_4/3
+../../build/noxim -config ../../config_examples/phd_4/mesh_10x10_dor.yaml -pir 0.30 poisson -req_ack_mode 1 -both_phys_req_mode 1 -sim 10000 -detailed -log_file_name ../results/phd_4/3
+../../build/noxim -config ../../config_examples/phd_4/mesh_10x10_dor.yaml -pir 0.35 poisson -req_ack_mode 1 -both_phys_req_mode 1 -sim 10000 -detailed -log_file_name ../results/phd_4/3
 ../../build/noxim -config ../../config_examples/phd_4/mesh_10x10_dor.yaml -pir 0.40 poisson -req_ack_mode 1 -both_phys_req_mode 1 -sim 10000 -detailed -log_file_name ../results/phd_4/3
 ../../build/noxim -config ../../config_examples/phd_4/mesh_10x10_dor.yaml -pir 0.50 poisson -req_ack_mode 1 -both_phys_req_mode 1 -sim 10000 -detailed -log_file_name ../results/phd_4/3
 ../../build/noxim -config ../../config_examples/phd_4/mesh_10x10_dor.yaml -pir 0.60 poisson -req_ack_mode 1 -both_phys_req_mode 1 -sim 10000 -detailed -log_file_name ../results/phd_4/3

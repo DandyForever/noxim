@@ -1,9 +1,9 @@
-# ./run_mesh_1.sh &
-# ./run_mesh_2.sh &
-# ./run_mesh_3.sh &
-# ./run_mesh_4.sh &
-# ./run_mesh_5.sh &
-# ./run_mesh_6.sh &
+./run_mesh_1.sh &
+./run_mesh_2.sh &
+./run_mesh_3.sh &
+./run_mesh_4.sh &
+./run_mesh_5.sh &
+./run_mesh_6.sh &
 ./run_mesh_7_1.sh &
 ./run_mesh_7_2.sh &
 ./run_mesh_8.sh &
