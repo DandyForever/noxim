@@ -20,29 +20,25 @@
 
 #ifdef DEBUG
 
-#define LOG                                                                 \
-  (std::cout << std::setw(7) << left                                        \
-             << sc_time_stamp().to_double() / GlobalParams::clock_period_ps \
+#define LOG                                                                    \
+  (std::cout << std::setw(7) << left                                           \
+             << sc_time_stamp().to_double() / GlobalParams::clock_period_ps    \
              << " " << name() << "::" << __func__ << "() --> ")
 
 #else
 template <class cT, class traits = std::char_traits<cT>>
-class basic_nullbuf : public std::basic_streambuf<cT, traits>
-{
-  typename traits::int_type overflow(typename traits::int_type c)
-  {
+class basic_nullbuf : public std::basic_streambuf<cT, traits> {
+  typename traits::int_type overflow(typename traits::int_type c) {
     return traits::not_eof(c); // indicate success
   }
 };
 
 template <class cT, class traits = std::char_traits<cT>>
-class basic_onullstream : public std::basic_ostream<cT, traits>
-{
+class basic_onullstream : public std::basic_ostream<cT, traits> {
 public:
   basic_onullstream()
       : std::basic_ios<cT, traits>(&m_sbuf), std::basic_ostream<cT, traits>(
-                                                 &m_sbuf)
-  {
+                                                 &m_sbuf) {
     // note: the original code is missing the required this->
     this->init(&m_sbuf);
   }
@@ -60,11 +56,9 @@ static onullstream LOG;
 
 // Output overloading
 
-inline ostream &operator<<(ostream &os, const Flit &flit)
-{
+inline ostream &operator<<(ostream &os, const Flit &flit) {
 
-  if (GlobalParams::verbose_mode == VERBOSE_HIGH)
-  {
+  if (GlobalParams::verbose_mode == VERBOSE_HIGH) {
 
     os << "### FLIT ###" << endl;
     os << "Source Tile[" << flit.src_id << "]" << endl;
@@ -76,9 +70,7 @@ inline ostream &operator<<(ostream &os, const Flit &flit)
     os << "Unix timestamp at packet generation " << flit.timestamp << endl;
     os << "Total number of hops from source to destination is " << flit.hop_no
        << endl;
-  }
-  else
-  {
+  } else {
     os << "(";
 
     os << flit.sequence_no << ", " << flit.src_id << "->" << flit.dst_id
@@ -88,8 +80,7 @@ inline ostream &operator<<(ostream &os, const Flit &flit)
   return os;
 }
 
-inline ostream &operator<<(ostream &os, const ChannelStatus &status)
-{
+inline ostream &operator<<(ostream &os, const ChannelStatus &status) {
   char msg;
   if (status.available)
     msg = 'A';
@@ -99,8 +90,7 @@ inline ostream &operator<<(ostream &os, const ChannelStatus &status)
   return os;
 }
 
-inline ostream &operator<<(ostream &os, const NoP_data &NoP_data)
-{
+inline ostream &operator<<(ostream &os, const NoP_data &NoP_data) {
   os << "      NoP data from [" << NoP_data.sender_id << "] [ ";
 
   for (int j = 0; j < DIRECTIONS; j++)
@@ -109,8 +99,7 @@ inline ostream &operator<<(ostream &os, const NoP_data &NoP_data)
   os << "]" << endl;
   return os;
 }
-inline ostream &operator<<(ostream &os, const TBufferFullStatus &bfs)
-{
+inline ostream &operator<<(ostream &os, const TBufferFullStatus &bfs) {
   os << "[";
   for (int j = 0; j < GlobalParams::n_virtual_channels; j++)
     os << bfs.mask[j] << " ";
@@ -119,8 +108,7 @@ inline ostream &operator<<(ostream &os, const TBufferFullStatus &bfs)
   return os;
 }
 
-inline ostream &operator<<(ostream &os, const Coord &coord)
-{
+inline ostream &operator<<(ostream &os, const Coord &coord) {
   os << "(" << coord.x << "," << coord.y << ")";
 
   return os;
@@ -128,8 +116,7 @@ inline ostream &operator<<(ostream &os, const Coord &coord)
 
 // Trace overloading
 
-inline void sc_trace(sc_trace_file *&tf, const Flit &flit, string &name)
-{
+inline void sc_trace(sc_trace_file *&tf, const Flit &flit, string &name) {
   sc_trace(tf, flit.src_id, name + ".src_id");
   sc_trace(tf, flit.dst_id, name + ".dst_id");
   sc_trace(tf, flit.sequence_no, name + ".sequence_no");
@@ -138,38 +125,32 @@ inline void sc_trace(sc_trace_file *&tf, const Flit &flit, string &name)
 }
 
 inline void sc_trace(sc_trace_file *&tf, const NoP_data &NoP_data,
-                     string &name)
-{
+                     string &name) {
   sc_trace(tf, NoP_data.sender_id, name + ".sender_id");
 }
 inline void sc_trace(sc_trace_file *&tf, const TBufferFullStatus &bfs,
-                     string &name)
-{
+                     string &name) {
   for (int j = 0; j < GlobalParams::n_virtual_channels; j++)
     sc_trace(tf, bfs.mask[j], name + "VC " + to_string(j));
 }
 
 inline void sc_trace(sc_trace_file *&tf, const ChannelStatus &bs,
-                     string &name)
-{
+                     string &name) {
   sc_trace(tf, bs.free_slots, name + ".free_slots");
   sc_trace(tf, bs.available, name + ".available");
 }
 
 // Misc common functions
 
-inline Coord id2Coord(int id)
-{
+inline Coord id2Coord(int id) {
   Coord coord;
-  if (GlobalParams::topology == TOPOLOGY_MESH)
-  {
+  if (GlobalParams::topology == TOPOLOGY_MESH) {
     coord.x = id % GlobalParams::mesh_dim_x;
     coord.y = id / GlobalParams::mesh_dim_x;
 
     assert(coord.x < GlobalParams::mesh_dim_x);
     assert(coord.y < GlobalParams::mesh_dim_y);
-  }
-  else // other delta topologies
+  } else // other delta topologies
   {
     id = id - GlobalParams::n_delta_tiles;
     coord.x = id / (int)(GlobalParams::n_delta_tiles / 2);
@@ -181,16 +162,12 @@ inline Coord id2Coord(int id)
   return coord;
 }
 
-inline int coord2Id(const Coord &coord)
-{
+inline int coord2Id(const Coord &coord) {
   int id;
-  if (GlobalParams::topology == TOPOLOGY_MESH)
-  {
+  if (GlobalParams::topology == TOPOLOGY_MESH) {
     id = (coord.y * GlobalParams::mesh_dim_x) + coord.x;
     assert(id < GlobalParams::mesh_dim_x * GlobalParams::mesh_dim_y);
-  }
-  else
-  { // use only for switch bloc in delta topologies
+  } else { // use only for switch bloc in delta topologies
     id = (coord.x * (GlobalParams::n_delta_tiles / 2)) + coord.y +
          GlobalParams::n_delta_tiles;
     assert(id > (GlobalParams::n_delta_tiles - 1));
@@ -199,14 +176,60 @@ inline int coord2Id(const Coord &coord)
   return id;
 }
 
-inline bool is_memory_node(int id)
-{
+// helpers
+static inline bool coord_in_rect(const Coord &c, const Rect &r) {
+  return c.x >= r.top_left.x && c.x <= r.bot_right.x && c.y >= r.top_left.y &&
+         c.y <= r.bot_right.y;
+}
+
+static inline bool is_border_memory_node(const Coord &c) {
+  // старая логика "рамки", когда нет явных прямоугольников
+  if (c.x == 0)
+    return false;
+  if (c.y == 0)
+    return false;
+  if (c.x == GlobalParams::mesh_dim_x - 1)
+    return false;
+  if (c.y == GlobalParams::mesh_dim_y - 1)
+    return false;
+  return true;
+}
+
+/**
+ * Проверяет, имеет ли мастер с координатами local_id право отправлять пакет на
+ * dst_id. Возвращает true только если dst_id находится в разрешенном
+ * прямоугольнике памяти для данного мастера (персональном или глобальном). Если
+ * в конфиге не задан ни персональный, ни глобальный прямоугольник, используется
+ * старая "рамочная" эвристика.
+ */
+inline bool can_master_send_to(int local_id, int dst_id) {
+  const Coord m = id2Coord(local_id);
+  const Coord d = id2Coord(dst_id);
+
+  // 1) Если есть персональное правило для мастера — оно главнее всего
+  auto it = GlobalParams::master_to_slave_rect.find(m);
+  if (it != GlobalParams::master_to_slave_rect.end()) {
+    return coord_in_rect(d, it->second);
+  }
+
+  // 2) Если персонального нет — используем глобальный прямоугольник (если
+  // задан)
+  if (GlobalParams::has_global_slave_rect) {
+    return coord_in_rect(d, GlobalParams::global_slave_rect);
+  }
+
+  // 3) Бэкап: старая логика "рамки", когда конфигов нет
+  return is_border_memory_node(d);
+}
+
+inline bool is_memory_node(int id) {
   Coord coord = id2Coord(id);
 
-  if (GlobalParams::slave_array.valid)
-  {
-    return coord.x >= GlobalParams::slave_array.top_left.x && coord.x <= GlobalParams::slave_array.bot_right.x &&
-           coord.y >= GlobalParams::slave_array.top_left.y && coord.y <= GlobalParams::slave_array.bot_right.y;
+  if (GlobalParams::has_global_slave_rect) {
+    return coord.x >= GlobalParams::global_slave_rect.top_left.x &&
+           coord.x <= GlobalParams::global_slave_rect.bot_right.x &&
+           coord.y >= GlobalParams::global_slave_rect.top_left.y &&
+           coord.y <= GlobalParams::global_slave_rect.bot_right.y;
   }
 
   if (coord.x == 0)
@@ -221,25 +244,19 @@ inline bool is_memory_node(int id)
   return true;
 }
 
-inline bool is_master_node(int id)
-{
-  if (!GlobalParams::master_connections.empty())
-  {
+inline bool is_master_node(int id) {
+  if (!GlobalParams::master_connections.empty()) {
     return GlobalParams::master_connections.count(id2Coord(id));
-  }
-  else
-  {
+  } else {
     return !is_memory_node(id);
   }
 }
 
-inline int timestamp()
-{
+inline int timestamp() {
   return (int)sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
 }
 
-inline bool sameRadioHub(int id1, int id2)
-{
+inline bool sameRadioHub(int id1, int id2) {
   map<int, int>::iterator it1 = GlobalParams::hub_for_tile.find(id1);
   map<int, int>::iterator it2 = GlobalParams::hub_for_tile.find(id2);
 
@@ -251,15 +268,13 @@ inline bool sameRadioHub(int id1, int id2)
   return (it1->second == it2->second);
 }
 
-inline bool hasRadioHub(int id)
-{
+inline bool hasRadioHub(int id) {
   map<int, int>::iterator it = GlobalParams::hub_for_tile.find(id);
 
   return (it != GlobalParams::hub_for_tile.end());
 }
 
-inline int tile2Hub(int id)
-{
+inline int tile2Hub(int id) {
   map<int, int>::iterator it = GlobalParams::hub_for_tile.find(id);
   assert((it != GlobalParams::hub_for_tile.end()) &&
          "Specified Tile is not connected to any Hub");
@@ -267,8 +282,7 @@ inline int tile2Hub(int id)
 }
 
 inline void printMap(string label, const map<string, double> &m,
-                     std::ostream &out)
-{
+                     std::ostream &out) {
   out << label << " = [" << endl;
   for (map<string, double>::const_iterator i = m.begin(); i != m.end(); i++)
     out << "\t" << std::scientific << i->second << "\t % " << i->first << endl;
@@ -276,16 +290,13 @@ inline void printMap(string label, const map<string, double> &m,
   out << "];" << endl;
 }
 
-template <typename T>
-std::string i_to_string(const T &t)
-{
+template <typename T> std::string i_to_string(const T &t) {
   std::stringstream s;
   s << t;
   return s.str();
 }
 
-inline bool YouAreSwitch(int id)
-{
+inline bool YouAreSwitch(int id) {
   if (id <
       (GlobalParams::n_delta_tiles / 2) * log2(GlobalParams::n_delta_tiles))
     return true;

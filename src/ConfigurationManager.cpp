@@ -14,24 +14,139 @@
 YAML::Node config;
 YAML::Node power_config;
 
-void loadConfiguration()
-{
+static void validate_coord_in_mesh(int x, int y) {
+  if (x < 0 || x >= GlobalParams::mesh_dim_x) {
+    cerr << "X is out of mesh scope: " << x << endl;
+    exit(1);
+  }
+  if (y < 0 || y >= GlobalParams::mesh_dim_y) {
+    cerr << "Y is out of mesh scope: " << y << endl;
+    exit(1);
+  }
+}
+
+static Coord parse_coord_vec(const YAML::Node &node) {
+  auto v = node.as<std::vector<int>>();
+  if (v.size() != 2) {
+    cerr << "coord must have 2 ints";
+    exit(1);
+  }
+  validate_coord_in_mesh(v[0], v[1]);
+  return Coord{v[0], v[1]};
+}
+
+static Rect parse_rect(const YAML::Node &node) {
+  auto tl = parse_coord_vec(node["top_left"]);
+  auto br = parse_coord_vec(node["bot_right"]);
+  if (br.x < tl.x || br.y < tl.y) {
+    cerr << "invalid slave_array rectangle";
+    exit(1);
+  }
+  return Rect{tl, br};
+}
+
+// селектор мастеров из select-узла
+static std::vector<Coord>
+expand_select(const YAML::Node &select,
+              const std::map<std::string, std::vector<Coord>> &groups_index) {
+
+  std::set<Coord> result; // чтобы уникализировать
+
+  if (select["masters"]) {
+    for (const auto &n : select["masters"])
+      result.insert(parse_coord_vec(n));
+  }
+
+  auto add_range = [&](int x0, int x1, int y0, int y1) {
+    for (int x = x0; x <= x1; ++x)
+      for (int y = y0; y <= y1; ++y) {
+        validate_coord_in_mesh(x, y);
+        result.insert(Coord{x, y});
+      }
+  };
+
+  int x0 = 0, x1 = 0, y0 = 0, y1 = 0;
+  if (select["x_range"]) {
+    auto xr = select["x_range"].as<std::vector<int>>();
+    if (xr.size() != 2) {
+      cerr << "x_range must have 2 ints";
+      exit(1);
+    }
+    x0 = xr[0];
+    x1 = xr[1];
+  }
+  if (select["y_range"]) {
+    auto yr = select["y_range"].as<std::vector<int>>();
+    if (yr.size() != 2) {
+      cerr << "y_range must have 2 ints";
+      exit(1);
+    }
+    y0 = yr[0];
+    y1 = yr[1];
+  }
+  bool has_xr = select["x_range"].IsDefined();
+  bool has_yr = select["y_range"].IsDefined();
+
+  // сахар: row/col
+  if (select["row"]) {
+    y0 = y1 = select["row"].as<int>();
+    has_yr = true;
+  }
+  if (select["col"]) {
+    x0 = x1 = select["col"].as<int>();
+    has_xr = true;
+  }
+
+  if (has_xr && has_yr)
+    add_range(x0, x1, y0, y1);
+
+  // x_set × y_set
+  if (select["x_set"] && select["y_set"]) {
+    auto xs = select["x_set"].as<std::vector<int>>();
+    auto ys = select["y_set"].as<std::vector<int>>();
+    for (int x : xs)
+      for (int y : ys) {
+        validate_coord_in_mesh(x, y);
+        result.insert(Coord{x, y});
+      }
+  }
+
+  // группы
+  if (select["groups"]) {
+    for (const auto &g : select["groups"]) {
+      std::string name = g.as<std::string>();
+      auto it = groups_index.find(name);
+      if (it == groups_index.end()) {
+        cerr << "unknown group: " << name;
+        exit(1);
+      }
+      result.insert(it->second.begin(), it->second.end());
+    }
+  }
+
+  return std::vector<Coord>(result.begin(), result.end());
+}
+
+static std::vector<Coord> expand_group_selector(const YAML::Node &sel) {
+  // поддерживаем те же поля, что и в select: row/col, x_range, y_range, x_set,
+  // y_set, masters можно переиспользовать expand_select, передав пустой
+  // groups_index и запрещая groups
+  return expand_select(
+      sel, {}); // но убедитесь, что внутри не обрабатываете "groups"
+}
+
+void loadConfiguration() {
 
   cout << "Loading configuration from file \"" << GlobalParams::config_filename
        << "\"...";
-  try
-  {
+  try {
     config = YAML::LoadFile(GlobalParams::config_filename);
     cout << " Done" << endl;
-  }
-  catch (YAML::BadFile &e)
-  {
+  } catch (YAML::BadFile &e) {
     cout << " Failed" << endl;
     cerr << "The specified YAML configuration file was not found!" << endl;
     exit(0);
-  }
-  catch (YAML::ParserException &pe)
-  {
+  } catch (YAML::ParserException &pe) {
     cout << " Failed" << endl;
     cerr << "ERROR at line " << pe.mark.line + 1 << " column "
          << pe.mark.column + 1 << ": " << pe.msg << ". Please check identation."
@@ -41,20 +156,15 @@ void loadConfiguration()
 
   cout << "Loading power configurations from file \""
        << GlobalParams::power_config_filename << "\"...";
-  try
-  {
+  try {
     power_config = YAML::LoadFile(GlobalParams::power_config_filename);
     cout << " Done" << endl;
-  }
-  catch (YAML::BadFile &e)
-  {
+  } catch (YAML::BadFile &e) {
     cout << " Failed" << endl;
     cerr << "The specified YAML power configurations file was not found!"
          << endl;
     exit(0);
-  }
-  catch (YAML::ParserException &pe)
-  {
+  } catch (YAML::ParserException &pe) {
     cout << " Failed" << endl;
     cerr << "ERROR at line " << pe.mark.line + 1 << " column "
          << pe.mark.column + 1 << ": " << pe.msg << ". Please check identation."
@@ -71,16 +181,14 @@ void loadConfiguration()
   GlobalParams::topology = readParam<string>(config, "topology", TOPOLOGY_MESH);
 
   // Mesh network params
-  if (GlobalParams::topology == TOPOLOGY_MESH)
-  {
+  if (GlobalParams::topology == TOPOLOGY_MESH) {
     GlobalParams::mesh_dim_x = readParam<int>(config, "mesh_dim_x");
     GlobalParams::mesh_dim_y = readParam<int>(config, "mesh_dim_y");
   }
   // Delta network params
   if (GlobalParams::topology == TOPOLOGY_BASELINE ||
       GlobalParams::topology == TOPOLOGY_BUTTERFLY ||
-      GlobalParams::topology == TOPOLOGY_OMEGA)
-  {
+      GlobalParams::topology == TOPOLOGY_OMEGA) {
     // GlobalParams::mesh_dim_x = readParam<int>(config, "mesh_dim_x");
     // GlobalParams::mesh_dim_y = readParam<int>(config, "mesh_dim_y");
     GlobalParams::n_delta_tiles = readParam<int>(config, "n_delta_tiles");
@@ -148,81 +256,111 @@ void loadConfiguration()
       readParam<int>(config, "pe_request_buffer_size");
   GlobalParams::traffic_burst_size =
       readParam<int>(config, "traffic_burst_size");
-  GlobalParams::six_channel_traffic = readParam<bool>(config, "six_channel_traffic");
+  GlobalParams::six_channel_traffic =
+      readParam<bool>(config, "six_channel_traffic");
 
-  if (config["master_connections"])
-  {
-    auto list_of_masters = config["master_connections"].as<std::vector<std::vector<int>>>();
+  if (config["master_connections"]) {
+    auto list_of_masters =
+        config["master_connections"].as<std::vector<std::vector<int>>>();
 
-    for (auto &pair_vec : list_of_masters)
-    {
-      if (pair_vec.size() != 2)
-      {
-        cerr << "each entry in master_connections must have exactly 2 coordinates" << endl;
+    for (auto &pair_vec : list_of_masters) {
+      if (pair_vec.size() != 2) {
+        cerr << "each entry in master_connections must have exactly 2 "
+                "coordinates"
+             << endl;
         exit(1);
       }
       int x = pair_vec[0];
       int y = pair_vec[1];
-      if (x < 0 || x >= GlobalParams::mesh_dim_x)
-      {
-        cerr << "X coordinate of master_connections is out of mesh_dim_x scope: " << x << endl;
+      if (x < 0 || x >= GlobalParams::mesh_dim_x) {
+        cerr
+            << "X coordinate of master_connections is out of mesh_dim_x scope: "
+            << x << endl;
         exit(1);
       }
-      if (y < 0 || y >= GlobalParams::mesh_dim_y)
-      {
-        cerr << "Y coordinate of master_connections is out of mesh_dim_y scope: " << y << endl;
+      if (y < 0 || y >= GlobalParams::mesh_dim_y) {
+        cerr
+            << "Y coordinate of master_connections is out of mesh_dim_y scope: "
+            << y << endl;
         exit(1);
       }
       GlobalParams::master_connections.insert(Coord{x, y});
     }
   }
 
-  if (config["slave_array"])
-  {
-    auto top_left = config["slave_array"]["top_left"].as<std::vector<int>>();
-    auto bot_right = config["slave_array"]["bot_right"].as<std::vector<int>>();
-
-    if (top_left.size() != 2 || bot_right.size() != 2)
-    {
-      cerr << "each entry in slave_array must have exactly 2 coordinates" << endl;
-      exit(1);
+  std::map<std::string, std::vector<Coord>> groups_index;
+  if (config["master_groups"]) {
+    for (auto it : config["master_groups"]) {
+      auto name = it.first.as<std::string>();
+      groups_index[name] = expand_group_selector(it.second);
     }
-    int top_left_x = top_left[0];
-    int top_left_y = top_left[1];
-    if (top_left_x < 0 || top_left_x >= GlobalParams::mesh_dim_x)
-    {
-      cerr << "X coordinate of slave_array.top_left is out of mesh_dim_x scope: " << top_left_x << endl;
-      exit(1);
-    }
-    if (top_left_y < 0 || top_left_y >= GlobalParams::mesh_dim_y)
-    {
-      cerr << "Y coordinate of slave_array.top_left is out of mesh_dim_y scope: " << top_left_y << endl;
-      exit(1);
-    }
-    int bot_right_x = bot_right[0];
-    int bot_right_y = bot_right[1];
-    if (bot_right_x < 0 || bot_right_x >= GlobalParams::mesh_dim_x)
-    {
-      cerr << "X coordinate of slave_array.bot_right is out of mesh_dim_x scope: " << bot_right_x << endl;
-      exit(1);
-    }
-    if (bot_right_y < 0 || bot_right_y >= GlobalParams::mesh_dim_y)
-    {
-      cerr << "Y coordinate of slave_array.bot_right is out of mesh_dim_y scope: " << bot_right_y << endl;
-      exit(1);
-    }
-    if (bot_right < top_left)
-    {
-      cerr << "invalid slave_array configuration" << endl;
-      exit(1);
-    }
-    GlobalParams::slave_array.top_left = Coord{top_left_x, top_left_y};
-    GlobalParams::slave_array.bot_right = Coord{bot_right_x, bot_right_y};
-    GlobalParams::slave_array.valid = true;
   }
-  else
-  {
-    GlobalParams::slave_array.valid = false;
+
+  // 1) глобальный slave_array (опционален)
+  GlobalParams::has_global_slave_rect = false;
+  if (config["slave_array"]) {
+    GlobalParams::global_slave_rect = parse_rect(config["slave_array"]);
+    GlobalParams::has_global_slave_rect = true;
+  } else {
+    GlobalParams::has_global_slave_rect = true;
+    GlobalParams::global_slave_rect = Rect{
+      top_left : Coord{x : 1, y : 1},
+      bot_right :
+      Coord{x : GlobalParams::mesh_dim_x - 2, y : GlobalParams::mesh_dim_y - 2}
+    };
+  }
+
+  // 2) карта назначений
+  GlobalParams::master_to_slave_rect.clear();
+
+  auto ensure_master_known = [&](const Coord &c) {
+    if (!GlobalParams::master_connections.empty() &&
+        !GlobalParams::master_connections.count(c)) {
+      cerr << "master in rule not present in master_connections: (" << c.x
+           << "," << c.y << ")\n";
+      exit(1);
+    }
+  };
+
+  if (config["master_slave_rules"]) {
+    for (const auto &rule : config["master_slave_rules"]) {
+      if (!rule["select"] || !rule["slave_array"]) {
+        cerr << "each rule must have select and slave_array";
+        exit(1);
+      }
+      auto targets = expand_select(rule["select"], groups_index);
+      auto rect = parse_rect(rule["slave_array"]);
+      for (const auto &m : targets) {
+        ensure_master_known(m);
+        // приоритет: первое правило выигрывает
+        if (!GlobalParams::master_to_slave_rect.count(m)) {
+          GlobalParams::master_to_slave_rect[m] = rect;
+          cout << "for master [" << m.x << "][" << m.y << "]: "
+               << "top_left [" << rect.top_left.x << "][" << rect.top_left.y
+               << "] "
+               << "bot_right [" << rect.bot_right.x << "][" << rect.bot_right.y
+               << "]\n";
+        }
+      }
+    }
+  }
+
+  // 3) применяем глобальный дефолт тем, кто остался без назначения
+  if (GlobalParams::has_global_slave_rect) {
+    for (const auto &m : GlobalParams::master_connections) {
+      if (!GlobalParams::master_to_slave_rect.count(m)) {
+        GlobalParams::master_to_slave_rect[m] = GlobalParams::global_slave_rect;
+      }
+    }
+  } else {
+    // если глобального нет — можно проверить, что все мастера покрыты
+    for (const auto &m : GlobalParams::master_connections) {
+      if (!GlobalParams::master_to_slave_rect.count(m)) {
+        cerr << "no slave_array assigned for master (" << m.x << "," << m.y
+             << ")";
+        exit(1);
+      }
+    }
   }
 
   set<int> channelSet;
@@ -231,8 +369,7 @@ void loadConfiguration()
       config["Hubs"]["defaults"].as<HubConfig>();
 
   for (YAML::const_iterator hubs_it = config["Hubs"].begin();
-       hubs_it != config["Hubs"].end(); ++hubs_it)
-  {
+       hubs_it != config["Hubs"].end(); ++hubs_it) {
     int hub_id = hubs_it->first.as<int>(-1);
     if (hub_id < 0)
       continue;
@@ -254,15 +391,13 @@ void loadConfiguration()
       default_channel_config_node.as<ChannelConfig>();
 
   for (set<int>::iterator it = channelSet.begin(); it != channelSet.end();
-       ++it)
-  {
+       ++it) {
     GlobalParams::channel_configuration[*it] =
         default_channel_config_node.as<ChannelConfig>();
   }
 
   for (YAML::const_iterator channels_it = config["RadioChannels"].begin();
-       channels_it != config["RadioChannels"].end(); ++channels_it)
-  {
+       channels_it != config["RadioChannels"].end(); ++channels_it) {
     int channel_id = channels_it->first.as<int>(-1);
     if (channel_id < 0)
       continue;
@@ -276,11 +411,9 @@ void loadConfiguration()
   GlobalParams::power_configuration = power_config["Energy"].as<PowerConfig>();
 }
 
-void setBufferToTile(int depth)
-{
+void setBufferToTile(int depth) {
   for (YAML::const_iterator hubs_it = config["Hubs"].begin();
-       hubs_it != config["Hubs"].end(); ++hubs_it)
-  {
+       hubs_it != config["Hubs"].end(); ++hubs_it) {
     int hub_id = hubs_it->first.as<int>(-1);
     if (hub_id < 0)
       continue;
@@ -290,11 +423,9 @@ void setBufferToTile(int depth)
     GlobalParams::hub_configuration[hub_id].toTileBufferSize = depth;
   }
 }
-void setBufferFromTile(int depth)
-{
+void setBufferFromTile(int depth) {
   for (YAML::const_iterator hubs_it = config["Hubs"].begin();
-       hubs_it != config["Hubs"].end(); ++hubs_it)
-  {
+       hubs_it != config["Hubs"].end(); ++hubs_it) {
     int hub_id = hubs_it->first.as<int>(-1);
     if (hub_id < 0)
       continue;
@@ -304,11 +435,9 @@ void setBufferFromTile(int depth)
     GlobalParams::hub_configuration[hub_id].fromTileBufferSize = depth;
   }
 }
-void setBufferAntenna(int depth)
-{
+void setBufferAntenna(int depth) {
   for (YAML::const_iterator hubs_it = config["Hubs"].begin();
-       hubs_it != config["Hubs"].end(); ++hubs_it)
-  {
+       hubs_it != config["Hubs"].end(); ++hubs_it) {
     int hub_id = hubs_it->first.as<int>(-1);
     if (hub_id < 0)
       continue;
@@ -320,8 +449,7 @@ void setBufferAntenna(int depth)
   }
 }
 
-void showHelp(char selfname[])
-{
+void showHelp(char selfname[]) {
   cout
       << "Usage: " << selfname << " [options]" << endl
       << "Where [options] is one or more of the following ones:" << endl
@@ -431,8 +559,7 @@ void showHelp(char selfname[])
       << endl;
 }
 
-void showConfig()
-{
+void showConfig() {
   cout << "Using the following configuration: " << endl
        << "- verbose_mode = " << GlobalParams::verbose_mode << endl
        << "- trace_mode = " << GlobalParams::trace_mode
@@ -460,44 +587,35 @@ void showConfig()
        << "- rnd_generator_seed = " << GlobalParams::rnd_generator_seed << endl;
 }
 
-void checkConfiguration()
-{
-  if (GlobalParams::topology == TOPOLOGY_MESH)
-  {
-    if (GlobalParams::mesh_dim_x <= 1)
-    {
+void checkConfiguration() {
+  if (GlobalParams::topology == TOPOLOGY_MESH) {
+    if (GlobalParams::mesh_dim_x <= 1) {
       cerr << "Error: dimx must be greater than 1" << endl;
       exit(1);
     }
 
-    if (GlobalParams::mesh_dim_y <= 1)
-    {
+    if (GlobalParams::mesh_dim_y <= 1) {
       cerr << "Error: dimy must be greater than 1" << endl;
       exit(1);
     }
-    if (GlobalParams::winoc_dst_hops > 0)
-    {
+    if (GlobalParams::winoc_dst_hops > 0) {
       cerr << "Error: winoc_dst_hops currently supported only in delta "
               "topologies"
            << endl;
       exit(1);
     }
-  }
-  else // other delta topologies
+  } else // other delta topologies
   {
     int x = GlobalParams::n_delta_tiles;
-    while (x != 1)
-    {
+    while (x != 1) {
       // checks whether a number is divisible by 2
-      if (x % 2 != 0)
-      {
+      if (x % 2 != 0) {
         cerr << "Error: n_delta_tiles must be a power of 2 " << endl;
         exit(1);
       }
       x /= 2;
     }
-    if (GlobalParams::routing_algorithm != "DELTA")
-    {
+    if (GlobalParams::routing_algorithm != "DELTA") {
       cerr << "Error: BUTTERFLY/OMEGA/BASELINE topologies only supported in "
               "DELTA routing algorithm "
            << endl;
@@ -505,30 +623,25 @@ void checkConfiguration()
     }
   }
 
-  if (GlobalParams::winoc_dst_hops > 0)
-  {
-    if (GlobalParams::topology != TOPOLOGY_BUTTERFLY)
-    {
+  if (GlobalParams::winoc_dst_hops > 0) {
+    if (GlobalParams::topology != TOPOLOGY_BUTTERFLY) {
       cerr << "Error: winoc_dst_hops currently supported only in BUTTERFLY "
               "topology"
            << endl;
       exit(1);
     }
-    if (!GlobalParams::use_winoc)
-    {
+    if (!GlobalParams::use_winoc) {
       cerr << "Error: winoc_dst_hops makes sense only when -winoc is enabled!"
            << endl;
       exit(1);
     }
   }
 
-  if (GlobalParams::buffer_depth < 1)
-  {
+  if (GlobalParams::buffer_depth < 1) {
     cerr << "Error: buffer must be >= 1" << endl;
     exit(1);
   }
-  if (GlobalParams::flit_size <= 0)
-  {
+  if (GlobalParams::flit_size <= 0) {
     cerr << "Error: flit_size must be > 0" << endl;
     exit(1);
   }
@@ -539,42 +652,33 @@ void checkConfiguration()
   // exit(1);
   // }
 
-  if (GlobalParams::min_packet_size > GlobalParams::max_packet_size)
-  {
+  if (GlobalParams::min_packet_size > GlobalParams::max_packet_size) {
     cerr << "Error: min packet size must be less than max packet size" << endl;
     exit(1);
   }
 
-  if (GlobalParams::selection_strategy.compare("INVALID_SELECTION") == 0)
-  {
+  if (GlobalParams::selection_strategy.compare("INVALID_SELECTION") == 0) {
     cerr << "Error: invalid selection policy" << endl;
     exit(1);
   }
 
   if (GlobalParams::packet_injection_rate <= 0.0 ||
-      GlobalParams::packet_injection_rate > 1.0)
-  {
+      GlobalParams::packet_injection_rate > 1.0) {
     cerr << "Error: packet injection rate mmust be in the interval ]0,1]"
          << endl;
     exit(1);
   }
 
-  for (unsigned int i = 0; i < GlobalParams::hotspots.size(); i++)
-  {
-    if (GlobalParams::topology == TOPOLOGY_MESH)
-    {
+  for (unsigned int i = 0; i < GlobalParams::hotspots.size(); i++) {
+    if (GlobalParams::topology == TOPOLOGY_MESH) {
       if (GlobalParams::hotspots[i].first >=
-          GlobalParams::mesh_dim_x * GlobalParams::mesh_dim_y)
-      {
+          GlobalParams::mesh_dim_x * GlobalParams::mesh_dim_y) {
         cerr << "Error: hotspot node " << GlobalParams::hotspots[i].first
              << " is invalid (out of range)" << endl;
         exit(1);
       }
-    }
-    else
-    {
-      if (GlobalParams::hotspots[i].first >= GlobalParams::n_delta_tiles)
-      {
+    } else {
+      if (GlobalParams::hotspots[i].first >= GlobalParams::n_delta_tiles) {
         cerr << "Error: hotspot node " << GlobalParams::hotspots[i].first
              << " is invalid (out of range)" << endl;
         exit(1);
@@ -582,46 +686,39 @@ void checkConfiguration()
     }
 
     if (GlobalParams::hotspots[i].second < 0.0 ||
-        GlobalParams::hotspots[i].second > 1.0)
-    {
+        GlobalParams::hotspots[i].second > 1.0) {
       cerr << "Error: hotspot percentage must be in the interval [0,1]" << endl;
       exit(1);
     }
   }
 
-  if (GlobalParams::stats_warm_up_time < 0)
-  {
+  if (GlobalParams::stats_warm_up_time < 0) {
     cerr << "Error: warm-up time must be positive" << endl;
     exit(1);
   }
 
-  if (GlobalParams::simulation_time < 0)
-  {
+  if (GlobalParams::simulation_time < 0) {
     cerr << "Error: simulation time must be positive" << endl;
     exit(1);
   }
-  if (GlobalParams::n_virtual_channels > MAX_VIRTUAL_CHANNELS)
-  {
+  if (GlobalParams::n_virtual_channels > MAX_VIRTUAL_CHANNELS) {
     cerr << "Error: number of virtual channels must be less than "
          << MAX_VIRTUAL_CHANNELS << endl;
     exit(1);
   }
 
-  if (GlobalParams::stats_warm_up_time > GlobalParams::simulation_time)
-  {
+  if (GlobalParams::stats_warm_up_time > GlobalParams::simulation_time) {
     cerr << "Error: warmup time must be less than simulation time" << endl;
     exit(1);
   }
 
-  if (GlobalParams::locality < 0 || GlobalParams::locality > 1)
-  {
+  if (GlobalParams::locality < 0 || GlobalParams::locality > 1) {
     cerr << "Error: traffic locality must be in the range 0..1" << endl;
     exit(1);
   }
 
   if (GlobalParams::n_virtual_channels > 1 &&
-      GlobalParams::selection_strategy.compare("NOP") == 0)
-  {
+      GlobalParams::selection_strategy.compare("NOP") == 0) {
     cerr << "Error: NoP selection strategy can be used only with a single "
             "virtual channel"
          << endl;
@@ -629,15 +726,13 @@ void checkConfiguration()
   }
 
   if (GlobalParams::n_virtual_channels > 1 &&
-      GlobalParams::selection_strategy.compare("BUFFER_LEVEL") == 0)
-  {
+      GlobalParams::selection_strategy.compare("BUFFER_LEVEL") == 0) {
     cerr << "Error: Buffer level selection strategy can be used only with a "
             "single virtual channel"
          << endl;
     exit(1);
   }
-  if (GlobalParams::n_virtual_channels > MAX_VIRTUAL_CHANNELS)
-  {
+  if (GlobalParams::n_virtual_channels > MAX_VIRTUAL_CHANNELS) {
     cerr << "Error: cannot use more than " << MAX_VIRTUAL_CHANNELS
          << " virtual channels." << endl
          << "If you need more vc please modify the MAX_VIRTUAL_CHANNELS "
@@ -646,16 +741,14 @@ void checkConfiguration()
          << "GlobalParams.h and compile again " << endl;
     exit(1);
   }
-  if (GlobalParams::n_virtual_channels > 1 && GlobalParams::use_powermanager)
-  {
+  if (GlobalParams::n_virtual_channels > 1 && GlobalParams::use_powermanager) {
     cerr << "Error: Power manager (-wirxsleep) option only supports a single "
             "virtual channel"
          << endl;
     exit(1);
   }
 
-  if (GlobalParams::ascii_monitor)
-  {
+  if (GlobalParams::ascii_monitor) {
 #ifdef DEBUG
     cerr << "-ascii_monitor option need DEBUG flag to be disabled in Makefile "
          << endl;
@@ -664,24 +757,19 @@ void checkConfiguration()
   }
 }
 
-void parseCmdLine(int arg_num, char *arg_vet[])
-{
+void parseCmdLine(int arg_num, char *arg_vet[]) {
   if (arg_num == 1)
     cout << "Running with default parameters (use '-help' option to see how to "
             "override them)"
          << endl;
-  else
-  {
-    for (int i = 1; i < arg_num; i++)
-    {
+  else {
+    for (int i = 1; i < arg_num; i++) {
       if (!strcmp(arg_vet[i], "-verbose"))
         GlobalParams::verbose_mode = atoi(arg_vet[++i]);
-      else if (!strcmp(arg_vet[i], "-trace"))
-      {
+      else if (!strcmp(arg_vet[i], "-trace")) {
         GlobalParams::trace_mode = true;
         GlobalParams::trace_filename = arg_vet[++i];
-      }
-      else if (!strcmp(arg_vet[i], "-dimx"))
+      } else if (!strcmp(arg_vet[i], "-dimx"))
         GlobalParams::mesh_dim_x = atoi(arg_vet[++i]);
       else if (!strcmp(arg_vet[i], "-dimy"))
         GlobalParams::mesh_dim_y = atoi(arg_vet[++i]);
@@ -703,113 +791,63 @@ void parseCmdLine(int arg_num, char *arg_vet[])
         GlobalParams::flit_size = atoi(arg_vet[++i]);
       else if (!strcmp(arg_vet[i], "-winoc"))
         GlobalParams::use_winoc = true;
-      else if (!strcmp(arg_vet[i], "-winoc_dst_hops"))
-      {
+      else if (!strcmp(arg_vet[i], "-winoc_dst_hops")) {
         GlobalParams::winoc_dst_hops = atoi(arg_vet[++i]);
-      }
-      else if (!strcmp(arg_vet[i], "-wirxsleep"))
-      {
+      } else if (!strcmp(arg_vet[i], "-wirxsleep")) {
         GlobalParams::use_powermanager = true;
-      }
-      else if (!strcmp(arg_vet[i], "-size"))
-      {
+      } else if (!strcmp(arg_vet[i], "-size")) {
         GlobalParams::min_packet_size = atoi(arg_vet[++i]);
         GlobalParams::max_packet_size = atoi(arg_vet[++i]);
-      }
-      else if (!strcmp(arg_vet[i], "-topology"))
-      {
+      } else if (!strcmp(arg_vet[i], "-topology")) {
         GlobalParams::topology = arg_vet[++i];
         cout << "Changing topology to " << GlobalParams::topology << endl;
-      }
-      else if (!strcmp(arg_vet[i], "-routing"))
-      {
+      } else if (!strcmp(arg_vet[i], "-routing")) {
         GlobalParams::routing_algorithm = arg_vet[++i];
         if (GlobalParams::routing_algorithm == ROUTING_DYAD)
           GlobalParams::dyad_threshold = atof(arg_vet[++i]);
-        else if (GlobalParams::routing_algorithm == ROUTING_TABLE_BASED)
-        {
+        else if (GlobalParams::routing_algorithm == ROUTING_TABLE_BASED) {
           GlobalParams::routing_table_filename = arg_vet[++i];
           GlobalParams::packet_injection_rate = 0;
         }
-      }
-      else if (!strcmp(arg_vet[i], "-sel"))
-      {
+      } else if (!strcmp(arg_vet[i], "-sel")) {
         GlobalParams::selection_strategy = arg_vet[++i];
-      }
-      else if (!strcmp(arg_vet[i], "-log_file_name"))
-      {
+      } else if (!strcmp(arg_vet[i], "-log_file_name")) {
         GlobalParams::log_file_name = arg_vet[++i];
-      }
-      else if (!strcmp(arg_vet[i], "-interliving_reps"))
-      {
+      } else if (!strcmp(arg_vet[i], "-interliving_reps")) {
         GlobalParams::interliving_reps = atoi(arg_vet[++i]);
-      }
-      else if (!strcmp(arg_vet[i], "-interliving_direction"))
-      {
+      } else if (!strcmp(arg_vet[i], "-interliving_direction")) {
         GlobalParams::interliving_direction = atoi(arg_vet[++i]);
-      }
-      else if (!strcmp(arg_vet[i], "-mem_ports"))
-      {
+      } else if (!strcmp(arg_vet[i], "-mem_ports")) {
         GlobalParams::mem_ports = atoi(arg_vet[++i]);
-      }
-      else if (!strcmp(arg_vet[i], "-eu_ports"))
-      {
+      } else if (!strcmp(arg_vet[i], "-eu_ports")) {
         GlobalParams::eu_ports = atoi(arg_vet[++i]);
-      }
-      else if (!strcmp(arg_vet[i], "-switch_vertical_masters"))
-      {
+      } else if (!strcmp(arg_vet[i], "-switch_vertical_masters")) {
         GlobalParams::switch_vertical_masters = atoi(arg_vet[++i]);
-      }
-      else if (!strcmp(arg_vet[i], "-switch_angle_masters"))
-      {
+      } else if (!strcmp(arg_vet[i], "-switch_angle_masters")) {
         GlobalParams::switch_angle_masters = atoi(arg_vet[++i]);
-      }
-      else if (!strcmp(arg_vet[i], "-switch_horizontal_masters"))
-      {
+      } else if (!strcmp(arg_vet[i], "-switch_horizontal_masters")) {
         GlobalParams::switch_horizontal_masters = atoi(arg_vet[++i]);
-      }
-      else if (!strcmp(arg_vet[i], "-switch_interliving_validation"))
-      {
+      } else if (!strcmp(arg_vet[i], "-switch_interliving_validation")) {
         GlobalParams::switch_interliving_validation = atoi(arg_vet[++i]);
-      }
-      else if (!strcmp(arg_vet[i], "-switch_debug"))
-      {
+      } else if (!strcmp(arg_vet[i], "-switch_debug")) {
         GlobalParams::switch_debug = atoi(arg_vet[++i]);
-      }
-      else if (!strcmp(arg_vet[i], "-req_ack_mode"))
-      {
+      } else if (!strcmp(arg_vet[i], "-req_ack_mode")) {
         GlobalParams::req_ack_mode = atoi(arg_vet[++i]);
-      }
-      else if (!strcmp(arg_vet[i], "-both_phys_req_mode"))
-      {
+      } else if (!strcmp(arg_vet[i], "-both_phys_req_mode")) {
         GlobalParams::both_phys_req_mode = atoi(arg_vet[++i]);
-      }
-      else if (!strcmp(arg_vet[i], "-buffer_verbose"))
-      {
+      } else if (!strcmp(arg_vet[i], "-buffer_verbose")) {
         GlobalParams::buffer_verbose = atoi(arg_vet[++i]);
-      }
-      else if (!strcmp(arg_vet[i], "-traffic_verbose"))
-      {
+      } else if (!strcmp(arg_vet[i], "-traffic_verbose")) {
         GlobalParams::traffic_verbose = atoi(arg_vet[++i]);
-      }
-      else if (!strcmp(arg_vet[i], "-buffer_mid"))
-      {
+      } else if (!strcmp(arg_vet[i], "-buffer_mid")) {
         GlobalParams::buffer_mid = atoi(arg_vet[++i]);
-      }
-      else if (!strcmp(arg_vet[i], "-pe_request_buffer_size"))
-      {
+      } else if (!strcmp(arg_vet[i], "-pe_request_buffer_size")) {
         GlobalParams::pe_request_buffer_size = atoi(arg_vet[++i]);
-      }
-      else if (!strcmp(arg_vet[i], "-traffic_burst_size"))
-      {
+      } else if (!strcmp(arg_vet[i], "-traffic_burst_size")) {
         GlobalParams::traffic_burst_size = atoi(arg_vet[++i]);
-      }
-      else if (!strcmp(arg_vet[i], "-flit_dump"))
-      {
+      } else if (!strcmp(arg_vet[i], "-flit_dump")) {
         GlobalParams::flit_dump = atoi(arg_vet[++i]);
-      }
-      else if (!strcmp(arg_vet[i], "-pir"))
-      {
+      } else if (!strcmp(arg_vet[i], "-pir")) {
 
         GlobalParams::packet_injection_rate = atof(arg_vet[++i]);
         char *distribution = arg_vet[i + 1 < arg_num ? ++i : i];
@@ -817,28 +855,22 @@ void parseCmdLine(int arg_num, char *arg_vet[])
         if (!strcmp(distribution, "poisson"))
           GlobalParams::probability_of_retransmission =
               GlobalParams::packet_injection_rate;
-        else if (!strcmp(distribution, "burst"))
-        {
+        else if (!strcmp(distribution, "burst")) {
           double burstness = atof(arg_vet[++i]);
           GlobalParams::probability_of_retransmission =
               GlobalParams::packet_injection_rate / (1 - burstness);
-        }
-        else if (!strcmp(distribution, "pareto"))
-        {
+        } else if (!strcmp(distribution, "pareto")) {
           double Aon = atof(arg_vet[++i]);
           double Aoff = atof(arg_vet[++i]);
           double r = atof(arg_vet[++i]);
           GlobalParams::probability_of_retransmission =
               GlobalParams::packet_injection_rate *
               pow((1 - r), (1 / Aoff - 1 / Aon));
-        }
-        else if (!strcmp(distribution, "custom"))
+        } else if (!strcmp(distribution, "custom"))
           GlobalParams::probability_of_retransmission = atof(arg_vet[++i]);
         else
           assert("Invalid pir format" && false);
-      }
-      else if (!strcmp(arg_vet[i], "-traffic"))
-      {
+      } else if (!strcmp(arg_vet[i], "-traffic")) {
         char *traffic = arg_vet[++i];
         if (!strcmp(traffic, "random"))
           GlobalParams::traffic_distribution = TRAFFIC_RANDOM;
@@ -854,27 +886,20 @@ void parseCmdLine(int arg_num, char *arg_vet[])
           GlobalParams::traffic_distribution = TRAFFIC_SHUFFLE;
         else if (!strcmp(traffic, "ulocal"))
           GlobalParams::traffic_distribution = TRAFFIC_ULOCAL;
-        else if (!strcmp(traffic, "table"))
-        {
+        else if (!strcmp(traffic, "table")) {
           GlobalParams::traffic_distribution = TRAFFIC_TABLE_BASED;
           GlobalParams::traffic_table_filename = arg_vet[++i];
-        }
-        else if (!strcmp(traffic, "local"))
-        {
+        } else if (!strcmp(traffic, "local")) {
           GlobalParams::traffic_distribution = TRAFFIC_LOCAL;
           GlobalParams::locality = atof(arg_vet[++i]);
-        }
-        else
+        } else
           assert(false);
-      }
-      else if (!strcmp(arg_vet[i], "-hs"))
-      {
+      } else if (!strcmp(arg_vet[i], "-hs")) {
         int node = atoi(arg_vet[++i]);
         double percentage = atof(arg_vet[++i]);
         pair<int, double> t(node, percentage);
         GlobalParams::hotspots.push_back(t);
-      }
-      else if (!strcmp(arg_vet[i], "-warmup"))
+      } else if (!strcmp(arg_vet[i], "-warmup"))
         GlobalParams::stats_warm_up_time = atoi(arg_vet[++i]);
       else if (!strcmp(arg_vet[i], "-seed"))
         GlobalParams::rnd_generator_seed = atoi(arg_vet[++i]);
@@ -892,8 +917,7 @@ void parseCmdLine(int arg_num, char *arg_vet[])
         // -config is managed from configure function
         // i++ skips the configuration file name
         i++;
-      else
-      {
+      else {
         cerr << "Error: Invalid option: " << arg_vet[i] << endl;
         exit(1);
       }
@@ -901,38 +925,31 @@ void parseCmdLine(int arg_num, char *arg_vet[])
   }
 }
 
-void configure(int arg_num, char *arg_vet[])
-{
+void configure(int arg_num, char *arg_vet[]) {
 
   bool config_found = false;
   bool power_config_found = false;
 
-  for (int i = 1; i < arg_num; i++)
-  {
-    if (!strcmp(arg_vet[i], "-help"))
-    {
+  for (int i = 1; i < arg_num; i++) {
+    if (!strcmp(arg_vet[i], "-help")) {
       showHelp(arg_vet[0]);
       exit(0);
     }
   }
 
-  for (int i = 1; i < arg_num; i++)
-  {
-    if (!strcmp(arg_vet[i], "-config"))
-    {
+  for (int i = 1; i < arg_num; i++) {
+    if (!strcmp(arg_vet[i], "-config")) {
       GlobalParams::config_filename = arg_vet[++i];
       config_found = true;
       break;
     }
   }
 
-  if (!config_found)
-  {
+  if (!config_found) {
     std::ifstream infile(CONFIG_FILENAME);
     if (infile.good())
       GlobalParams::config_filename = CONFIG_FILENAME;
-    else
-    {
+    else {
       cerr << "No YAML configuration file found!\n Use -config to load "
               "examples from config_examples folder"
            << endl;
@@ -940,23 +957,19 @@ void configure(int arg_num, char *arg_vet[])
     }
   }
 
-  for (int i = 1; i < arg_num; i++)
-  {
-    if (!strcmp(arg_vet[i], "-power"))
-    {
+  for (int i = 1; i < arg_num; i++) {
+    if (!strcmp(arg_vet[i], "-power")) {
       GlobalParams::power_config_filename = arg_vet[++i];
       power_config_found = true;
       break;
     }
   }
 
-  if (!power_config_found)
-  {
+  if (!power_config_found) {
     std::ifstream infile(POWER_CONFIG_FILENAME);
     if (infile.good())
       GlobalParams::power_config_filename = POWER_CONFIG_FILENAME;
-    else
-    {
+    else {
       cerr << "No YAML power configurations file found!\n Use -power to load "
               "examples from config_examples folder"
            << endl;
@@ -975,14 +988,10 @@ void configure(int arg_num, char *arg_vet[])
 }
 
 template <typename T>
-T readParam(YAML::Node node, string param, T default_value)
-{
-  try
-  {
+T readParam(YAML::Node node, string param, T default_value) {
+  try {
     return node[param].as<T>();
-  }
-  catch (exception &e)
-  {
+  } catch (exception &e) {
     /*
     cerr << "WARNING: parameter " << param << " not present in YAML
     configuration file." << endl; cerr << "Using command line value or default
@@ -992,15 +1001,10 @@ T readParam(YAML::Node node, string param, T default_value)
   }
 }
 
-template <typename T>
-T readParam(YAML::Node node, string param)
-{
-  try
-  {
+template <typename T> T readParam(YAML::Node node, string param) {
+  try {
     return node[param].as<T>();
-  }
-  catch (exception &e)
-  {
+  } catch (exception &e) {
     cerr << "ERROR: Cannot read param " << param << ". " << endl;
     exit(0);
   }

@@ -989,20 +989,7 @@ Packet ProcessingElement::trafficRandom(RequestType request_type) {
     }
 #endif
 
-  } while (!is_memory_node(p.dst_id)
-           //------------------------------
-           // Temporary for quadrant study
-           //------------------------------
-           // || !is_same_quadrant(local_id, p.dst_id)
-           //------------------------------
-           // Temporary for empty columns
-           //------------------------------
-           // || ((p.dst_id - 1) % GlobalParams::mesh_dim_x == 0)
-           // || ((p.dst_id + 2) % GlobalParams::mesh_dim_x == 0)
-           // || ((p.dst_id - 2) % GlobalParams::mesh_dim_x == 0)
-           // || ((p.dst_id + 3) % GlobalParams::mesh_dim_x == 0)
-           //------------------------------
-  );
+  } while (!can_master_send_to(local_id, p.dst_id));
 
   //-----------------------------------
   // Interliving feature traffic

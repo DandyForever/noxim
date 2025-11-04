@@ -80,4 +80,6 @@ int GlobalParams::pe_request_buffer_size;
 unsigned long GlobalParams::traffic_burst_size;
 bool GlobalParams::six_channel_traffic;
 std::set<Coord> GlobalParams::master_connections;
-SlaveArray GlobalParams::slave_array;
+bool GlobalParams::has_global_slave_rect;
+Rect GlobalParams::global_slave_rect;
+std::unordered_map<Coord, Rect, CoordHash> GlobalParams::master_to_slave_rect;

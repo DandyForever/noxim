@@ -1,10 +1,10 @@
 import csv
 
 mesh_x = 10
-mesh_y = 6
+mesh_y = 10
 
 eu_h = 8 * 2
-eu_v = 4 * 2
+eu_v = 8 * 2
 eu_a = 0
 
 mem = (mesh_x - 2) * (mesh_y - 2)
@@ -12,11 +12,11 @@ mem = (mesh_x - 2) * (mesh_y - 2)
 pir_list = [50, 100, 150, 200, 250, 300,
             350, 400, 500, 600, 700, 800, 900, 1000]
 
-path = "sim/results/phd_4/8/"
-pref = "8"
+path = "sim/results/quadrants/"
+pref = "q1"
 routing_list = ["MOD_DOR"]
 mesh = 'x'.join([str(mesh_x), str(mesh_y)])
-suff_list = ["mp_1_sv_1_sh_1"]
+suff_list = ["mp_1_sv_1"]
 result_names = [0, mesh_y+1, 2 *
                 (mesh_y+1), 3*(mesh_y+1), 4*(mesh_y+1), 5*(mesh_y+1)]
 burst_list = [1]
@@ -31,7 +31,7 @@ for burst in burst_list:
             pir_map = dict()
             for pir in pir_list:
                 file_name = '_'.join(
-                    [pref, "mesh", mesh, routing, suff, "pir", str(pir//2), "ps", str(burst), "bs", str(traffic_burst)])
+                    [pref, "mesh", mesh, routing, suff, "pir", str(pir), "ps", str(burst), "bs", str(traffic_burst)])
 
                 data = list()
                 data.append(list())
@@ -85,11 +85,11 @@ for burst in burst_list:
                         for j in range(1, mesh_y-1):
                             total_mem += pir_map[key][dir][j][i]
                     results['t'].append(
-                        (total_horizontal+total_vertical+total_angle) / (eu_v + eu_h + eu_a) / 50)
-                    results['h'].append(total_horizontal / eu_h / 50)
-                    results['v'].append(total_vertical / eu_v / 50)
+                        (total_horizontal+total_vertical+total_angle) / (eu_v + eu_h + eu_a) / 100)
+                    results['h'].append(total_horizontal / eu_h / 100)
+                    results['v'].append(total_vertical / eu_v / 100)
                     if eu_a:
-                        results['a'].append(total_angle / eu_a / 50)
+                        results['a'].append(total_angle / eu_a / 100)
                     results['m'].append(total_mem / mem / 100)
                 # print(dir)
                 with open(path + pref + mesh + dir + suff + routing + str(burst) + '.csv', 'w', newline='') as csvfile:

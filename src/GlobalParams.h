@@ -15,6 +15,7 @@
 #include <map>
 #include <set>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -92,15 +93,13 @@ using namespace std;
 #define TOKEN_MAX_HOLD "TOKEN_MAX_HOLD"
 #define TOKEN_PACKET "TOKEN_PACKET"
 
-typedef struct
-{
+typedef struct {
   pair<double, double> ber;
   int dataRate;
   vector<string> macPolicy;
 } ChannelConfig;
 
-typedef struct
-{
+typedef struct {
   vector<int> attachedNodes;
   vector<int> rxChannels;
   vector<int> txChannels;
@@ -110,8 +109,7 @@ typedef struct
   int rxBufferSize;
 } HubConfig;
 
-typedef struct
-{
+typedef struct {
   map<pair<int, int>, double> front;
   map<pair<int, int>, double> pop;
   map<pair<int, int>, double> push;
@@ -120,16 +118,14 @@ typedef struct
 
 typedef map<double, pair<double, double>> LinkBitLinePowerConfig;
 
-typedef struct
-{
+typedef struct {
   map<pair<double, double>, pair<double, double>> crossbar_pm;
   map<int, pair<double, double>> network_interface;
   map<string, pair<double, double>> routing_algorithm_pm;
   map<string, pair<double, double>> selection_strategy_pm;
 } RouterPowerConfig;
 
-typedef struct
-{
+typedef struct {
   pair<double, double> transceiver_leakage;
   pair<double, double> transceiver_biasing;
   double rx_dynamic;
@@ -138,8 +134,7 @@ typedef struct
   map<pair<int, int>, double> transmitter_attenuation_map;
 } HubPowerConfig;
 
-typedef struct
-{
+typedef struct {
   BufferPowerConfig bufferPowerConfig;
   LinkBitLinePowerConfig linkBitLinePowerConfig;
   RouterPowerConfig routerPowerConfig;
@@ -147,19 +142,16 @@ typedef struct
 } PowerConfig;
 
 // Coord -- XY coordinates type of the Tile inside the Mesh
-class Coord
-{
+class Coord {
 public:
   int x; // X coordinate
   int y; // Y coordinate
 
-  inline bool operator==(const Coord &coord) const
-  {
+  inline bool operator==(const Coord &coord) const {
     return (coord.x == x && coord.y == y);
   }
 
-  inline bool operator<(const Coord &other) const
-  {
+  inline bool operator<(const Coord &other) const {
     // One common way: sort primarily by x, then by y
     if (x < other.x)
       return true;
@@ -170,15 +162,18 @@ public:
   }
 };
 
-typedef struct
-{
-  bool valid;
+struct CoordHash {
+  size_t operator()(const Coord &c) const noexcept {
+    return (static_cast<size_t>(c.x) << 32) ^ static_cast<size_t>(c.y);
+  }
+};
+
+struct Rect {
   Coord top_left;
   Coord bot_right;
-} SlaveArray;
+};
 
-struct GlobalParams
-{
+struct GlobalParams {
   static string verbose_mode;
   static int trace_mode;
   static string trace_filename;
@@ -245,7 +240,9 @@ struct GlobalParams
   static unsigned long traffic_burst_size;
   static bool six_channel_traffic;
   static set<Coord> master_connections;
-  static SlaveArray slave_array;
+  static bool has_global_slave_rect;
+  static Rect global_slave_rect;
+  static std::unordered_map<Coord, Rect, CoordHash> master_to_slave_rect;
 };
 
 #endif

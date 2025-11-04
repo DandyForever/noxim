@@ -38,14 +38,14 @@
 #     -both_phys_req_mode 1 \
 #     -log_file_name ./results/latencies/validation_long
 
-../build/noxim \
-    -config ../config_examples/strawman/mesh_18x10_dor.yaml \
-    -pir 1.0 poisson \
-    -sim 10000 \
-    -detailed \
-    -req_ack_mode 1 \
-    -both_phys_req_mode 1 \
-    -log_file_name ./results/strawman/validation_1 &
+# ../build/noxim \
+#     -config ../config_examples/strawman/mesh_18x10_dor.yaml \
+#     -pir 1.0 poisson \
+#     -sim 10000 \
+#     -detailed \
+#     -req_ack_mode 1 \
+#     -both_phys_req_mode 1 \
+#     -log_file_name ./results/strawman/validation_1 &
 
 # ../build/noxim \
 #     -config ../config_examples/strawman/mesh_18x10_mod_dor.yaml \
@@ -118,3 +118,30 @@
 #     -req_ack_mode 1 \
 #     -both_phys_req_mode 1 \
 #     -log_file_name ./results/strawman/validation_8 &
+
+../build/noxim \
+    -config ../config_examples/quadrants/mesh_10x10_dor_q1.yaml \
+    -pir 1.0 poisson \
+    -sim 10000 \
+    -detailed \
+    -req_ack_mode 1 \
+    -both_phys_req_mode 1 \
+    -log_file_name ./results/quadrants/validation_q1 &
+
+# ../build/noxim \
+#     -config ../config_examples/quadrants/mesh_10x10_dor_q2.yaml \
+#     -pir 1.0 poisson \
+#     -sim 10000 \
+#     -detailed \
+#     -req_ack_mode 1 \
+#     -both_phys_req_mode 1 \
+#     -log_file_name ./results/quadrants/validation_q2 &
+
+# ../build/noxim \
+#     -config ../config_examples/quadrants/mesh_10x10_dor_q4.yaml \
+#     -pir 1.0 poisson \
+#     -sim 10000 \
+#     -detailed \
+#     -req_ack_mode 1 \
+#     -both_phys_req_mode 1 \
+#     -log_file_name ./results/quadrants/validation_q4 &
