@@ -98,7 +98,7 @@ void ProcessingElement::rxProcess() {
     if (req_rx.read() && ack_rx.read()) {
       if (flit_rx.read().flit_type(FLIT_TYPE_TAIL)) {
         Flit flit_tmp = flit_rx.read();
-        int vc_id = GlobalParams::n_virtual_channels - 1 - flit_tmp.vc_id;
+        int vc_id = get_reply_vc_for_request_vc(flit_tmp.vc_id);
         Packet p = generateResponse(flit_tmp, RequestType::WRITE);
         in_packet_queue_x[vc_id].push(p);
       }
@@ -372,7 +372,7 @@ void ProcessingElement::ryProcess() {
     if (req_ry.read() && ack_ry.read()) {
       if (flit_ry.read().flit_type(FLIT_TYPE_TAIL)) {
         Flit flit_tmp = flit_ry.read();
-        int vc_id = GlobalParams::n_virtual_channels - 1 - flit_tmp.vc_id;
+        int vc_id = get_reply_vc_for_request_vc(flit_tmp.vc_id);
         Packet p = generateResponse(flit_ry.read(), RequestType::READ);
         in_packet_queue_y[vc_id].push(p);
       } else {
@@ -927,7 +927,7 @@ Packet ProcessingElement::generateResponse(Flit flit,
   p.src_id = flit.dst_id;
   p.dst_id = flit.src_id;
   p.id = flit.id;
-  p.vc_id = GlobalParams::n_virtual_channels - 1 - flit.vc_id;
+  p.vc_id = get_reply_vc_for_request_vc(flit.vc_id);
   p.is_head = flit.traffic_burst_is_head;
   p.is_tail = flit.traffic_burst_is_tail;
   p.traffic_burst_id = flit.traffic_burst_id;
@@ -1130,11 +1130,7 @@ Packet ProcessingElement::trafficRandom(RequestType request_type) {
     p.size = p.flit_left = 1;
     break;
   }
-  if (GlobalParams::routing_algorithm == "MOD_DOR") {
-    p.vc_id = (int)is_vertical_pe(local_id);
-  } else {
-    p.vc_id = 0;
-  }
+  p.vc_id = get_request_vc_for_master(id2Coord(local_id));
 
   if (GlobalParams::switch_debug)
     cout << "For " << local_id << " dst " << p.dst_id << " ldid "

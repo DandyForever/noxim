@@ -121,7 +121,7 @@
 
 ../build/noxim \
     -config ../config_examples/quadrants/mesh_10x10_dor_q1.yaml \
-    -pir 1.0 poisson \
+    -pir 0.5 poisson \
     -sim 10000 \
     -detailed \
     -req_ack_mode 1 \

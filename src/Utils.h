@@ -252,6 +252,24 @@ inline bool is_master_node(int id) {
   }
 }
 
+inline RoutingType get_routing_for_vc(int vc) {
+  return GlobalParams::vc_routing[vc];
+}
+
+inline int get_request_vc_for_master(const Coord &m) {
+  auto it = GlobalParams::master_to_request_vc.find(m);
+  if (it == GlobalParams::master_to_request_vc.end()) {
+    std::cerr << "master has no request VC assigned: (" << m.x << "," << m.y
+              << ")\n";
+    std::exit(1);
+  }
+  return it->second;
+}
+
+inline int get_reply_vc_for_request_vc(int req_vc) {
+  return GlobalParams::reply_vc_by_request_vc[req_vc];
+}
+
 inline int timestamp() {
   return (int)sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
 }

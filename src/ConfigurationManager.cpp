@@ -135,6 +135,22 @@ static std::vector<Coord> expand_group_selector(const YAML::Node &sel) {
       sel, {}); // но убедитесь, что внутри не обрабатываете "groups"
 }
 
+static RoutingType parse_routing_type(const std::string &s) {
+  if (s == "XY")
+    return RoutingType::XY;
+  if (s == "YX")
+    return RoutingType::YX;
+  std::cerr << "unknown routing type: " << s << std::endl;
+  std::exit(1);
+}
+
+static void ensure_vc_in_range(int vc) {
+  if (vc < 0 || vc >= GlobalParams::n_virtual_channels) {
+    std::cerr << "VC index out of range: " << vc << std::endl;
+    std::exit(1);
+  }
+}
+
 void loadConfiguration() {
 
   cout << "Loading configuration from file \"" << GlobalParams::config_filename
@@ -286,6 +302,17 @@ void loadConfiguration() {
       }
       GlobalParams::master_connections.insert(Coord{x, y});
     }
+  } else {
+    for (int x = 0; x < GlobalParams::mesh_dim_x; x++) {
+      GlobalParams::master_connections.insert(Coord{x, 0});
+      GlobalParams::master_connections.insert(
+          Coord{x, GlobalParams::mesh_dim_y - 1});
+    }
+    for (int y = 0; y < GlobalParams::mesh_dim_y; y++) {
+      GlobalParams::master_connections.insert(Coord{0, y});
+      GlobalParams::master_connections.insert(
+          Coord{GlobalParams::mesh_dim_x - 1, y});
+    }
   }
 
   std::map<std::string, std::vector<Coord>> groups_index;
@@ -359,6 +386,108 @@ void loadConfiguration() {
         cerr << "no slave_array assigned for master (" << m.x << "," << m.y
              << ")";
         exit(1);
+      }
+    }
+  }
+
+  GlobalParams::vc_routing.assign(GlobalParams::n_virtual_channels,
+                                  RoutingType::XY); // дефолт: XY
+
+  if (config["routing_by_vc"]) {
+    const auto node = config["routing_by_vc"];
+    if (node.IsSequence()) {
+      if (static_cast<int>(node.size()) != GlobalParams::n_virtual_channels) {
+        std::cerr << "routing_by_vc list size must equal n_virtual_channels"
+                  << std::endl;
+        std::exit(1);
+      }
+      for (int i = 0; i < (int)node.size(); ++i) {
+        GlobalParams::vc_routing[i] =
+            parse_routing_type(node[i].as<std::string>());
+      }
+    } else if (node.IsMap()) {
+      for (auto it : node) {
+        int vc = it.first.as<int>();
+        ensure_vc_in_range(vc);
+        GlobalParams::vc_routing[vc] =
+            parse_routing_type(it.second.as<std::string>());
+      }
+    } else {
+      std::cerr << "routing_by_vc must be a list or a map" << std::endl;
+      std::exit(1);
+    }
+  }
+
+  GlobalParams::reply_vc_by_request_vc.resize(GlobalParams::n_virtual_channels);
+  for (int i = 0; i < GlobalParams::n_virtual_channels; ++i) {
+    GlobalParams::reply_vc_by_request_vc[i] =
+        GlobalParams::n_virtual_channels - 1 - i; // Deadlock freedom
+  }
+
+  if (config["reply_vc_by_request_vc"]) {
+    const auto node = config["reply_vc_by_request_vc"];
+    if (!node.IsMap()) {
+      std::cerr << "reply_vc_by_request_vc must be a map" << std::endl;
+      std::exit(1);
+    }
+    for (auto it : node) {
+      int req_vc = it.first.as<int>();
+      int rep_vc = it.second.as<int>();
+      ensure_vc_in_range(req_vc);
+      ensure_vc_in_range(rep_vc);
+      GlobalParams::reply_vc_by_request_vc[req_vc] = rep_vc;
+    }
+  }
+
+  GlobalParams::master_to_request_vc.clear();
+
+  // прямые точечные назначения
+  if (config["master_request_vc"]) {
+    for (const auto &item : config["master_request_vc"]) {
+      if (!item["master"] || !item["vc"]) {
+        std::cerr << "master_request_vc: need {master, vc}\n";
+        std::exit(1);
+      }
+      Coord m = parse_coord_vec(item["master"]);
+      if (!GlobalParams::master_connections.count(m)) {
+        std::cerr << "master_request_vc: master not in master_connections: ("
+                  << m.x << "," << m.y << ")\n";
+        std::exit(1);
+      }
+      int vc = item["vc"].as<int>();
+      ensure_vc_in_range(vc);
+      // первое назначение побеждает
+      GlobalParams::master_to_request_vc.emplace(m, vc);
+    }
+  }
+
+  if (config["master_request_vc_rules"]) {
+    for (const auto &rule : config["master_request_vc_rules"]) {
+      if (!rule["select"] || !rule["vc"]) {
+        std::cerr << "each rule must have select and vc\n";
+        std::exit(1);
+      }
+      int vc = rule["vc"].as<int>();
+      ensure_vc_in_range(vc);
+      auto targets = expand_select(rule["select"], groups_index);
+      for (const auto &m : targets) {
+        if (!GlobalParams::master_connections.count(m))
+          continue; // или exit(1), если хотите строго
+        GlobalParams::master_to_request_vc.emplace(m, vc); // не перезаписываем
+      }
+    }
+  }
+
+  // дефолт для мастеров без назначения: можно выбрать VC=0, либо считать
+  // ошибкой
+  for (const auto &m : GlobalParams::master_connections) {
+    if (!GlobalParams::master_to_request_vc.count(m)) {
+      if (GlobalParams::routing_algorithm == "MOD_DOR" &&
+          ((m.x == 0) || // vertical master
+           (m.x == GlobalParams::mesh_dim_x - 1))) {
+        GlobalParams::master_to_request_vc.emplace(m, 1);
+      } else {
+        GlobalParams::master_to_request_vc.emplace(m, 0);
       }
     }
   }

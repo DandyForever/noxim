@@ -173,6 +173,8 @@ struct Rect {
   Coord bot_right;
 };
 
+enum class RoutingType : uint8_t { XY = 0, YX = 1 };
+
 struct GlobalParams {
   static string verbose_mode;
   static int trace_mode;
@@ -243,6 +245,9 @@ struct GlobalParams {
   static bool has_global_slave_rect;
   static Rect global_slave_rect;
   static std::unordered_map<Coord, Rect, CoordHash> master_to_slave_rect;
+  static std::vector<RoutingType> vc_routing; // size = n_virtual_channels
+  static std::unordered_map<Coord, int, CoordHash> master_to_request_vc;
+  static std::vector<int> reply_vc_by_request_vc; // size = n_virtual_channels
 };
 
 #endif
