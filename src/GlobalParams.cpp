@@ -85,5 +85,4 @@ Rect GlobalParams::global_slave_rect;
 std::unordered_map<Coord, Rect, CoordHash> GlobalParams::master_to_slave_rect;
 std::vector<RoutingType> GlobalParams::vc_routing; // size = n_virtual_channels
 std::unordered_map<Coord, int, CoordHash> GlobalParams::master_to_request_vc;
-std::vector<int>
-    GlobalParams::reply_vc_by_request_vc; // size = n_virtual_channels
+std::unordered_map<Coord, int, CoordHash> GlobalParams::master_to_response_vc;

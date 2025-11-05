@@ -290,7 +290,6 @@ SC_MODULE(Tile) {
       pe[i]->is_master = is_master_node(local_id);
       pe[i]->clock(clock);
       pe[i]->reset(reset);
-      cout << local_id << " is master " << pe[i]->is_master << endl;
 
       //-------------------------------------------------------------------------
       // X channel

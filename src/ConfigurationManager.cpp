@@ -418,27 +418,6 @@ void loadConfiguration() {
     }
   }
 
-  GlobalParams::reply_vc_by_request_vc.resize(GlobalParams::n_virtual_channels);
-  for (int i = 0; i < GlobalParams::n_virtual_channels; ++i) {
-    GlobalParams::reply_vc_by_request_vc[i] =
-        GlobalParams::n_virtual_channels - 1 - i; // Deadlock freedom
-  }
-
-  if (config["reply_vc_by_request_vc"]) {
-    const auto node = config["reply_vc_by_request_vc"];
-    if (!node.IsMap()) {
-      std::cerr << "reply_vc_by_request_vc must be a map" << std::endl;
-      std::exit(1);
-    }
-    for (auto it : node) {
-      int req_vc = it.first.as<int>();
-      int rep_vc = it.second.as<int>();
-      ensure_vc_in_range(req_vc);
-      ensure_vc_in_range(rep_vc);
-      GlobalParams::reply_vc_by_request_vc[req_vc] = rep_vc;
-    }
-  }
-
   GlobalParams::master_to_request_vc.clear();
 
   // прямые точечные назначения
@@ -489,6 +468,56 @@ void loadConfiguration() {
       } else {
         GlobalParams::master_to_request_vc.emplace(m, 0);
       }
+    }
+  }
+
+  // очистка
+  GlobalParams::master_to_response_vc.clear();
+
+  // точечные назначения
+  if (config["master_response_vc"]) {
+    for (const auto &item : config["master_response_vc"]) {
+      if (!item["master"] || !item["vc"]) {
+        std::cerr << "master_response_vc: need {master, vc}\n";
+        std::exit(1);
+      }
+      Coord m = parse_coord_vec(item["master"]);
+      if (!GlobalParams::master_connections.count(m)) {
+        std::cerr << "master_response_vc: master not in master_connections: ("
+                  << m.x << "," << m.y << ")\n";
+        std::exit(1);
+      }
+      int vc = item["vc"].as<int>();
+      ensure_vc_in_range(vc);
+      GlobalParams::master_to_response_vc.emplace(m, vc); // первое — победитель
+    }
+  }
+
+  // групповые правила
+  if (config["master_response_vc_rules"]) {
+    for (const auto &rule : config["master_response_vc_rules"]) {
+      if (!rule["select"] || !rule["vc"]) {
+        std::cerr
+            << "each master_response_vc_rules item must have select and vc\n";
+        std::exit(1);
+      }
+      int vc = rule["vc"].as<int>();
+      ensure_vc_in_range(vc);
+      auto targets = expand_select(rule["select"], groups_index);
+      for (const auto &m : targets) {
+        if (!GlobalParams::master_connections.count(m))
+          continue; // или exit(1)
+        GlobalParams::master_to_response_vc.emplace(m, vc);
+      }
+    }
+  }
+
+  // дефолт для мастеров без назначения
+  for (const auto &m : GlobalParams::master_connections) {
+    if (!GlobalParams::master_to_response_vc.count(m)) {
+      GlobalParams::master_to_response_vc.emplace(
+          m, GlobalParams::n_virtual_channels - 1 -
+                 GlobalParams::master_to_request_vc[m]);
     }
   }
 

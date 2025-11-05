@@ -66,6 +66,7 @@ Energy:
         routing:
         #   Algorithm:   [Static, Dynamic]
             default:     [1.20e-4, 6.00e-14]
+            CUSTOM:      [1.20e-4, 6.00e-14]
             XY:          [1.20e-4, 6.00e-14]
             YX:          [1.20e-4, 6.00e-14]
             DOR_XY:      [1.20e-4, 6.00e-14]

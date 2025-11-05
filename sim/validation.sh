@@ -119,14 +119,14 @@
 #     -both_phys_req_mode 1 \
 #     -log_file_name ./results/strawman/validation_8 &
 
-../build/noxim \
-    -config ../config_examples/quadrants/mesh_10x10_dor_q1.yaml \
-    -pir 0.5 poisson \
-    -sim 10000 \
-    -detailed \
-    -req_ack_mode 1 \
-    -both_phys_req_mode 1 \
-    -log_file_name ./results/quadrants/validation_q1 &
+# ../build/noxim \
+#     -config ../config_examples/quadrants/mesh_10x10_mod_dor_q1.yaml \
+#     -pir 0.5 poisson \
+#     -sim 10000 \
+#     -detailed \
+#     -req_ack_mode 1 \
+#     -both_phys_req_mode 1 \
+#     -log_file_name ./results/quadrants/validation_q1 &
 
 # ../build/noxim \
 #     -config ../config_examples/quadrants/mesh_10x10_dor_q2.yaml \
@@ -145,3 +145,93 @@
 #     -req_ack_mode 1 \
 #     -both_phys_req_mode 1 \
 #     -log_file_name ./results/quadrants/validation_q4 &
+
+../build/noxim \
+    -config ../config_examples/routing_study/mesh_10x10_2vc_yx_yx_xy_xy.yaml \
+    -pir 1.0 poisson \
+    -sim 10000 \
+    -detailed \
+    -req_ack_mode 1 \
+    -both_phys_req_mode 1 \
+    -log_file_name ./results/routing_study/2vc_yx_yx_xy_xy &
+
+../build/noxim \
+    -config ../config_examples/routing_study/mesh_10x10_2vc_yx_yx_yx_yx.yaml \
+    -pir 1.0 poisson \
+    -sim 10000 \
+    -detailed \
+    -req_ack_mode 1 \
+    -both_phys_req_mode 1 \
+    -log_file_name ./results/routing_study/2vc_yx_yx_yx_yx &
+
+../build/noxim \
+    -config ../config_examples/routing_study/mesh_10x10_3vc_yx_xy_xy_xy.yaml \
+    -pir 1.0 poisson \
+    -sim 10000 \
+    -detailed \
+    -req_ack_mode 1 \
+    -both_phys_req_mode 1 \
+    -log_file_name ./results/routing_study/3vc_yx_xy_xy_xy &
+
+../build/noxim \
+    -config ../config_examples/routing_study/mesh_10x10_3vc_yx_xy_yx_yx.yaml \
+    -pir 1.0 poisson \
+    -sim 10000 \
+    -detailed \
+    -req_ack_mode 1 \
+    -both_phys_req_mode 1 \
+    -log_file_name ./results/routing_study/3vc_yx_xy_yx_yx &
+
+../build/noxim \
+    -config ../config_examples/routing_study/mesh_10x10_3vc_yx_yx_xy_yx.yaml \
+    -pir 1.0 poisson \
+    -sim 10000 \
+    -detailed \
+    -req_ack_mode 1 \
+    -both_phys_req_mode 1 \
+    -log_file_name ./results/routing_study/3vc_yx_yx_xy_yx &
+
+../build/noxim \
+    -config ../config_examples/routing_study/mesh_10x10_3vc_yx_yx_yx_xy.yaml \
+    -pir 1.0 poisson \
+    -sim 10000 \
+    -detailed \
+    -req_ack_mode 1 \
+    -both_phys_req_mode 1 \
+    -log_file_name ./results/routing_study/3vc_yx_yx_yx_xy &
+
+../build/noxim \
+    -config ../config_examples/routing_study/mesh_10x10_4vc_xy_yx_xy_yx.yaml \
+    -pir 1.0 poisson \
+    -sim 10000 \
+    -detailed \
+    -req_ack_mode 1 \
+    -both_phys_req_mode 1 \
+    -log_file_name ./results/routing_study/4vc_xy_yx_xy_yx &
+
+../build/noxim \
+    -config ../config_examples/routing_study/mesh_10x10_4vc_xy_yx_yx_xy.yaml \
+    -pir 1.0 poisson \
+    -sim 10000 \
+    -detailed \
+    -req_ack_mode 1 \
+    -both_phys_req_mode 1 \
+    -log_file_name ./results/routing_study/4vc_xy_yx_yx_xy &
+
+../build/noxim \
+    -config ../config_examples/routing_study/mesh_10x10_4vc_yx_xy_xy_yx.yaml \
+    -pir 1.0 poisson \
+    -sim 10000 \
+    -detailed \
+    -req_ack_mode 1 \
+    -both_phys_req_mode 1 \
+    -log_file_name ./results/routing_study/4vc_yx_xy_xy_yx &
+
+../build/noxim \
+    -config ../config_examples/routing_study/mesh_10x10_4vc_yx_xy_yx_xy.yaml \
+    -pir 1.0 poisson \
+    -sim 10000 \
+    -detailed \
+    -req_ack_mode 1 \
+    -both_phys_req_mode 1 \
+    -log_file_name ./results/routing_study/4vc_yx_xy_yx_xy &
