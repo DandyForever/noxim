@@ -311,12 +311,6 @@ void loadConfiguration() {
   GlobalParams::both_phys_req_mode =
       readParam<bool>(config, "both_phys_req_mode");
   GlobalParams::mem_ports = readParam<int>(config, "mem_ports");
-  GlobalParams::switch_vertical_masters =
-      readParam<bool>(config, "switch_vertical_masters");
-  GlobalParams::switch_angle_masters =
-      readParam<int>(config, "switch_angle_masters");
-  GlobalParams::switch_horizontal_masters =
-      readParam<int>(config, "switch_horizontal_masters");
   GlobalParams::switch_debug = readParam<bool>(config, "switch_debug");
   GlobalParams::log_file_name = readParam<string>(config, "log_file_name");
   GlobalParams::buffer_verbose = readParam<bool>(config, "buffer_verbose");
@@ -1070,12 +1064,6 @@ void parseCmdLine(int arg_num, char *arg_vet[]) {
         GlobalParams::log_file_name = arg_vet[++i];
       } else if (!strcmp(arg_vet[i], "-mem_ports")) {
         GlobalParams::mem_ports = atoi(arg_vet[++i]);
-      } else if (!strcmp(arg_vet[i], "-switch_vertical_masters")) {
-        GlobalParams::switch_vertical_masters = atoi(arg_vet[++i]);
-      } else if (!strcmp(arg_vet[i], "-switch_angle_masters")) {
-        GlobalParams::switch_angle_masters = atoi(arg_vet[++i]);
-      } else if (!strcmp(arg_vet[i], "-switch_horizontal_masters")) {
-        GlobalParams::switch_horizontal_masters = atoi(arg_vet[++i]);
       } else if (!strcmp(arg_vet[i], "-switch_debug")) {
         GlobalParams::switch_debug = atoi(arg_vet[++i]);
       } else if (!strcmp(arg_vet[i], "-req_ack_mode")) {

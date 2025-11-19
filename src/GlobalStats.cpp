@@ -463,12 +463,6 @@ void GlobalStats::showStats(std::ostream &out, bool detailed) {
               << GlobalParams::mesh_dim_x << "x" << GlobalParams::mesh_dim_y
               << "_" << GlobalParams::routing_algorithm << "_mp_"
               << GlobalParams::mem_ports;
-    if (GlobalParams::GlobalParams::switch_angle_masters)
-      file_name << "_sv_" << GlobalParams::switch_angle_masters;
-    if (GlobalParams::switch_vertical_masters)
-      file_name << "_sv_all_";
-    if (GlobalParams::switch_horizontal_masters)
-      file_name << "_sh_" << GlobalParams::switch_horizontal_masters;
     file_name << "_pir_" << (int)(GlobalParams::packet_injection_rate * 1000);
     file_name << "_ps_" << GlobalParams::max_packet_size;
     file_name << "_bs_" << GlobalParams::traffic_burst_size;

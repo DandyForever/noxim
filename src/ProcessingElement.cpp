@@ -595,75 +595,6 @@ Flit ProcessingElement::nextFlit(queue<Packet> &packet_queue, bool is_update) {
   return flit;
 }
 
-bool ProcessingElement::is_same_quadrant(int self_id, int id) {
-  Coord self_coord = id2Coord(self_id);
-  Coord coord = id2Coord(id);
-
-  bool is_self_left = 2 * self_coord.x < GlobalParams::mesh_dim_x;
-  bool is_self_top = 2 * self_coord.y < GlobalParams::mesh_dim_y;
-
-  bool is_left = 2 * coord.x < GlobalParams::mesh_dim_x;
-  bool is_top = 2 * coord.y < GlobalParams::mesh_dim_y;
-
-  if (is_self_left && is_self_top && is_left && is_top)
-    return true;
-
-  if (!is_self_left && is_self_top && !is_left && is_top)
-    return true;
-
-  if (is_self_left && !is_self_top && is_left && !is_top)
-    return true;
-
-  if (!is_self_left && !is_self_top && !is_left && !is_top)
-    return true;
-
-  return false;
-}
-
-bool ProcessingElement::is_angle_pe(int id) {
-  Coord coord = id2Coord(id);
-
-  if (coord.x == 0 && coord.y == 0)
-    return true;
-  if (coord.x == 0 && coord.y == GlobalParams::mesh_dim_y - 1)
-    return true;
-  if (coord.x == GlobalParams::mesh_dim_x - 1 && coord.y == 0)
-    return true;
-  if (coord.x == GlobalParams::mesh_dim_x - 1 &&
-      coord.y == GlobalParams::mesh_dim_y - 1)
-    return true;
-
-  return false;
-}
-
-bool ProcessingElement::is_angle_special_pe(int id, int num) {
-  DEBUG assert(GlobalParams::mesh_dim_y >= 2 * num);
-
-  Coord coord = id2Coord(id);
-
-  if (coord.x == 0 || coord.x == GlobalParams::mesh_dim_x - 1)
-    return (coord.y < num) || (coord.y + num > GlobalParams::mesh_dim_y - 1);
-
-  return false;
-}
-
-bool ProcessingElement::is_horizontal_special_pe(int id, int num) {
-  DEBUG assert(GlobalParams::mesh_dim_x >= 2 * num);
-
-  Coord coord = id2Coord(id);
-
-  if (coord.y == 0 || coord.y == GlobalParams::mesh_dim_y - 1)
-    return (coord.x < num) || (coord.x + num > GlobalParams::mesh_dim_x - 1);
-
-  return false;
-}
-
-bool ProcessingElement::is_vertical_pe(int id) {
-  Coord coord = id2Coord(id);
-
-  return (coord.x == 0) || (coord.x == GlobalParams::mesh_dim_x - 1);
-}
-
 bool ProcessingElement::canShot(Packet &packet, RequestType request_type) {
   if (never_transmit)
     return false;
@@ -671,19 +602,6 @@ bool ProcessingElement::canShot(Packet &packet, RequestType request_type) {
   // Central tiles should not send packets
   if (!is_master)
     return false;
-
-  // Switching off some PEs
-  //-----------------------------------------------------
-  if (GlobalParams::switch_angle_masters &&
-      is_angle_special_pe(local_id, GlobalParams::switch_angle_masters))
-    return false;
-  if (GlobalParams::switch_horizontal_masters &&
-      is_horizontal_special_pe(local_id,
-                               GlobalParams::switch_horizontal_masters))
-    return false;
-  if (GlobalParams::switch_vertical_masters && is_vertical_pe(local_id))
-    return false;
-  //-----------------------------------------------------
 
   //-----------------------------------------------------
   // For debug only
@@ -712,9 +630,6 @@ bool ProcessingElement::canShot(Packet &packet, RequestType request_type) {
       if (traffic_burst_curr_y == 0) {
         threshold =
             get_pir_for_master(local_id) / GlobalParams::traffic_burst_size;
-        if (GlobalParams::six_channel_traffic && is_vertical_pe(local_id)) {
-          threshold /= 2.;
-        }
       } else {
         threshold = 1.;
       }
@@ -723,9 +638,6 @@ bool ProcessingElement::canShot(Packet &packet, RequestType request_type) {
       if (traffic_burst_curr_x == 0) {
         threshold =
             get_pir_for_master(local_id) / GlobalParams::traffic_burst_size;
-        if (GlobalParams::six_channel_traffic && is_vertical_pe(local_id)) {
-          threshold /= 2.;
-        }
       } else {
         threshold = 1.;
       }
