@@ -61,7 +61,6 @@ PowerConfig GlobalParams::power_configuration;
 bool GlobalParams::ascii_monitor;
 int GlobalParams::channel_selection;
 int GlobalParams::mem_ports;
-bool GlobalParams::switch_debug;
 string GlobalParams::log_file_name;
 bool GlobalParams::req_ack_mode;
 bool GlobalParams::both_phys_req_mode;

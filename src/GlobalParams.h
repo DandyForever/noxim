@@ -223,7 +223,6 @@ struct GlobalParams {
   static bool ascii_monitor;
   static int channel_selection;
   static int mem_ports;
-  static bool switch_debug;
   static string log_file_name;
   static bool req_ack_mode;
   static bool both_phys_req_mode;

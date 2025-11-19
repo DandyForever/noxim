@@ -603,18 +603,6 @@ bool ProcessingElement::canShot(Packet &packet, RequestType request_type) {
   if (!is_master)
     return false;
 
-  //-----------------------------------------------------
-  // For debug only
-  //-----------------------------------------------------
-  if (GlobalParams::switch_debug &&
-      local_id != 0
-      // && local_id != 1
-      && local_id != GlobalParams::mesh_dim_x &&
-      local_id != 2 * GlobalParams::mesh_dim_x &&
-      local_id + 1 != 2 * GlobalParams::mesh_dim_x)
-    return false;
-    //-----------------------------------------------------
-
 #ifdef DEADLOCK_AVOIDANCE
   if (local_id % 2 == 0)
     return false;
@@ -900,9 +888,6 @@ Packet ProcessingElement::trafficRandom(RequestType request_type) {
   }
   p.vc_id = get_request_vc_for_master(local_id);
 
-  if (GlobalParams::switch_debug)
-    cout << "For " << local_id << " dst " << p.dst_id << " ldid "
-         << p.local_direction_id << " vcid " << p.vc_id << endl;
   return p;
 }
 
