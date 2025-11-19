@@ -61,7 +61,6 @@ PowerConfig GlobalParams::power_configuration;
 bool GlobalParams::ascii_monitor;
 int GlobalParams::channel_selection;
 int GlobalParams::mem_ports;
-int GlobalParams::eu_ports;
 bool GlobalParams::switch_vertical_masters;
 int GlobalParams::switch_angle_masters;
 int GlobalParams::switch_horizontal_masters;

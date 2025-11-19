@@ -311,7 +311,6 @@ void loadConfiguration() {
   GlobalParams::both_phys_req_mode =
       readParam<bool>(config, "both_phys_req_mode");
   GlobalParams::mem_ports = readParam<int>(config, "mem_ports");
-  GlobalParams::eu_ports = readParam<int>(config, "eu_ports");
   GlobalParams::switch_vertical_masters =
       readParam<bool>(config, "switch_vertical_masters");
   GlobalParams::switch_angle_masters =
@@ -1071,8 +1070,6 @@ void parseCmdLine(int arg_num, char *arg_vet[]) {
         GlobalParams::log_file_name = arg_vet[++i];
       } else if (!strcmp(arg_vet[i], "-mem_ports")) {
         GlobalParams::mem_ports = atoi(arg_vet[++i]);
-      } else if (!strcmp(arg_vet[i], "-eu_ports")) {
-        GlobalParams::eu_ports = atoi(arg_vet[++i]);
       } else if (!strcmp(arg_vet[i], "-switch_vertical_masters")) {
         GlobalParams::switch_vertical_masters = atoi(arg_vet[++i]);
       } else if (!strcmp(arg_vet[i], "-switch_angle_masters")) {

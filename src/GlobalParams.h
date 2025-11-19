@@ -223,7 +223,6 @@ struct GlobalParams {
   static bool ascii_monitor;
   static int channel_selection;
   static int mem_ports;
-  static int eu_ports;
   static bool switch_vertical_masters;
   static int switch_angle_masters;
   static int switch_horizontal_masters;

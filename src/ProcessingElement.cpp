@@ -685,16 +685,6 @@ bool ProcessingElement::canShot(Packet &packet, RequestType request_type) {
     return false;
   //-----------------------------------------------------
 
-  // Switching off some local directions
-  //-----------------------------------------------------
-  if (GlobalParams::eu_ports < 2 && local_direction_id == DIRECTION_LOCAL_WEST)
-    return false;
-  if (GlobalParams::eu_ports < 3 && local_direction_id == DIRECTION_LOCAL_SOUTH)
-    return false;
-  if (GlobalParams::eu_ports < 4 && local_direction_id == DIRECTION_LOCAL_EAST)
-    return false;
-  //-----------------------------------------------------
-
   //-----------------------------------------------------
   // For debug only
   //-----------------------------------------------------
