@@ -12,15 +12,18 @@
 
 #define DEBUG if (0)
 
-int ProcessingElement::randInt(int min, int max) {
+int ProcessingElement::randInt(int min, int max)
+{
   return min + (int)((double)(max - min + 1) * rand() / (RAND_MAX + 1.0));
 }
 
 // AXI4-Stream protocol
 // ack_rx <-> s_axis_tready
 // req_tx <-> m_axis_tvalid
-void ProcessingElement::rxProcess() {
-  if (reset.read()) {
+void ProcessingElement::rxProcess()
+{
+  if (reset.read())
+  {
     ack_rx.write(1);
     return;
   }
@@ -28,8 +31,10 @@ void ProcessingElement::rxProcess() {
   //---------------------------------------------------------------------
   // Start checks
   //---------------------------------------------------------------------
-  DEBUG if (!GlobalParams::both_phys_req_mode) {
-    if (is_master) {
+  DEBUG if (!GlobalParams::both_phys_req_mode)
+  {
+    if (is_master)
+    {
       assert(!req_rx.read());
     }
   }
@@ -40,22 +45,27 @@ void ProcessingElement::rxProcess() {
   //---------------------------------------------------------------------
   // Start collect stats
   //---------------------------------------------------------------------
-  if (req_rx.read() && ack_rx.read()) {
+  if (req_rx.read() && ack_rx.read())
+  {
     Flit flit = flit_rx.read();
     flits_recv_x++;
-    if (flit.flit_type(FLIT_TYPE_TAIL)) {
+    if (flit.flit_type(FLIT_TYPE_TAIL))
+    {
       packets_recv_x++;
-      if (flit.traffic_burst_is_tail) {
+      if (flit.traffic_burst_is_tail)
+      {
         traffic_burst_packets_recv_x++;
       }
     }
 
-    if (is_master && flit.flit_type(FLIT_TYPE_TAIL)) {
+    if (is_master && flit.flit_type(FLIT_TYPE_TAIL))
+    {
       int send_timestamp = flit_latency_y[flit.id].latency;
       int recv_timestamp = timestamp();
       int latency = recv_timestamp - send_timestamp;
       flit_latency_y[flit.id] = {1, flit.src_id, latency};
-      if (flit.traffic_burst_is_tail) {
+      if (flit.traffic_burst_is_tail)
+      {
         int traffic_burst_send_timestamp =
             traffic_burst_flit_latency_y[flit.traffic_burst_id].latency;
         int traffic_burst_latency =
@@ -79,8 +89,10 @@ void ProcessingElement::rxProcess() {
   //---------------------------------------------------------------------
   // Start dump info
   //---------------------------------------------------------------------
-  if (req_rx.read() && ack_rx.read()) {
-    if (GlobalParams::flit_dump) {
+  if (req_rx.read() && ack_rx.read())
+  {
+    if (GlobalParams::flit_dump)
+    {
       cout << "X Recv Info: Cycle[" << timestamp() << "] flit "
            << flit_rx.read().src_id << " -> " << flit_rx.read().dst_id << endl;
     }
@@ -93,10 +105,13 @@ void ProcessingElement::rxProcess() {
   // Start managing flit recieved
   //---------------------------------------------------------------------
   // Only memory PEs are required to send response back
-  if (GlobalParams::req_ack_mode && is_memory_pe) {
+  if (GlobalParams::req_ack_mode && is_memory_pe)
+  {
     // Slave AXIS valid & ready handshake
-    if (req_rx.read() && ack_rx.read()) {
-      if (flit_rx.read().flit_type(FLIT_TYPE_TAIL)) {
+    if (req_rx.read() && ack_rx.read())
+    {
+      if (flit_rx.read().flit_type(FLIT_TYPE_TAIL))
+      {
         Flit flit_tmp = flit_rx.read();
         int vc_id = get_response_vc_for_master_id(flit_tmp.src_id);
         Packet p = generateResponse(flit_tmp, RequestType::WRITE);
@@ -111,10 +126,13 @@ void ProcessingElement::rxProcess() {
   //---------------------------------------------------------------------
   // Start managing ack_rx
   //---------------------------------------------------------------------
-  if (is_memory_pe) {
+  if (is_memory_pe)
+  {
     ack_rx.write(in_packet_queue_x[free_slots_neighbor].size() <
                  GlobalParams::buffer_depth);
-  } else {
+  }
+  else
+  {
     // PE is always ready to recieve packets
     ack_rx.write(1);
   }
@@ -123,8 +141,10 @@ void ProcessingElement::rxProcess() {
   //!---------------------------------------------------------------------
 }
 
-void ProcessingElement::txProcess() {
-  if (reset.read()) {
+void ProcessingElement::txProcess()
+{
+  if (reset.read())
+  {
     // Not valid on reset
     req_tx.write(0);
     transmittedAtPreviousCycle = false;
@@ -134,14 +154,17 @@ void ProcessingElement::txProcess() {
   //---------------------------------------------------------------------
   // Start collect stats
   //---------------------------------------------------------------------
-  if (req_tx.read() && ack_tx.read()) {
+  if (req_tx.read() && ack_tx.read())
+  {
     Flit flit = flit_tx.read();
 
-    if (is_master && flit.flit_type(FLIT_TYPE_HEAD)) {
+    if (is_master && flit.flit_type(FLIT_TYPE_HEAD))
+    {
       int dst_id = flit.dst_id;
       int now = timestamp();
       flit_latency_x[flit.id] = {0, dst_id, now};
-      if (flit.traffic_burst_is_head) {
+      if (flit.traffic_burst_is_head)
+      {
         traffic_burst_flit_latency_x[flit.traffic_burst_id] = {0, dst_id, now};
         int creation_timestamp = (int)flit.timestamp;
         traffic_burst_flit_latency_from_creation_x[flit.traffic_burst_id] = {
@@ -150,9 +173,11 @@ void ProcessingElement::txProcess() {
     }
 
     flits_sent_x++;
-    if (flit.flit_type(FLIT_TYPE_TAIL)) {
+    if (flit.flit_type(FLIT_TYPE_TAIL))
+    {
       packets_sent_x++;
-      if (flit.traffic_burst_is_tail) {
+      if (flit.traffic_burst_is_tail)
+      {
         traffic_burst_packets_sent_x++;
       }
     }
@@ -164,8 +189,10 @@ void ProcessingElement::txProcess() {
   //---------------------------------------------------------------------
   // Start dump info
   //---------------------------------------------------------------------
-  if (req_tx.read() && ack_tx.read()) {
-    if (GlobalParams::flit_dump) {
+  if (req_tx.read() && ack_tx.read())
+  {
+    if (GlobalParams::flit_dump)
+    {
       cout << "X Send Info: Cycle[" << timestamp() << "] flit "
            << flit_tx.read().src_id << " -> " << flit_tx.read().dst_id << endl;
     }
@@ -177,26 +204,34 @@ void ProcessingElement::txProcess() {
   //---------------------------------------------------------------------
   // Start managing memory PE
   //---------------------------------------------------------------------
-  if (is_memory_pe) {
-    if (req_tx.read() && ack_tx.read()) {
+  if (is_memory_pe)
+  {
+    if (req_tx.read() && ack_tx.read())
+    {
       DEBUG assert(!in_packet_queue_y[cur_out_vc_x].empty());
       nextFlit(in_packet_queue_y[cur_out_vc_x], true);
     }
 
-    for (int vc = 0; vc < GlobalParams::n_virtual_channels; vc++) {
-      if (!in_packet_queue_y[vc].empty() && !out_reservation_status_x[vc]) {
+    for (int vc = 0; vc < GlobalParams::n_virtual_channels; vc++)
+    {
+      if (!in_packet_queue_y[vc].empty() && !out_reservation_status_x[vc])
+      {
         out_reservation_queue_x.push(vc);
         out_reservation_status_x[vc] = true;
       }
     }
 
-    if (!is_vc_set_x) {
+    if (!is_vc_set_x)
+    {
       req_tx.write(0);
-      if (!out_reservation_queue_x.empty()) {
+      if (!out_reservation_queue_x.empty())
+      {
         free_slots.write(out_reservation_queue_x.front());
         is_vc_set_x = true;
       }
-    } else {
+    }
+    else
+    {
       req_tx.write(1);
       int vc = out_reservation_queue_x.front();
       cur_out_vc_x = vc;
@@ -204,15 +239,21 @@ void ProcessingElement::txProcess() {
       flit_tx->write(flit);
       out_reservation_status_x[vc] = false;
       out_reservation_queue_x.pop();
-      if (out_reservation_queue_x.empty()) {
-        if (in_packet_queue_y[vc].size() > 1) {
+      if (out_reservation_queue_x.empty())
+      {
+        if (in_packet_queue_y[vc].size() > 1)
+        {
           free_slots.write(vc);
           out_reservation_queue_x.push(vc);
           out_reservation_status_x[vc] = true;
-        } else {
+        }
+        else
+        {
           is_vc_set_x = false;
         }
-      } else {
+      }
+      else
+      {
         free_slots.write(out_reservation_queue_x.front());
       }
     }
@@ -224,7 +265,8 @@ void ProcessingElement::txProcess() {
   //---------------------------------------------------------------------
   // Start managing EU PE
   //---------------------------------------------------------------------
-  if (is_master) {
+  if (is_master)
+  {
     int on_the_fly_x = packets_sent_x - packets_recv_y;
     // Generate packet and add to packet queue
     Packet packet;
@@ -232,10 +274,13 @@ void ProcessingElement::txProcess() {
         !GlobalParams::req_ack_mode ||
         ((int)packet_queue_x.size() + on_the_fly_x <
          GlobalParams::pe_request_buffer_size / GlobalParams::packet_size);
-    if (request_buffer_cond && canShot(packet, RequestType::WRITE)) {
+    if (request_buffer_cond && canShot(packet, RequestType::WRITE))
+    {
       packet_queue_x.push(packet);
       transmittedAtPreviousCycle = true;
-    } else {
+    }
+    else
+    {
       transmittedAtPreviousCycle = false;
     }
     // Tell the router VC to recieve flits
@@ -243,21 +288,27 @@ void ProcessingElement::txProcess() {
     // Handle AXIS
     if ((req_tx.read() && ack_tx.read()) || // Handshake happened
         !req_tx.read()                      // Not started sending
-    ) {
+    )
+    {
       bool request_buffer_cond =
           !GlobalParams::req_ack_mode ||
           (on_the_fly_x <
            GlobalParams::pe_request_buffer_size / GlobalParams::packet_size);
-      if (!packet_queue_x.empty() && request_buffer_cond) {
+      if (!packet_queue_x.empty() && request_buffer_cond)
+      {
         Flit flit = nextFlit(packet_queue_x, true);
         flit.id = packets_sent_x;
         flit.traffic_burst_id = traffic_burst_packets_sent_x;
         flit_tx->write(flit);
         req_tx.write(1);
-      } else {
+      }
+      else
+      {
         req_tx.write(0);
       }
-    } else if (req_tx.read() && !ack_tx.read()) {
+    }
+    else if (req_tx.read() && !ack_tx.read())
+    {
       req_tx.write(1);
     }
   }
@@ -268,18 +319,24 @@ void ProcessingElement::txProcess() {
   //---------------------------------------------------------------------
   // Start checks
   //---------------------------------------------------------------------
-  DEBUG if (!GlobalParams::both_phys_req_mode) {
-    if (is_memory_pe) {
+  DEBUG if (!GlobalParams::both_phys_req_mode)
+  {
+    if (is_memory_pe)
+    {
       assert(!req_tx.read());
     }
   }
-  DEBUG if (!GlobalParams::req_ack_mode) {
-    if (is_memory_pe) {
+  DEBUG if (!GlobalParams::req_ack_mode)
+  {
+    if (is_memory_pe)
+    {
       assert(!req_tx.read());
     }
   }
-  DEBUG if (!GlobalParams::req_ack_mode) {
-    for (int vc = 0; vc < GlobalParams::n_virtual_channels; vc++) {
+  DEBUG if (!GlobalParams::req_ack_mode)
+  {
+    for (int vc = 0; vc < GlobalParams::n_virtual_channels; vc++)
+    {
       assert(in_packet_queue_y[vc].empty());
     }
   }
@@ -288,8 +345,10 @@ void ProcessingElement::txProcess() {
   //!---------------------------------------------------------------------
 }
 
-void ProcessingElement::ryProcess() {
-  if (reset.read()) {
+void ProcessingElement::ryProcess()
+{
+  if (reset.read())
+  {
     ack_ry.write(1);
     return;
   }
@@ -297,8 +356,10 @@ void ProcessingElement::ryProcess() {
   //---------------------------------------------------------------------
   // Start checks
   //---------------------------------------------------------------------
-  DEBUG if (!GlobalParams::both_phys_req_mode) {
-    if (is_memory_pe) {
+  DEBUG if (!GlobalParams::both_phys_req_mode)
+  {
+    if (is_memory_pe)
+    {
       assert(!req_ry.read());
     }
   }
@@ -309,22 +370,27 @@ void ProcessingElement::ryProcess() {
   //---------------------------------------------------------------------
   // Start collect stats
   //---------------------------------------------------------------------
-  if (req_ry.read() && ack_ry.read()) {
+  if (req_ry.read() && ack_ry.read())
+  {
     Flit flit = flit_ry.read();
     flits_recv_y++;
-    if (flit.flit_type(FLIT_TYPE_TAIL)) {
+    if (flit.flit_type(FLIT_TYPE_TAIL))
+    {
       packets_recv_y++;
-      if (flit.traffic_burst_is_head) {
+      if (flit.traffic_burst_is_head)
+      {
         traffic_burst_packets_recv_y++;
       }
     }
 
-    if (is_master && flit.flit_type(FLIT_TYPE_TAIL)) {
+    if (is_master && flit.flit_type(FLIT_TYPE_TAIL))
+    {
       int send_timestamp = flit_latency_x[flit.id].latency;
       int recv_timestamp = timestamp();
       int latency = recv_timestamp - send_timestamp;
       flit_latency_x[flit.id] = {1, flit.src_id, latency};
-      if (flit.traffic_burst_is_tail) {
+      if (flit.traffic_burst_is_tail)
+      {
         int traffic_burst_send_timestamp =
             traffic_burst_flit_latency_x[flit.traffic_burst_id].latency;
         int traffic_burst_latency =
@@ -348,8 +414,10 @@ void ProcessingElement::ryProcess() {
   //---------------------------------------------------------------------
   // Start dump info
   //---------------------------------------------------------------------
-  if (req_ry.read() && ack_ry.read()) {
-    if (GlobalParams::flit_dump) {
+  if (req_ry.read() && ack_ry.read())
+  {
+    if (GlobalParams::flit_dump)
+    {
       cout << "Y Recv Info: Cycle[" << timestamp() << "] flit "
            << flit_ry.read().src_id << " -> " << flit_ry.read().dst_id << endl;
     }
@@ -363,15 +431,20 @@ void ProcessingElement::ryProcess() {
   //---------------------------------------------------------------------
   // Only memory PEs are required to send response back
   if (GlobalParams::both_phys_req_mode && GlobalParams::req_ack_mode &&
-      is_memory_pe) {
+      is_memory_pe)
+  {
     // Slave AXIS valid & ready handshake
-    if (req_ry.read() && ack_ry.read()) {
-      if (flit_ry.read().flit_type(FLIT_TYPE_TAIL)) {
+    if (req_ry.read() && ack_ry.read())
+    {
+      if (flit_ry.read().flit_type(FLIT_TYPE_TAIL))
+      {
         Flit flit_tmp = flit_ry.read();
         int vc_id = get_response_vc_for_master_id(flit_tmp.src_id);
         Packet p = generateResponse(flit_ry.read(), RequestType::READ);
         in_packet_queue_y[vc_id].push(p);
-      } else {
+      }
+      else
+      {
         assert(0);
       }
     }
@@ -383,10 +456,13 @@ void ProcessingElement::ryProcess() {
   //---------------------------------------------------------------------
   // Start managing ack_ry
   //---------------------------------------------------------------------
-  if (is_memory_pe) {
+  if (is_memory_pe)
+  {
     ack_ry.write(in_packet_queue_y[free_slots_neighbor_y].size() <
                  GlobalParams::buffer_depth);
-  } else {
+  }
+  else
+  {
     // PE is always ready to recieve packets
     ack_ry.write(1);
   }
@@ -395,8 +471,10 @@ void ProcessingElement::ryProcess() {
   //---------------------------------------------------------------------
 }
 
-void ProcessingElement::tyProcess() {
-  if (reset.read()) {
+void ProcessingElement::tyProcess()
+{
+  if (reset.read())
+  {
     req_ty.write(0);
     return;
   }
@@ -404,14 +482,17 @@ void ProcessingElement::tyProcess() {
   //---------------------------------------------------------------------
   // Start collect stats
   //---------------------------------------------------------------------
-  if (req_ty.read() && ack_ty.read()) {
+  if (req_ty.read() && ack_ty.read())
+  {
     Flit flit = flit_ty.read();
 
-    if (is_master && flit.flit_type(FLIT_TYPE_HEAD)) {
+    if (is_master && flit.flit_type(FLIT_TYPE_HEAD))
+    {
       int now = timestamp();
       int dst_id = flit.dst_id;
       flit_latency_y[flit.id] = {0, dst_id, now};
-      if (flit.traffic_burst_is_head) {
+      if (flit.traffic_burst_is_head)
+      {
         traffic_burst_flit_latency_y[flit.traffic_burst_id] = {0, dst_id, now};
         int creation_timestamp = flit.timestamp;
         traffic_burst_flit_latency_from_creation_y[flit.traffic_burst_id] = {
@@ -420,9 +501,11 @@ void ProcessingElement::tyProcess() {
     }
 
     flits_sent_y++;
-    if (flit.flit_type(FLIT_TYPE_TAIL)) {
+    if (flit.flit_type(FLIT_TYPE_TAIL))
+    {
       packets_sent_y++;
-      if (flit.traffic_burst_is_tail) {
+      if (flit.traffic_burst_is_tail)
+      {
         traffic_burst_packets_sent_y++;
       }
     }
@@ -434,8 +517,10 @@ void ProcessingElement::tyProcess() {
   //---------------------------------------------------------------------
   // Start dump info
   //---------------------------------------------------------------------
-  if (req_ty.read() && ack_ty.read()) {
-    if (GlobalParams::flit_dump) {
+  if (req_ty.read() && ack_ty.read())
+  {
+    if (GlobalParams::flit_dump)
+    {
       cout << "Y Send Info: Cycle[" << timestamp() << "] flit "
            << flit_ty.read().src_id << " -> " << flit_ty.read().dst_id << endl;
     }
@@ -447,26 +532,34 @@ void ProcessingElement::tyProcess() {
   //---------------------------------------------------------------------
   // Start managing memory PE
   //---------------------------------------------------------------------
-  if (is_memory_pe) {
-    if (req_ty.read() && ack_ty.read()) {
+  if (is_memory_pe)
+  {
+    if (req_ty.read() && ack_ty.read())
+    {
       DEBUG assert(!in_packet_queue_x[cur_out_vc_y].empty());
       nextFlit(in_packet_queue_x[cur_out_vc_y], true);
     }
 
-    for (int vc = 0; vc < GlobalParams::n_virtual_channels; vc++) {
-      if (!in_packet_queue_x[vc].empty() && !out_reservation_status_y[vc]) {
+    for (int vc = 0; vc < GlobalParams::n_virtual_channels; vc++)
+    {
+      if (!in_packet_queue_x[vc].empty() && !out_reservation_status_y[vc])
+      {
         out_reservation_queue_y.push(vc);
         out_reservation_status_y[vc] = true;
       }
     }
 
-    if (!is_vc_set_y) {
+    if (!is_vc_set_y)
+    {
       req_ty.write(0);
-      if (!out_reservation_queue_y.empty()) {
+      if (!out_reservation_queue_y.empty())
+      {
         free_slots_y.write(out_reservation_queue_y.front());
         is_vc_set_y = true;
       }
-    } else {
+    }
+    else
+    {
       req_ty.write(1);
       int vc = out_reservation_queue_y.front();
       cur_out_vc_y = vc;
@@ -474,15 +567,21 @@ void ProcessingElement::tyProcess() {
       flit_ty->write(flit);
       out_reservation_status_y[vc] = false;
       out_reservation_queue_y.pop();
-      if (out_reservation_queue_y.empty()) {
-        if (in_packet_queue_x[vc].size() > 1) {
+      if (out_reservation_queue_y.empty())
+      {
+        if (in_packet_queue_x[vc].size() > 1)
+        {
           free_slots_y.write(vc);
           out_reservation_queue_y.push(vc);
           out_reservation_status_y[vc] = true;
-        } else {
+        }
+        else
+        {
           is_vc_set_y = false;
         }
-      } else {
+      }
+      else
+      {
         free_slots_y.write(out_reservation_queue_y.front());
       }
     }
@@ -494,7 +593,8 @@ void ProcessingElement::tyProcess() {
   //---------------------------------------------------------------------
   // Start managing EU PE
   //---------------------------------------------------------------------
-  if (GlobalParams::both_phys_req_mode && is_master) {
+  if (GlobalParams::both_phys_req_mode && is_master)
+  {
     int on_the_fly_y = packets_sent_y - packets_recv_x;
     // Generate packet and add to packet queue
     Packet packet;
@@ -502,10 +602,13 @@ void ProcessingElement::tyProcess() {
         !GlobalParams::req_ack_mode ||
         ((int)packet_queue_y.size() + on_the_fly_y <
          GlobalParams::pe_request_buffer_size / GlobalParams::packet_size);
-    if (request_buffer_cond && canShot(packet, RequestType::READ)) {
+    if (request_buffer_cond && canShot(packet, RequestType::READ))
+    {
       packet_queue_y.push(packet);
       transmittedAtPreviousCycle = true;
-    } else {
+    }
+    else
+    {
       transmittedAtPreviousCycle = false;
     }
     // Tell the router VC to recieve flits
@@ -513,21 +616,26 @@ void ProcessingElement::tyProcess() {
     // Handle AXIS
     if ((req_ty.read() && ack_ty.read()) || // Handshake happened
         !req_ty.read()                      // Not started sending
-    ) {
+    )
+    {
       bool request_buffer_cond =
           !GlobalParams::req_ack_mode ||
           (on_the_fly_y <
            GlobalParams::pe_request_buffer_size / GlobalParams::packet_size);
-      if (!packet_queue_y.empty() && request_buffer_cond) {
+      if (!packet_queue_y.empty() && request_buffer_cond)
+      {
         Flit flit = nextFlit(packet_queue_y, true);
         flit.id = packets_sent_y;
         flit.traffic_burst_id = traffic_burst_packets_sent_y;
         flit_ty->write(flit);
         req_ty.write(1);
-      } else { // Packet queue is empty
+      }
+      else
+      { // Packet queue is empty
         req_ty.write(0);
       }
-    } else if (req_ty.read() && !ack_ty.read()) // Router not ready to recieve
+    }
+    else if (req_ty.read() && !ack_ty.read()) // Router not ready to recieve
     {
       req_ty.write(1);
     }
@@ -539,18 +647,24 @@ void ProcessingElement::tyProcess() {
   //---------------------------------------------------------------------
   // Start checks
   //---------------------------------------------------------------------
-  DEBUG if (!GlobalParams::both_phys_req_mode) {
-    if (is_master) {
+  DEBUG if (!GlobalParams::both_phys_req_mode)
+  {
+    if (is_master)
+    {
       assert(!req_ty.read());
     }
   }
-  DEBUG if (!GlobalParams::req_ack_mode) {
-    if (is_memory_pe) {
+  DEBUG if (!GlobalParams::req_ack_mode)
+  {
+    if (is_memory_pe)
+    {
       assert(!req_ty.read());
     }
   }
-  DEBUG if (!GlobalParams::req_ack_mode) {
-    for (int vc = 0; vc < GlobalParams::n_virtual_channels; vc++) {
+  DEBUG if (!GlobalParams::req_ack_mode)
+  {
+    for (int vc = 0; vc < GlobalParams::n_virtual_channels; vc++)
+    {
       assert(in_packet_queue_x[vc].empty());
     }
   }
@@ -559,7 +673,8 @@ void ProcessingElement::tyProcess() {
   //!---------------------------------------------------------------------
 }
 
-Flit ProcessingElement::nextFlit(queue<Packet> &packet_queue, bool is_update) {
+Flit ProcessingElement::nextFlit(queue<Packet> &packet_queue, bool is_update)
+{
   Flit flit;
   Packet packet = packet_queue.front();
 
@@ -595,7 +710,8 @@ Flit ProcessingElement::nextFlit(queue<Packet> &packet_queue, bool is_update) {
   return flit;
 }
 
-bool ProcessingElement::canShot(Packet &packet, RequestType request_type) {
+bool ProcessingElement::canShot(Packet &packet, RequestType request_type)
+{
   if (never_transmit)
     return false;
 
@@ -612,19 +728,27 @@ bool ProcessingElement::canShot(Packet &packet, RequestType request_type) {
 
   double now = timestamp();
 
-  if (GlobalParams::traffic_distribution != TRAFFIC_TABLE_BASED) {
-    switch (request_type) {
+  if (GlobalParams::traffic_distribution != TRAFFIC_TABLE_BASED)
+  {
+    switch (request_type)
+    {
     case READ:
-      if (traffic_burst_curr_y == 0) {
+      if (traffic_burst_curr_y == 0)
+      {
         threshold = get_pir_for_master(local_id) / GlobalParams::message_size;
-      } else {
+      }
+      else
+      {
         threshold = 1.;
       }
       break;
     case WRITE:
-      if (traffic_burst_curr_x == 0) {
+      if (traffic_burst_curr_x == 0)
+      {
         threshold = get_pir_for_master(local_id) / GlobalParams::message_size;
-      } else {
+      }
+      else
+      {
         threshold = 1.;
       }
       break;
@@ -634,7 +758,8 @@ bool ProcessingElement::canShot(Packet &packet, RequestType request_type) {
     }
 
     shot = (((double)rand()) / RAND_MAX < threshold);
-    if (shot) {
+    if (shot)
+    {
       if (GlobalParams::traffic_distribution == TRAFFIC_RANDOM)
         packet = trafficRandom(request_type);
       else if (GlobalParams::traffic_distribution == TRAFFIC_TRANSPOSE1)
@@ -651,13 +776,16 @@ bool ProcessingElement::canShot(Packet &packet, RequestType request_type) {
         packet = trafficLocal();
       else if (GlobalParams::traffic_distribution == TRAFFIC_ULOCAL)
         packet = trafficULocal();
-      else {
+      else
+      {
         cout << "Invalid traffic distribution: "
              << GlobalParams::traffic_distribution << endl;
         exit(-1);
       }
     }
-  } else { // Table based communication traffic
+  }
+  else
+  { // Table based communication traffic
     if (never_transmit)
       return false;
 
@@ -668,9 +796,12 @@ bool ProcessingElement::canShot(Packet &packet, RequestType request_type) {
 
     double prob = (double)rand() / RAND_MAX;
     shot = (prob < threshold);
-    if (shot) {
-      for (unsigned int i = 0; i < dst_prob.size(); i++) {
-        if (prob < dst_prob[i].second) {
+    if (shot)
+    {
+      for (unsigned int i = 0; i < dst_prob.size(); i++)
+      {
+        if (prob < dst_prob[i].second)
+        {
           int vc = randInt(0, GlobalParams::n_virtual_channels - 1);
           packet.make(local_id, dst_prob[i].first, vc, now,
                       GlobalParams::packet_size, local_direction_id, 0, 0, true,
@@ -684,7 +815,8 @@ bool ProcessingElement::canShot(Packet &packet, RequestType request_type) {
   return shot;
 }
 
-Packet ProcessingElement::trafficLocal() {
+Packet ProcessingElement::trafficLocal()
+{
   Packet p;
   p.src_id = local_id;
   double rnd = rand() / (double)RAND_MAX;
@@ -693,12 +825,17 @@ Packet ProcessingElement::trafficLocal() {
 
   int max_id = (GlobalParams::mesh_dim_x * GlobalParams::mesh_dim_y);
 
-  for (int i = 0; i < max_id; i++) {
-    if (rnd <= GlobalParams::locality) {
+  for (int i = 0; i < max_id; i++)
+  {
+    if (rnd <= GlobalParams::locality)
+    {
       if (local_id != i && sameRadioHub(local_id, i))
         dst_set.push_back(i);
-    } else {
-      if (!sameRadioHub(local_id, i)) {
+    }
+    else
+    {
+      if (!sameRadioHub(local_id, i))
+      {
         dst_set.push_back(i);
       }
     }
@@ -714,7 +851,8 @@ Packet ProcessingElement::trafficLocal() {
   return p;
 }
 
-int ProcessingElement::findRandomDestination(int id, int hops) {
+int ProcessingElement::findRandomDestination(int id, int hops)
+{
   assert(GlobalParams::topology == TOPOLOGY_MESH);
 
   int inc_y = rand() % 2 ? -1 : 1;
@@ -722,7 +860,8 @@ int ProcessingElement::findRandomDestination(int id, int hops) {
 
   Coord current = id2Coord(id);
 
-  for (int h = 0; h < hops; h++) {
+  for (int h = 0; h < hops; h++)
+  {
 
     if (current.x == 0)
       if (inc_x < 0)
@@ -748,13 +887,16 @@ int ProcessingElement::findRandomDestination(int id, int hops) {
   return coord2Id(current);
 }
 
-int roulette() {
+int roulette()
+{
   int slices = GlobalParams::mesh_dim_x + GlobalParams::mesh_dim_y - 2;
 
   double r = rand() / (double)RAND_MAX;
 
-  for (int i = 1; i <= slices; i++) {
-    if (r < (1 - 1 / double(2 << i))) {
+  for (int i = 1; i <= slices; i++)
+  {
+    if (r < (1 - 1 / double(2 << i)))
+    {
       return i;
     }
   }
@@ -762,7 +904,8 @@ int roulette() {
   return 1;
 }
 
-Packet ProcessingElement::trafficULocal() {
+Packet ProcessingElement::trafficULocal()
+{
   Packet p;
   p.src_id = local_id;
 
@@ -778,7 +921,8 @@ Packet ProcessingElement::trafficULocal() {
 }
 
 Packet ProcessingElement::generateResponse(Flit flit,
-                                           RequestType request_type) {
+                                           RequestType request_type)
+{
   Packet p;
   p.src_id = flit.dst_id;
   p.dst_id = flit.src_id;
@@ -790,7 +934,8 @@ Packet ProcessingElement::generateResponse(Flit flit,
   p.local_direction_id = DIRECTION_LOCAL_NORTH;
   p.phys_channel_id = 1 - flit.phys_channel_id;
   p.timestamp = timestamp();
-  switch (request_type) {
+  switch (request_type)
+  {
   case RequestType::READ:
     p.size = p.flit_left = GlobalParams::packet_size;
     break;
@@ -804,7 +949,8 @@ Packet ProcessingElement::generateResponse(Flit flit,
   return p;
 }
 
-Packet ProcessingElement::trafficRandom(RequestType request_type) {
+Packet ProcessingElement::trafficRandom(RequestType request_type)
+{
   Packet p;
   p.src_id = local_id;
   p.phys_channel_id = 0;
@@ -819,28 +965,34 @@ Packet ProcessingElement::trafficRandom(RequestType request_type) {
 
   if (GlobalParams::topology == TOPOLOGY_MESH)
     max_id = (GlobalParams::mesh_dim_x * GlobalParams::mesh_dim_y) - 1; // Mesh
-  else // other delta topologies
+  else                                                                  // other delta topologies
     max_id = GlobalParams::n_delta_tiles - 1;
 
   // Random destination distribution
-  do {
+  do
+  {
     p.dst_id = randInt(0, max_id);
 
     // check for hotspot destination
-    for (size_t i = 0; i < GlobalParams::hotspots.size(); i++) {
+    for (size_t i = 0; i < GlobalParams::hotspots.size(); i++)
+    {
 
       if (rnd >= range_start &&
-          rnd < range_start + GlobalParams::hotspots[i].second) {
-        if (local_id != GlobalParams::hotspots[i].first) {
+          rnd < range_start + GlobalParams::hotspots[i].second)
+      {
+        if (local_id != GlobalParams::hotspots[i].first)
+        {
           p.dst_id = GlobalParams::hotspots[i].first;
         }
         break;
-      } else
+      }
+      else
         range_start += GlobalParams::hotspots[i].second; // try next
     }
 #ifdef DEADLOCK_AVOIDANCE
     assert((GlobalParams::topology == TOPOLOGY_MESH));
-    if (p.dst_id % 2 != 0) {
+    if (p.dst_id % 2 != 0)
+    {
       p.dst_id = (p.dst_id + 1) % 256;
     }
 #endif
@@ -850,33 +1002,42 @@ Packet ProcessingElement::trafficRandom(RequestType request_type) {
   p.timestamp = timestamp();
   p.is_head = false;
   p.is_tail = false;
-  switch (request_type) {
+  switch (request_type)
+  {
   case RequestType::READ:
     p.size = p.flit_left = 1;
-    if (traffic_burst_curr_y == 0) {
+    if (traffic_burst_curr_y == 0)
+    {
       p.is_head = true;
       traffic_burst_curr_dst_y = p.dst_id;
-    } else {
+    }
+    else
+    {
       p.dst_id = traffic_burst_curr_dst_y;
     }
     traffic_burst_curr_y++;
     if (traffic_burst_curr_y * GlobalParams::packet_size ==
-        GlobalParams::message_size) {
+        GlobalParams::message_size)
+    {
       p.is_tail = true;
       traffic_burst_curr_y = 0;
     }
     break;
   case RequestType::WRITE:
     p.size = p.flit_left = GlobalParams::packet_size;
-    if (traffic_burst_curr_x == 0) {
+    if (traffic_burst_curr_x == 0)
+    {
       p.is_head = true;
       traffic_burst_curr_dst_x = p.dst_id;
-    } else {
+    }
+    else
+    {
       p.dst_id = traffic_burst_curr_dst_x;
     }
     traffic_burst_curr_x++;
     if (traffic_burst_curr_x * GlobalParams::packet_size ==
-        GlobalParams::message_size) {
+        GlobalParams::message_size)
+    {
       p.is_tail = true;
       traffic_burst_curr_x = 0;
     }
@@ -891,7 +1052,8 @@ Packet ProcessingElement::trafficRandom(RequestType request_type) {
 }
 
 // TODO: for testing only
-Packet ProcessingElement::trafficTest() {
+Packet ProcessingElement::trafficTest()
+{
   Packet p;
   p.src_id = local_id;
   p.dst_id = 10;
@@ -903,7 +1065,8 @@ Packet ProcessingElement::trafficTest() {
   return p;
 }
 
-Packet ProcessingElement::trafficTranspose1() {
+Packet ProcessingElement::trafficTranspose1()
+{
   assert(GlobalParams::topology == TOPOLOGY_MESH);
   Packet p;
   p.src_id = local_id;
@@ -924,7 +1087,8 @@ Packet ProcessingElement::trafficTranspose1() {
   return p;
 }
 
-Packet ProcessingElement::trafficTranspose2() {
+Packet ProcessingElement::trafficTranspose2()
+{
   assert(GlobalParams::topology == TOPOLOGY_MESH);
   Packet p;
   p.src_id = local_id;
@@ -945,7 +1109,8 @@ Packet ProcessingElement::trafficTranspose2() {
   return p;
 }
 
-void ProcessingElement::setBit(int &x, int w, int v) {
+void ProcessingElement::setBit(int &x, int w, int v)
+{
   int mask = 1 << w;
 
   if (v == 1)
@@ -958,11 +1123,13 @@ void ProcessingElement::setBit(int &x, int w, int v) {
 
 int ProcessingElement::getBit(int x, int w) { return (x >> w) & 1; }
 
-inline double ProcessingElement::log2ceil(double x) {
+inline double ProcessingElement::log2ceil(double x)
+{
   return ceil(log(x) / log(2.0));
 }
 
-Packet ProcessingElement::trafficBitReversal() {
+Packet ProcessingElement::trafficBitReversal()
+{
 
   int nbits = (int)log2ceil(
       (double)(GlobalParams::mesh_dim_x * GlobalParams::mesh_dim_y));
@@ -981,7 +1148,8 @@ Packet ProcessingElement::trafficBitReversal() {
   return p;
 }
 
-Packet ProcessingElement::trafficShuffle() {
+Packet ProcessingElement::trafficShuffle()
+{
 
   int nbits = (int)log2ceil(
       (double)(GlobalParams::mesh_dim_x * GlobalParams::mesh_dim_y));
@@ -1001,7 +1169,8 @@ Packet ProcessingElement::trafficShuffle() {
   return p;
 }
 
-Packet ProcessingElement::trafficButterfly() {
+Packet ProcessingElement::trafficButterfly()
+{
 
   int nbits = (int)log2ceil(
       (double)(GlobalParams::mesh_dim_x * GlobalParams::mesh_dim_y));
@@ -1022,7 +1191,8 @@ Packet ProcessingElement::trafficButterfly() {
   return p;
 }
 
-void ProcessingElement::fixRanges(const Coord src, Coord &dst) {
+void ProcessingElement::fixRanges(const Coord src, Coord &dst)
+{
   // Fix ranges
   if (dst.x < 0)
     dst.x = 0;
@@ -1034,6 +1204,7 @@ void ProcessingElement::fixRanges(const Coord src, Coord &dst) {
     dst.y = GlobalParams::mesh_dim_y - 1;
 }
 
-unsigned int ProcessingElement::getQueueSize() const {
+unsigned int ProcessingElement::getQueueSize() const
+{
   return packet_queue_x.size();
 }
