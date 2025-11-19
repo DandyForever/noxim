@@ -165,6 +165,9 @@ traffic_distribution: TRAFFIC_RANDOM
 # configuration file
 traffic_table_filename: "t.txt"
 
+req_ack_mode: true
+both_phys_req_mode: true
+
 # Interliving params
 interliving_reps: 0
 interliving_direction: 0
