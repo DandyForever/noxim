@@ -231,7 +231,7 @@ void Router::txProcess() {
       DEBUG assert(vc == vc_o);
 
       if (buffer[i][vc].IsEmpty()) {
-        DEBUG assert(GlobalParams::max_packet_size > 1);
+        DEBUG assert(GlobalParams::packet_size > 1);
         continue;
       }
 
@@ -267,7 +267,7 @@ void Router::txProcess() {
         r.vc = vc;
         reservation_table.release(r, o, vc);
       } else {
-        DEBUG assert(GlobalParams::max_packet_size > 1);
+        DEBUG assert(GlobalParams::packet_size > 1);
       }
 
       // Power & Stats -------------------------------------------------

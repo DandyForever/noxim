@@ -272,7 +272,7 @@ void loadConfiguration() {
   GlobalParams::r2h_link_length = readParam<double>(config, "r2h_link_length");
   GlobalParams::buffer_depth = readParam<int>(config, "buffer_depth");
   GlobalParams::flit_size = readParam<int>(config, "flit_size");
-  GlobalParams::max_packet_size = readParam<int>(config, "max_packet_size");
+  GlobalParams::packet_size = readParam<int>(config, "packet_size");
   GlobalParams::routing_algorithm =
       readParam<string>(config, "routing_algorithm");
   GlobalParams::routing_table_filename =
@@ -815,7 +815,7 @@ void showConfig() {
        << "- mesh_dim_y = " << GlobalParams::mesh_dim_y << endl
        << "- buffer_depth = " << GlobalParams::buffer_depth << endl
        << "- n_virtual_channels = " << GlobalParams::n_virtual_channels << endl
-       << "- max_packet_size = " << GlobalParams::max_packet_size << endl
+       << "- packet_size = " << GlobalParams::packet_size << endl
        << "- routing_algorithm = " << GlobalParams::routing_algorithm
        << endl
        // << "- routing_table_filename = " <<
@@ -1030,7 +1030,7 @@ void parseCmdLine(int arg_num, char *arg_vet[]) {
       } else if (!strcmp(arg_vet[i], "-wirxsleep")) {
         GlobalParams::use_powermanager = true;
       } else if (!strcmp(arg_vet[i], "-size")) {
-        GlobalParams::max_packet_size = atoi(arg_vet[++i]);
+        GlobalParams::packet_size = atoi(arg_vet[++i]);
       } else if (!strcmp(arg_vet[i], "-topology")) {
         GlobalParams::topology = arg_vet[++i];
         cout << "Changing topology to " << GlobalParams::topology << endl;

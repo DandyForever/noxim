@@ -25,7 +25,7 @@ double GlobalParams::r2r_link_length;
 double GlobalParams::r2h_link_length;
 unsigned int GlobalParams::buffer_depth;
 int GlobalParams::flit_size;
-int GlobalParams::max_packet_size;
+int GlobalParams::packet_size;
 string GlobalParams::routing_algorithm;
 string GlobalParams::routing_table_filename;
 string GlobalParams::selection_strategy;

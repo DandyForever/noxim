@@ -464,7 +464,7 @@ void GlobalStats::showStats(std::ostream &out, bool detailed) {
               << "_" << GlobalParams::routing_algorithm << "_mp_"
               << GlobalParams::mem_ports;
     file_name << "_pir_" << (int)(GlobalParams::packet_injection_rate * 1000);
-    file_name << "_ps_" << GlobalParams::max_packet_size;
+    file_name << "_ps_" << GlobalParams::packet_size;
     file_name << "_bs_" << GlobalParams::traffic_burst_size;
     std::ofstream f_sent_flits(file_name.str() + ".csv", std::ofstream::out);
     std::ofstream f_latencies(file_name.str() + "_latency.log",
@@ -1070,13 +1070,13 @@ double GlobalStats::getReceivedIdealFlitRatio() {
   if (GlobalParams::topology == TOPOLOGY_MESH) {
     ratio =
         getReceivedFlits() /
-        (GlobalParams::packet_injection_rate * GlobalParams::max_packet_size *
+        (GlobalParams::packet_injection_rate * GlobalParams::packet_size *
          total_cycles * GlobalParams::mesh_dim_y * GlobalParams::mesh_dim_x);
   } else // other delta topologies
   {
-    ratio = getReceivedFlits() / (GlobalParams::packet_injection_rate *
-                                  GlobalParams::max_packet_size * total_cycles *
-                                  GlobalParams::n_delta_tiles);
+    ratio = getReceivedFlits() /
+            (GlobalParams::packet_injection_rate * GlobalParams::packet_size *
+             total_cycles * GlobalParams::n_delta_tiles);
   }
   return ratio;
 }

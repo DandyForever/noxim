@@ -231,7 +231,7 @@ void ProcessingElement::txProcess() {
     bool request_buffer_cond =
         !GlobalParams::req_ack_mode ||
         ((int)packet_queue_x.size() + on_the_fly_x <
-         GlobalParams::pe_request_buffer_size / GlobalParams::max_packet_size);
+         GlobalParams::pe_request_buffer_size / GlobalParams::packet_size);
     if (request_buffer_cond && canShot(packet, RequestType::WRITE)) {
       packet_queue_x.push(packet);
       transmittedAtPreviousCycle = true;
@@ -246,8 +246,8 @@ void ProcessingElement::txProcess() {
     ) {
       bool request_buffer_cond =
           !GlobalParams::req_ack_mode ||
-          (on_the_fly_x < GlobalParams::pe_request_buffer_size /
-                              GlobalParams::max_packet_size);
+          (on_the_fly_x <
+           GlobalParams::pe_request_buffer_size / GlobalParams::packet_size);
       if (!packet_queue_x.empty() && request_buffer_cond) {
         Flit flit = nextFlit(packet_queue_x, true);
         flit.id = packets_sent_x;
@@ -501,7 +501,7 @@ void ProcessingElement::tyProcess() {
     bool request_buffer_cond =
         !GlobalParams::req_ack_mode ||
         ((int)packet_queue_y.size() + on_the_fly_y <
-         GlobalParams::pe_request_buffer_size / GlobalParams::max_packet_size);
+         GlobalParams::pe_request_buffer_size / GlobalParams::packet_size);
     if (request_buffer_cond && canShot(packet, RequestType::READ)) {
       packet_queue_y.push(packet);
       transmittedAtPreviousCycle = true;
@@ -516,8 +516,8 @@ void ProcessingElement::tyProcess() {
     ) {
       bool request_buffer_cond =
           !GlobalParams::req_ack_mode ||
-          (on_the_fly_y < GlobalParams::pe_request_buffer_size /
-                              GlobalParams::max_packet_size);
+          (on_the_fly_y <
+           GlobalParams::pe_request_buffer_size / GlobalParams::packet_size);
       if (!packet_queue_y.empty() && request_buffer_cond) {
         Flit flit = nextFlit(packet_queue_y, true);
         flit.id = packets_sent_y;
@@ -675,8 +675,8 @@ bool ProcessingElement::canShot(Packet &packet, RequestType request_type) {
         if (prob < dst_prob[i].second) {
           int vc = randInt(0, GlobalParams::n_virtual_channels - 1);
           packet.make(local_id, dst_prob[i].first, vc, now,
-                      GlobalParams::max_packet_size, local_direction_id, 0, 0,
-                      true, true, 0);
+                      GlobalParams::packet_size, local_direction_id, 0, 0, true,
+                      true, 0);
           break;
         }
       }
@@ -710,7 +710,7 @@ Packet ProcessingElement::trafficLocal() {
 
   p.dst_id = dst_set[i_rnd];
   p.timestamp = timestamp();
-  p.size = p.flit_left = GlobalParams::max_packet_size;
+  p.size = p.flit_left = GlobalParams::packet_size;
   p.vc_id = randInt(0, GlobalParams::n_virtual_channels - 1);
 
   return p;
@@ -773,7 +773,7 @@ Packet ProcessingElement::trafficULocal() {
   p.dst_id = findRandomDestination(local_id, target_hops);
 
   p.timestamp = timestamp();
-  p.size = p.flit_left = GlobalParams::max_packet_size;
+  p.size = p.flit_left = GlobalParams::packet_size;
   p.vc_id = randInt(0, GlobalParams::n_virtual_channels - 1);
 
   return p;
@@ -794,7 +794,7 @@ Packet ProcessingElement::generateResponse(Flit flit,
   p.timestamp = timestamp();
   switch (request_type) {
   case RequestType::READ:
-    p.size = p.flit_left = GlobalParams::max_packet_size;
+    p.size = p.flit_left = GlobalParams::packet_size;
     break;
   case RequestType::WRITE:
     p.size = p.flit_left = 1;
@@ -862,14 +862,14 @@ Packet ProcessingElement::trafficRandom(RequestType request_type) {
       p.dst_id = traffic_burst_curr_dst_y;
     }
     traffic_burst_curr_y++;
-    if (traffic_burst_curr_y * GlobalParams::max_packet_size ==
+    if (traffic_burst_curr_y * GlobalParams::packet_size ==
         GlobalParams::traffic_burst_size) {
       p.is_tail = true;
       traffic_burst_curr_y = 0;
     }
     break;
   case RequestType::WRITE:
-    p.size = p.flit_left = GlobalParams::max_packet_size;
+    p.size = p.flit_left = GlobalParams::packet_size;
     if (traffic_burst_curr_x == 0) {
       p.is_head = true;
       traffic_burst_curr_dst_x = p.dst_id;
@@ -877,7 +877,7 @@ Packet ProcessingElement::trafficRandom(RequestType request_type) {
       p.dst_id = traffic_burst_curr_dst_x;
     }
     traffic_burst_curr_x++;
-    if (traffic_burst_curr_x * GlobalParams::max_packet_size ==
+    if (traffic_burst_curr_x * GlobalParams::packet_size ==
         GlobalParams::traffic_burst_size) {
       p.is_tail = true;
       traffic_burst_curr_x = 0;
@@ -899,7 +899,7 @@ Packet ProcessingElement::trafficTest() {
   p.dst_id = 10;
 
   p.timestamp = timestamp();
-  p.size = p.flit_left = GlobalParams::max_packet_size;
+  p.size = p.flit_left = GlobalParams::packet_size;
   p.vc_id = randInt(0, GlobalParams::n_virtual_channels - 1);
 
   return p;
@@ -921,7 +921,7 @@ Packet ProcessingElement::trafficTranspose1() {
 
   p.vc_id = randInt(0, GlobalParams::n_virtual_channels - 1);
   p.timestamp = timestamp();
-  p.size = p.flit_left = GlobalParams::max_packet_size;
+  p.size = p.flit_left = GlobalParams::packet_size;
 
   return p;
 }
@@ -942,7 +942,7 @@ Packet ProcessingElement::trafficTranspose2() {
 
   p.vc_id = randInt(0, GlobalParams::n_virtual_channels - 1);
   p.timestamp = timestamp();
-  p.size = p.flit_left = GlobalParams::max_packet_size;
+  p.size = p.flit_left = GlobalParams::packet_size;
 
   return p;
 }
@@ -978,7 +978,7 @@ Packet ProcessingElement::trafficBitReversal() {
 
   p.vc_id = randInt(0, GlobalParams::n_virtual_channels - 1);
   p.timestamp = timestamp();
-  p.size = p.flit_left = GlobalParams::max_packet_size;
+  p.size = p.flit_left = GlobalParams::packet_size;
 
   return p;
 }
@@ -998,7 +998,7 @@ Packet ProcessingElement::trafficShuffle() {
 
   p.vc_id = randInt(0, GlobalParams::n_virtual_channels - 1);
   p.timestamp = timestamp();
-  p.size = p.flit_left = GlobalParams::max_packet_size;
+  p.size = p.flit_left = GlobalParams::packet_size;
 
   return p;
 }
@@ -1019,7 +1019,7 @@ Packet ProcessingElement::trafficButterfly() {
 
   p.vc_id = randInt(0, GlobalParams::n_virtual_channels - 1);
   p.timestamp = timestamp();
-  p.size = p.flit_left = GlobalParams::max_packet_size;
+  p.size = p.flit_left = GlobalParams::packet_size;
 
   return p;
 }
