@@ -317,8 +317,7 @@ void loadConfiguration() {
   GlobalParams::buffer_mid = readParam<bool>(config, "buffer_mid");
   GlobalParams::pe_request_buffer_size =
       readParam<int>(config, "pe_request_buffer_size");
-  GlobalParams::traffic_burst_size =
-      readParam<int>(config, "traffic_burst_size");
+  GlobalParams::message_size = readParam<int>(config, "message_size");
 
   if (config["master_connections"]) {
     auto list_of_masters =
@@ -1060,8 +1059,8 @@ void parseCmdLine(int arg_num, char *arg_vet[]) {
         GlobalParams::buffer_mid = atoi(arg_vet[++i]);
       } else if (!strcmp(arg_vet[i], "-pe_request_buffer_size")) {
         GlobalParams::pe_request_buffer_size = atoi(arg_vet[++i]);
-      } else if (!strcmp(arg_vet[i], "-traffic_burst_size")) {
-        GlobalParams::traffic_burst_size = atoi(arg_vet[++i]);
+      } else if (!strcmp(arg_vet[i], "-message_size")) {
+        GlobalParams::message_size = atoi(arg_vet[++i]);
       } else if (!strcmp(arg_vet[i], "-flit_dump")) {
         GlobalParams::flit_dump = atoi(arg_vet[++i]);
       } else if (!strcmp(arg_vet[i], "-pir")) {

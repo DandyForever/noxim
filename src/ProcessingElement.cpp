@@ -616,16 +616,14 @@ bool ProcessingElement::canShot(Packet &packet, RequestType request_type) {
     switch (request_type) {
     case READ:
       if (traffic_burst_curr_y == 0) {
-        threshold =
-            get_pir_for_master(local_id) / GlobalParams::traffic_burst_size;
+        threshold = get_pir_for_master(local_id) / GlobalParams::message_size;
       } else {
         threshold = 1.;
       }
       break;
     case WRITE:
       if (traffic_burst_curr_x == 0) {
-        threshold =
-            get_pir_for_master(local_id) / GlobalParams::traffic_burst_size;
+        threshold = get_pir_for_master(local_id) / GlobalParams::message_size;
       } else {
         threshold = 1.;
       }
@@ -863,7 +861,7 @@ Packet ProcessingElement::trafficRandom(RequestType request_type) {
     }
     traffic_burst_curr_y++;
     if (traffic_burst_curr_y * GlobalParams::packet_size ==
-        GlobalParams::traffic_burst_size) {
+        GlobalParams::message_size) {
       p.is_tail = true;
       traffic_burst_curr_y = 0;
     }
@@ -878,7 +876,7 @@ Packet ProcessingElement::trafficRandom(RequestType request_type) {
     }
     traffic_burst_curr_x++;
     if (traffic_burst_curr_x * GlobalParams::packet_size ==
-        GlobalParams::traffic_burst_size) {
+        GlobalParams::message_size) {
       p.is_tail = true;
       traffic_burst_curr_x = 0;
     }

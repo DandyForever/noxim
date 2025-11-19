@@ -465,7 +465,7 @@ void GlobalStats::showStats(std::ostream &out, bool detailed) {
               << GlobalParams::mem_ports;
     file_name << "_pir_" << (int)(GlobalParams::packet_injection_rate * 1000);
     file_name << "_ps_" << GlobalParams::packet_size;
-    file_name << "_bs_" << GlobalParams::traffic_burst_size;
+    file_name << "_ms_" << GlobalParams::message_size;
     std::ofstream f_sent_flits(file_name.str() + ".csv", std::ofstream::out);
     std::ofstream f_latencies(file_name.str() + "_latency.log",
                               std::ofstream::out);
