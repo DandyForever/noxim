@@ -86,3 +86,4 @@ std::unordered_map<Coord, std::vector<Rect>, CoordHash>
 std::vector<RoutingType> GlobalParams::vc_routing; // size = n_virtual_channels
 std::unordered_map<Coord, int, CoordHash> GlobalParams::master_to_request_vc;
 std::unordered_map<Coord, int, CoordHash> GlobalParams::master_to_response_vc;
+std::unordered_map<Coord, double, CoordHash> GlobalParams::master_pir_factor;

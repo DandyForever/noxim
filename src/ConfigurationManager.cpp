@@ -182,6 +182,8 @@ static void ensure_vc_in_range(int vc) {
   }
 }
 
+inline bool is_pir_invalid(double pir) { return pir <= 0.0 || pir > 1.0; }
+
 static void check_master_slave_disjoint() {
   std::vector<Coord> conflicts;
   conflicts.reserve(GlobalParams::master_connections.size());
@@ -571,6 +573,58 @@ void loadConfiguration() {
     }
   }
 
+  GlobalParams::master_pir_factor.clear();
+
+  if (config["master_pir_factor"]) {
+    for (const auto &item : config["master_pir_factor"]) {
+      if (!item["master"] || !item["pir_factor"]) {
+        std::cerr << "master_pir_factor: need {master, pir_factor}\n";
+        std::exit(1);
+      }
+      Coord m = parse_coord_vec(item["master"]);
+      if (!GlobalParams::master_connections.count(m)) {
+        std::cerr << "master_pir_factor: master not in master_connections: ("
+                  << m.x << "," << m.y << ")\n";
+        std::exit(1);
+      }
+      double pir_factor = item["pir_factor"].as<double>();
+      if (is_pir_invalid(pir_factor)) {
+        std::cerr << "master_pir_factor: invalid pir_factor (" << pir_factor
+                  << ") for master (" << m.x << "," << m.y << ")\n";
+        std::exit(1);
+      };
+      GlobalParams::master_pir_factor.emplace(m, pir_factor);
+    }
+  }
+
+  if (config["master_pir_factor_rules"]) {
+    for (const auto &rule : config["master_pir_factor_rules"]) {
+      if (!rule["select"] || !rule["pir_factor"]) {
+        std::cerr << "each master_pir_factor_rules item must have select and "
+                     "pir_factor\n";
+        std::exit(1);
+      }
+      double pir_factor = rule["pir_factor"].as<double>();
+      if (is_pir_invalid(pir_factor)) {
+        std::cerr << "master_pir_factor_rules: invalid pir_factor ("
+                  << pir_factor << ")\n";
+        std::exit(1);
+      };
+      auto targets = expand_select(rule["select"], groups_index);
+      for (const auto &m : targets) {
+        if (!GlobalParams::master_connections.count(m))
+          exit(1);
+        GlobalParams::master_pir_factor.emplace(m, pir_factor);
+      }
+    }
+  }
+
+  for (const auto &m : GlobalParams::master_connections) {
+    if (!GlobalParams::master_pir_factor.count(m)) {
+      GlobalParams::master_pir_factor.emplace(m, 1.0);
+    }
+  }
+
   set<int> channelSet;
 
   GlobalParams::default_hub_configuration =
@@ -870,9 +924,8 @@ void checkConfiguration() {
     exit(1);
   }
 
-  if (GlobalParams::packet_injection_rate <= 0.0 ||
-      GlobalParams::packet_injection_rate > 1.0) {
-    cerr << "Error: packet injection rate mmust be in the interval ]0,1]"
+  if (is_pir_invalid(GlobalParams::packet_injection_rate)) {
+    cerr << "Error: packet injection rate must be in the interval ]0,1]"
          << endl;
     exit(1);
   }

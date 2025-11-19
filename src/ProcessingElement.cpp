@@ -745,8 +745,8 @@ bool ProcessingElement::canShot(Packet &packet, RequestType request_type) {
     switch (request_type) {
     case READ:
       if (traffic_burst_curr_y == 0) {
-        threshold = GlobalParams::packet_injection_rate /
-                    GlobalParams::traffic_burst_size;
+        threshold =
+            get_pir_for_master(local_id) / GlobalParams::traffic_burst_size;
         if (GlobalParams::six_channel_traffic && is_vertical_pe(local_id)) {
           threshold /= 2.;
         }
@@ -756,8 +756,8 @@ bool ProcessingElement::canShot(Packet &packet, RequestType request_type) {
       break;
     case WRITE:
       if (traffic_burst_curr_x == 0) {
-        threshold = GlobalParams::packet_injection_rate /
-                    GlobalParams::traffic_burst_size;
+        threshold =
+            get_pir_for_master(local_id) / GlobalParams::traffic_burst_size;
         if (GlobalParams::six_channel_traffic && is_vertical_pe(local_id)) {
           threshold /= 2.;
         }
@@ -766,7 +766,7 @@ bool ProcessingElement::canShot(Packet &packet, RequestType request_type) {
       }
       break;
     default:
-      threshold = GlobalParams::packet_injection_rate;
+      threshold = get_pir_for_master(local_id);
       break;
     }
 

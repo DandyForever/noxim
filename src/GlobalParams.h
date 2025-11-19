@@ -248,6 +248,7 @@ struct GlobalParams {
   static std::vector<RoutingType> vc_routing; // size = n_virtual_channels
   static std::unordered_map<Coord, int, CoordHash> master_to_request_vc;
   static std::unordered_map<Coord, int, CoordHash> master_to_response_vc;
+  static std::unordered_map<Coord, double, CoordHash> master_pir_factor;
 };
 
 #endif

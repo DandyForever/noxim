@@ -213,6 +213,12 @@ inline int get_response_vc_for_master_id(int master_local_id) {
   return GlobalParams::master_to_response_vc[m];
 }
 
+inline double get_pir_for_master(int master_local_id) {
+  Coord m = id2Coord(master_local_id);
+  return GlobalParams::master_pir_factor[m] *
+         GlobalParams::packet_injection_rate;
+}
+
 inline int timestamp() {
   return (int)sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
 }
