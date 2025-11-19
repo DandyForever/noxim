@@ -182,75 +182,22 @@ static inline bool coord_in_rect(const Coord &c, const Rect &r) {
          c.y <= r.bot_right.y;
 }
 
-static inline bool is_border_memory_node(const Coord &c) {
-  // старая логика "рамки", когда нет явных прямоугольников
-  if (c.x == 0)
-    return false;
-  if (c.y == 0)
-    return false;
-  if (c.x == GlobalParams::mesh_dim_x - 1)
-    return false;
-  if (c.y == GlobalParams::mesh_dim_y - 1)
-    return false;
-  return true;
-}
-
-/**
- * Проверяет, имеет ли мастер с координатами local_id право отправлять пакет на
- * dst_id. Возвращает true только если dst_id находится в разрешенном
- * прямоугольнике памяти для данного мастера (персональном или глобальном). Если
- * в конфиге не задан ни персональный, ни глобальный прямоугольник, используется
- * старая "рамочная" эвристика.
- */
 inline bool can_master_send_to(int local_id, int dst_id) {
   const Coord m = id2Coord(local_id);
   const Coord d = id2Coord(dst_id);
 
-  // 1) Если есть персональное правило для мастера — оно главнее всего
-  auto it = GlobalParams::master_to_slave_rect.find(m);
-  if (it != GlobalParams::master_to_slave_rect.end()) {
-    return coord_in_rect(d, it->second);
-  }
+  for (const auto &r : GlobalParams::master_to_slave_areas[m])
+    if (coord_in_rect(d, r))
+      return true;
 
-  // 2) Если персонального нет — используем глобальный прямоугольник (если
-  // задан)
-  if (GlobalParams::has_global_slave_rect) {
-    return coord_in_rect(d, GlobalParams::global_slave_rect);
-  }
-
-  // 3) Бэкап: старая логика "рамки", когда конфигов нет
-  return is_border_memory_node(d);
-}
-
-inline bool is_memory_node(int id) {
-  Coord coord = id2Coord(id);
-
-  if (GlobalParams::has_global_slave_rect) {
-    return coord.x >= GlobalParams::global_slave_rect.top_left.x &&
-           coord.x <= GlobalParams::global_slave_rect.bot_right.x &&
-           coord.y >= GlobalParams::global_slave_rect.top_left.y &&
-           coord.y <= GlobalParams::global_slave_rect.bot_right.y;
-  }
-
-  if (coord.x == 0)
-    return false;
-  if (coord.y == 0)
-    return false;
-  if (coord.x == GlobalParams::mesh_dim_x - 1)
-    return false;
-  if (coord.y == GlobalParams::mesh_dim_y - 1)
-    return false;
-
-  return true;
+  return false;
 }
 
 inline bool is_master_node(int id) {
-  if (!GlobalParams::master_connections.empty()) {
-    return GlobalParams::master_connections.count(id2Coord(id));
-  } else {
-    return !is_memory_node(id);
-  }
+  return GlobalParams::master_connections.count(id2Coord(id));
 }
+
+inline bool is_memory_node(int id) { return !is_master_node(id); }
 
 inline RoutingType get_routing_for_vc(int vc) {
   return GlobalParams::vc_routing[vc];
@@ -258,25 +205,12 @@ inline RoutingType get_routing_for_vc(int vc) {
 
 inline int get_request_vc_for_master(int master_local_id) {
   Coord m = id2Coord(master_local_id);
-  auto it = GlobalParams::master_to_request_vc.find(m);
-  if (it == GlobalParams::master_to_request_vc.end()) {
-    std::cerr << "master has no request VC assigned: (" << m.x << "," << m.y
-              << ")\n";
-    std::exit(1);
-  }
-  return it->second;
+  return GlobalParams::master_to_request_vc[m];
 }
 
 inline int get_response_vc_for_master_id(int master_local_id) {
   Coord m = id2Coord(master_local_id);
-  auto it = GlobalParams::master_to_response_vc.find(m);
-  if (it == GlobalParams::master_to_response_vc.end()) {
-    std::cerr << "master has no response VC assigned: (" << m.x << "," << m.y
-              << ")\n";
-    std::exit(1);
-  }
-
-  return it->second;
+  return GlobalParams::master_to_response_vc[m];
 }
 
 inline int timestamp() {

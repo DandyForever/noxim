@@ -80,9 +80,9 @@ int GlobalParams::pe_request_buffer_size;
 unsigned long GlobalParams::traffic_burst_size;
 bool GlobalParams::six_channel_traffic;
 std::set<Coord> GlobalParams::master_connections;
-bool GlobalParams::has_global_slave_rect;
-Rect GlobalParams::global_slave_rect;
-std::unordered_map<Coord, Rect, CoordHash> GlobalParams::master_to_slave_rect;
+std::vector<Rect> GlobalParams::global_slave_areas;
+std::unordered_map<Coord, std::vector<Rect>, CoordHash>
+    GlobalParams::master_to_slave_areas;
 std::vector<RoutingType> GlobalParams::vc_routing; // size = n_virtual_channels
 std::unordered_map<Coord, int, CoordHash> GlobalParams::master_to_request_vc;
 std::unordered_map<Coord, int, CoordHash> GlobalParams::master_to_response_vc;

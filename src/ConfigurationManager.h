@@ -13,6 +13,7 @@
 #define __NOXIMCONFIGURATIONMANAGER_H__
 
 #include "GlobalParams.h"
+#include "Utils.h"
 #include "yaml-cpp/yaml.h"
 
 #include <iostream>

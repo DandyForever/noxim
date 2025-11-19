@@ -242,9 +242,9 @@ struct GlobalParams {
   static unsigned long traffic_burst_size;
   static bool six_channel_traffic;
   static set<Coord> master_connections;
-  static bool has_global_slave_rect;
-  static Rect global_slave_rect;
-  static std::unordered_map<Coord, Rect, CoordHash> master_to_slave_rect;
+  static std::vector<Rect> global_slave_areas; // 0+ прямоугольников
+  static std::unordered_map<Coord, std::vector<Rect>, CoordHash>
+      master_to_slave_areas;
   static std::vector<RoutingType> vc_routing; // size = n_virtual_channels
   static std::unordered_map<Coord, int, CoordHash> master_to_request_vc;
   static std::unordered_map<Coord, int, CoordHash> master_to_response_vc;
