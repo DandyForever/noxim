@@ -233,7 +233,6 @@ struct GlobalParams {
   static bool buffer_mid;
   static int pe_request_buffer_size;
   static unsigned long traffic_burst_size;
-  static bool six_channel_traffic;
   static set<Coord> master_connections;
   static std::vector<Rect> global_slave_areas; // 0+ прямоугольников
   static std::unordered_map<Coord, std::vector<Rect>, CoordHash>

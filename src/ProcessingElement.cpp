@@ -860,52 +860,6 @@ Packet ProcessingElement::trafficRandom(RequestType request_type) {
 
   } while (!can_master_send_to(local_id, p.dst_id));
 
-  if (GlobalParams::six_channel_traffic) {
-    Coord self_coord = id2Coord(local_id);
-    Coord dst_coord = id2Coord(p.dst_id);
-    if (self_coord.y == 0) // Horizontal upper EU
-    {
-      if (dst_coord.y % 2 == 0) {
-        dst_coord.y -= 1;
-        p.dst_id = coord2Id(dst_coord);
-      }
-    } else if (self_coord.y ==
-               GlobalParams::mesh_dim_y - 1) // Horizontal lower EU
-    {
-      if (dst_coord.y % 2 == 1) {
-        dst_coord.y += 1;
-        p.dst_id = coord2Id(dst_coord);
-      }
-    } /*else // Vertical EU
-    {
-      int self_cluster_id = (self_coord.y + 1) / 2;
-      int dst_cluster_id = (dst_coord.y + 1) / 2;
-      if (dst_cluster_id > self_cluster_id)
-      {
-        if (dst_coord.y % 2 == 0)
-        {
-          dst_coord.y -= 1;
-          p.dst_id = coord2Id(dst_coord);
-        }
-      }
-      else if (dst_cluster_id < self_cluster_id)
-      {
-        if (dst_coord.y % 2 == 1)
-        {
-          dst_coord.y += 1;
-          p.dst_id = coord2Id(dst_coord);
-        }
-      }
-      else
-      {
-        dst_coord.y = self_coord.y;
-        p.dst_id = coord2Id(dst_coord);
-      }
-    }
-    */
-  }
-  //-----------------------------------
-
   p.timestamp = timestamp();
   p.is_head = false;
   p.is_tail = false;

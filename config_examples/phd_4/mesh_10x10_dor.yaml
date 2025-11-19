@@ -176,5 +176,4 @@ flit_dump: false
 buffer_mid: false
 pe_request_buffer_size: 512
 traffic_burst_size: 1
-six_channel_traffic: false
 log_file_name: "./results/results.csv"
