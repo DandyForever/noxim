@@ -20,14 +20,12 @@
 
 using namespace std;
 
-enum RequestType
-{
+enum RequestType {
   WRITE,
   READ,
 };
 
-SC_MODULE(ProcessingElement)
-{
+SC_MODULE(ProcessingElement) {
 
   // I/O Ports
   sc_in_clk clock;   // The input clock for the PE
@@ -74,15 +72,15 @@ SC_MODULE(ProcessingElement)
   bool is_memory_pe;
   bool is_master;
   int local_direction_id;
-  bool current_level_rx;                             // Current level for Alternating Bit Protocol (ABP)
-  bool current_level_tx;                             // Current level for Alternating Bit Protocol (ABP)
-  queue<Packet> packet_queue_x;                      // Local queue of packets for x channel
+  bool current_level_rx; // Current level for Alternating Bit Protocol (ABP)
+  bool current_level_tx; // Current level for Alternating Bit Protocol (ABP)
+  queue<Packet> packet_queue_x; // Local queue of packets for x channel
   queue<Flit> in_flit_queue_x[MAX_VIRTUAL_CHANNELS]; // Queue of incoming flits
                                                      // for x channel
   queue<Packet>
-      in_packet_queue_x[MAX_VIRTUAL_CHANNELS];       // Queue of incoming packets
-                                                     // for x channel
-  queue<Packet> packet_queue_y;                      // Local queue of packets for y channel
+      in_packet_queue_x[MAX_VIRTUAL_CHANNELS]; // Queue of incoming packets
+                                               // for x channel
+  queue<Packet> packet_queue_y; // Local queue of packets for y channel
   queue<Flit> in_flit_queue_y[MAX_VIRTUAL_CHANNELS]; // Queue of incoming flits
                                                      // for y channel
   queue<Packet>
@@ -100,11 +98,6 @@ SC_MODULE(ProcessingElement)
   bool is_vc_set_y = 0;
 
   bool transmittedAtPreviousCycle; // Used for distributions with memory
-
-  // Interlivin feature parameters
-  int interliving_prev_dst;
-  int interliving_prev_reps;
-  int interliving_local_dst;
 
   // Traffic burst state
   unsigned long traffic_burst_curr_x = 0;
@@ -162,7 +155,7 @@ SC_MODULE(ProcessingElement)
   Packet generateResponse(Flit, RequestType);
 
   GlobalTrafficTable *traffic_table; // Reference to the Global traffic Table
-  bool never_transmit;               // true if the PE does not transmit any packet
+  bool never_transmit; // true if the PE does not transmit any packet
   //  (valid only for the table based traffic)
 
   void fixRanges(const Coord, Coord &); // Fix the ranges of the destination
@@ -178,8 +171,7 @@ SC_MODULE(ProcessingElement)
   unsigned int getQueueSize() const;
 
   // Constructor
-  SC_CTOR(ProcessingElement)
-  {
+  SC_CTOR(ProcessingElement) {
 
     SC_METHOD(txProcess);
     sensitive << reset;

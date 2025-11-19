@@ -463,8 +463,6 @@ void GlobalStats::showStats(std::ostream &out, bool detailed) {
               << GlobalParams::mesh_dim_x << "x" << GlobalParams::mesh_dim_y
               << "_" << GlobalParams::routing_algorithm << "_mp_"
               << GlobalParams::mem_ports;
-    if (GlobalParams::interliving_reps)
-      file_name << "_il_" << GlobalParams::interliving_reps;
     if (GlobalParams::GlobalParams::switch_angle_masters)
       file_name << "_sv_" << GlobalParams::switch_angle_masters;
     if (GlobalParams::switch_vertical_masters)
@@ -479,8 +477,8 @@ void GlobalStats::showStats(std::ostream &out, bool detailed) {
                               std::ofstream::out);
     std::ofstream f_latencies_burst(file_name.str() + "_latency_burst.log",
                                     std::ofstream::out);
-    std::ofstream f_latencies_creation_burst(file_name.str() + "_latency_creation_burst.log",
-                                    std::ofstream::out);
+    std::ofstream f_latencies_creation_burst(
+        file_name.str() + "_latency_creation_burst.log", std::ofstream::out);
 
     vector<char> directions;
     directions.push_back('x');
@@ -830,27 +828,35 @@ void GlobalStats::showStats(std::ostream &out, bool detailed) {
     //-----------------------------------------------------------------------
     for (int x = 0; x < GlobalParams::mesh_dim_x; x++) {
       for (int y = 0; y < GlobalParams::mesh_dim_y; y++) {
-        for (auto it =
-                 noc->t[x][y]->pe[0]->traffic_burst_flit_latency_from_creation_x.begin();
-             it != noc->t[x][y]->pe[0]->traffic_burst_flit_latency_from_creation_x.end();
+        for (auto it = noc->t[x][y]
+                           ->pe[0]
+                           ->traffic_burst_flit_latency_from_creation_x.begin();
+             it != noc->t[x][y]
+                       ->pe[0]
+                       ->traffic_burst_flit_latency_from_creation_x.end();
              it++) {
           Coord dst_coord = id2Coord(it->second.dst_id);
           int latency = it->second.latency;
           if (it->second.is_back)
             f_latencies_creation_burst << "[x][" << x << "][" << y << "] -> "
-                              << "[" << dst_coord.x << "][" << dst_coord.y
-                              << "]: " << latency << endl;
+                                       << "[" << dst_coord.x << "]["
+                                       << dst_coord.y << "]: " << latency
+                                       << endl;
         }
-        for (auto it =
-                 noc->t[x][y]->pe[0]->traffic_burst_flit_latency_from_creation_y.begin();
-             it != noc->t[x][y]->pe[0]->traffic_burst_flit_latency_from_creation_y.end();
+        for (auto it = noc->t[x][y]
+                           ->pe[0]
+                           ->traffic_burst_flit_latency_from_creation_y.begin();
+             it != noc->t[x][y]
+                       ->pe[0]
+                       ->traffic_burst_flit_latency_from_creation_y.end();
              it++) {
           Coord dst_coord = id2Coord(it->second.dst_id);
           int latency = it->second.latency;
           if (it->second.is_back)
             f_latencies_creation_burst << "[y][" << x << "][" << y << "] -> "
-                              << "[" << dst_coord.x << "][" << dst_coord.y
-                              << "]: " << latency << endl;
+                                       << "[" << dst_coord.x << "]["
+                                       << dst_coord.y << "]: " << latency
+                                       << endl;
         }
       }
     }

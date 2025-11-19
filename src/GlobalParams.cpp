@@ -60,14 +60,11 @@ PowerConfig GlobalParams::power_configuration;
 // out of yaml configuration
 bool GlobalParams::ascii_monitor;
 int GlobalParams::channel_selection;
-int GlobalParams::interliving_reps;
-int GlobalParams::interliving_direction;
 int GlobalParams::mem_ports;
 int GlobalParams::eu_ports;
 bool GlobalParams::switch_vertical_masters;
 int GlobalParams::switch_angle_masters;
 int GlobalParams::switch_horizontal_masters;
-bool GlobalParams::switch_interliving_validation;
 bool GlobalParams::switch_debug;
 string GlobalParams::log_file_name;
 bool GlobalParams::req_ack_mode;

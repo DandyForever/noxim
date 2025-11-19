@@ -310,9 +310,6 @@ void loadConfiguration() {
   GlobalParams::req_ack_mode = readParam<bool>(config, "req_ack_mode");
   GlobalParams::both_phys_req_mode =
       readParam<bool>(config, "both_phys_req_mode");
-  GlobalParams::interliving_reps = readParam<int>(config, "interliving_reps");
-  GlobalParams::interliving_direction =
-      readParam<int>(config, "interliving_direction");
   GlobalParams::mem_ports = readParam<int>(config, "mem_ports");
   GlobalParams::eu_ports = readParam<int>(config, "eu_ports");
   GlobalParams::switch_vertical_masters =
@@ -321,8 +318,6 @@ void loadConfiguration() {
       readParam<int>(config, "switch_angle_masters");
   GlobalParams::switch_horizontal_masters =
       readParam<int>(config, "switch_horizontal_masters");
-  GlobalParams::switch_interliving_validation =
-      readParam<bool>(config, "switch_interliving_validation");
   GlobalParams::switch_debug = readParam<bool>(config, "switch_debug");
   GlobalParams::log_file_name = readParam<string>(config, "log_file_name");
   GlobalParams::buffer_verbose = readParam<bool>(config, "buffer_verbose");
@@ -1074,10 +1069,6 @@ void parseCmdLine(int arg_num, char *arg_vet[]) {
         GlobalParams::selection_strategy = arg_vet[++i];
       } else if (!strcmp(arg_vet[i], "-log_file_name")) {
         GlobalParams::log_file_name = arg_vet[++i];
-      } else if (!strcmp(arg_vet[i], "-interliving_reps")) {
-        GlobalParams::interliving_reps = atoi(arg_vet[++i]);
-      } else if (!strcmp(arg_vet[i], "-interliving_direction")) {
-        GlobalParams::interliving_direction = atoi(arg_vet[++i]);
       } else if (!strcmp(arg_vet[i], "-mem_ports")) {
         GlobalParams::mem_ports = atoi(arg_vet[++i]);
       } else if (!strcmp(arg_vet[i], "-eu_ports")) {
@@ -1088,8 +1079,6 @@ void parseCmdLine(int arg_num, char *arg_vet[]) {
         GlobalParams::switch_angle_masters = atoi(arg_vet[++i]);
       } else if (!strcmp(arg_vet[i], "-switch_horizontal_masters")) {
         GlobalParams::switch_horizontal_masters = atoi(arg_vet[++i]);
-      } else if (!strcmp(arg_vet[i], "-switch_interliving_validation")) {
-        GlobalParams::switch_interliving_validation = atoi(arg_vet[++i]);
       } else if (!strcmp(arg_vet[i], "-switch_debug")) {
         GlobalParams::switch_debug = atoi(arg_vet[++i]);
       } else if (!strcmp(arg_vet[i], "-req_ack_mode")) {

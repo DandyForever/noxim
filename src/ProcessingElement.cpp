@@ -705,31 +705,6 @@ bool ProcessingElement::canShot(Packet &packet, RequestType request_type) {
       local_id != 2 * GlobalParams::mesh_dim_x &&
       local_id + 1 != 2 * GlobalParams::mesh_dim_x)
     return false;
-  //-----------------------------------------------------
-
-  //-----------------------------------------------------
-  // For validation only
-  //-----------------------------------------------------
-  if (GlobalParams::switch_interliving_validation &&
-      (local_id < GlobalParams::mesh_dim_x ||
-       local_id >= GlobalParams::mesh_dim_x * (GlobalParams::mesh_dim_y - 1)))
-    return false;
-    //-----------------------------------------------------
-
-    //-----------------------------------------------------
-    // Temporary for thinning
-    //-----------------------------------------------------
-    // if (
-    //     is_vertical_pe(local_id) &&
-    //     (local_id != 3 * GlobalParams::mesh_dim_x) && (local_id != 5 *
-    //     GlobalParams::mesh_dim_x - 1) && (local_id != 5 *
-    //     GlobalParams::mesh_dim_x) && (local_id != 7 *
-    //     GlobalParams::mesh_dim_x - 1) && (local_id != 7 *
-    //     GlobalParams::mesh_dim_x) && (local_id != 9 *
-    //     GlobalParams::mesh_dim_x - 1) && (local_id != 9 *
-    //     GlobalParams::mesh_dim_x) && (local_id != 11 *
-    //     GlobalParams::mesh_dim_x - 1)
-    // ) return false;
     //-----------------------------------------------------
 
 #ifdef DEADLOCK_AVOIDANCE
@@ -983,61 +958,6 @@ Packet ProcessingElement::trafficRandom(RequestType request_type) {
 
   } while (!can_master_send_to(local_id, p.dst_id));
 
-  //-----------------------------------
-  // Interliving feature traffic
-  //-----------------------------------
-  if (GlobalParams::interliving_reps) {
-    if (is_vertical_pe(local_id) && !is_angle_pe(local_id)) {
-      if (local_id % GlobalParams::mesh_dim_x == 0) { // left side tile PE
-        if (interliving_prev_reps == GlobalParams::interliving_reps) {
-          interliving_prev_reps = 0;
-          if (GlobalParams::interliving_direction) {
-            interliving_prev_dst--;
-            if (interliving_prev_dst == local_id) {
-              interliving_prev_dst = local_id + GlobalParams::mesh_dim_x - 2;
-              interliving_local_dst =
-                  (interliving_local_dst + 1) % GlobalParams::mem_ports;
-            }
-          } else {
-            interliving_prev_dst++;
-            if (interliving_prev_dst + 1 ==
-                GlobalParams::mesh_dim_x + local_id) {
-              interliving_prev_dst = local_id + 1;
-              interliving_local_dst =
-                  (interliving_local_dst + 1) % GlobalParams::mem_ports;
-            }
-          }
-        }
-        p.dst_id = interliving_prev_dst;
-        p.local_direction_id = DIRECTION_LOCAL_NORTH + interliving_local_dst;
-        interliving_prev_reps++;
-      } else { // right side tile PE
-        if (interliving_prev_reps == GlobalParams::interliving_reps) {
-          interliving_prev_reps = 0;
-          if (GlobalParams::interliving_direction) {
-            interliving_prev_dst++;
-            if (interliving_prev_dst == local_id) {
-              interliving_prev_dst = local_id - GlobalParams::mesh_dim_x + 2;
-              interliving_local_dst =
-                  (interliving_local_dst + 1) % GlobalParams::mem_ports;
-            }
-          } else {
-            interliving_prev_dst--;
-            if (interliving_prev_dst ==
-                local_id + 1 - GlobalParams::mesh_dim_x) {
-              interliving_prev_dst = local_id - 1;
-              interliving_local_dst =
-                  (interliving_local_dst + 1) % GlobalParams::mem_ports;
-            }
-          }
-        }
-        p.dst_id = interliving_prev_dst;
-        p.local_direction_id = DIRECTION_LOCAL_NORTH + interliving_local_dst;
-        interliving_prev_reps++;
-      }
-    }
-  }
-  //-----------------------------------
   if (GlobalParams::six_channel_traffic) {
     Coord self_coord = id2Coord(local_id);
     Coord dst_coord = id2Coord(p.dst_id);
