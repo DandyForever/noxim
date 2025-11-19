@@ -187,7 +187,6 @@ struct GlobalParams {
   static double r2h_link_length;
   static unsigned int buffer_depth;
   static int flit_size;
-  static int min_packet_size;
   static int max_packet_size;
   static string routing_algorithm;
   static string routing_table_filename;

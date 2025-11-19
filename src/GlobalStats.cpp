@@ -1070,15 +1070,13 @@ double GlobalStats::getReceivedIdealFlitRatio() {
   if (GlobalParams::topology == TOPOLOGY_MESH) {
     ratio =
         getReceivedFlits() /
-        (GlobalParams::packet_injection_rate *
-         (GlobalParams::min_packet_size + GlobalParams::max_packet_size) / 2 *
+        (GlobalParams::packet_injection_rate * GlobalParams::max_packet_size *
          total_cycles * GlobalParams::mesh_dim_y * GlobalParams::mesh_dim_x);
   } else // other delta topologies
   {
-    ratio = getReceivedFlits() /
-            (GlobalParams::packet_injection_rate *
-             (GlobalParams::min_packet_size + GlobalParams::max_packet_size) /
-             2 * total_cycles * GlobalParams::n_delta_tiles);
+    ratio = getReceivedFlits() / (GlobalParams::packet_injection_rate *
+                                  GlobalParams::max_packet_size * total_cycles *
+                                  GlobalParams::n_delta_tiles);
   }
   return ratio;
 }

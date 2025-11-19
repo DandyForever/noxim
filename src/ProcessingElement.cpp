@@ -674,8 +674,9 @@ bool ProcessingElement::canShot(Packet &packet, RequestType request_type) {
       for (unsigned int i = 0; i < dst_prob.size(); i++) {
         if (prob < dst_prob[i].second) {
           int vc = randInt(0, GlobalParams::n_virtual_channels - 1);
-          packet.make(local_id, dst_prob[i].first, vc, now, getRandomSize(),
-                      local_direction_id, 0, 0, true, true, 0);
+          packet.make(local_id, dst_prob[i].first, vc, now,
+                      GlobalParams::max_packet_size, local_direction_id, 0, 0,
+                      true, true, 0);
           break;
         }
       }
@@ -709,7 +710,7 @@ Packet ProcessingElement::trafficLocal() {
 
   p.dst_id = dst_set[i_rnd];
   p.timestamp = timestamp();
-  p.size = p.flit_left = getRandomSize();
+  p.size = p.flit_left = GlobalParams::max_packet_size;
   p.vc_id = randInt(0, GlobalParams::n_virtual_channels - 1);
 
   return p;
@@ -772,7 +773,7 @@ Packet ProcessingElement::trafficULocal() {
   p.dst_id = findRandomDestination(local_id, target_hops);
 
   p.timestamp = timestamp();
-  p.size = p.flit_left = getRandomSize();
+  p.size = p.flit_left = GlobalParams::max_packet_size;
   p.vc_id = randInt(0, GlobalParams::n_virtual_channels - 1);
 
   return p;
@@ -898,7 +899,7 @@ Packet ProcessingElement::trafficTest() {
   p.dst_id = 10;
 
   p.timestamp = timestamp();
-  p.size = p.flit_left = getRandomSize();
+  p.size = p.flit_left = GlobalParams::max_packet_size;
   p.vc_id = randInt(0, GlobalParams::n_virtual_channels - 1);
 
   return p;
@@ -920,7 +921,7 @@ Packet ProcessingElement::trafficTranspose1() {
 
   p.vc_id = randInt(0, GlobalParams::n_virtual_channels - 1);
   p.timestamp = timestamp();
-  p.size = p.flit_left = getRandomSize();
+  p.size = p.flit_left = GlobalParams::max_packet_size;
 
   return p;
 }
@@ -941,7 +942,7 @@ Packet ProcessingElement::trafficTranspose2() {
 
   p.vc_id = randInt(0, GlobalParams::n_virtual_channels - 1);
   p.timestamp = timestamp();
-  p.size = p.flit_left = getRandomSize();
+  p.size = p.flit_left = GlobalParams::max_packet_size;
 
   return p;
 }
@@ -977,7 +978,7 @@ Packet ProcessingElement::trafficBitReversal() {
 
   p.vc_id = randInt(0, GlobalParams::n_virtual_channels - 1);
   p.timestamp = timestamp();
-  p.size = p.flit_left = getRandomSize();
+  p.size = p.flit_left = GlobalParams::max_packet_size;
 
   return p;
 }
@@ -997,7 +998,7 @@ Packet ProcessingElement::trafficShuffle() {
 
   p.vc_id = randInt(0, GlobalParams::n_virtual_channels - 1);
   p.timestamp = timestamp();
-  p.size = p.flit_left = getRandomSize();
+  p.size = p.flit_left = GlobalParams::max_packet_size;
 
   return p;
 }
@@ -1018,7 +1019,7 @@ Packet ProcessingElement::trafficButterfly() {
 
   p.vc_id = randInt(0, GlobalParams::n_virtual_channels - 1);
   p.timestamp = timestamp();
-  p.size = p.flit_left = getRandomSize();
+  p.size = p.flit_left = GlobalParams::max_packet_size;
 
   return p;
 }
@@ -1033,10 +1034,6 @@ void ProcessingElement::fixRanges(const Coord src, Coord &dst) {
     dst.x = GlobalParams::mesh_dim_x - 1;
   if (dst.y >= GlobalParams::mesh_dim_y)
     dst.y = GlobalParams::mesh_dim_y - 1;
-}
-
-int ProcessingElement::getRandomSize() {
-  return randInt(GlobalParams::min_packet_size, GlobalParams::max_packet_size);
 }
 
 unsigned int ProcessingElement::getQueueSize() const {

@@ -272,7 +272,6 @@ void loadConfiguration() {
   GlobalParams::r2h_link_length = readParam<double>(config, "r2h_link_length");
   GlobalParams::buffer_depth = readParam<int>(config, "buffer_depth");
   GlobalParams::flit_size = readParam<int>(config, "flit_size");
-  GlobalParams::min_packet_size = readParam<int>(config, "min_packet_size");
   GlobalParams::max_packet_size = readParam<int>(config, "max_packet_size");
   GlobalParams::routing_algorithm =
       readParam<string>(config, "routing_algorithm");
@@ -893,17 +892,6 @@ void checkConfiguration() {
     exit(1);
   }
 
-  // if (GlobalParams::min_packet_size < 2 ||
-  // GlobalParams::max_packet_size < 2) {
-  // cerr << "Error: packet size must be >= 2" << endl;
-  // exit(1);
-  // }
-
-  if (GlobalParams::min_packet_size > GlobalParams::max_packet_size) {
-    cerr << "Error: min packet size must be less than max packet size" << endl;
-    exit(1);
-  }
-
   if (GlobalParams::selection_strategy.compare("INVALID_SELECTION") == 0) {
     cerr << "Error: invalid selection policy" << endl;
     exit(1);
@@ -1042,7 +1030,6 @@ void parseCmdLine(int arg_num, char *arg_vet[]) {
       } else if (!strcmp(arg_vet[i], "-wirxsleep")) {
         GlobalParams::use_powermanager = true;
       } else if (!strcmp(arg_vet[i], "-size")) {
-        GlobalParams::min_packet_size = atoi(arg_vet[++i]);
         GlobalParams::max_packet_size = atoi(arg_vet[++i]);
       } else if (!strcmp(arg_vet[i], "-topology")) {
         GlobalParams::topology = arg_vet[++i];

@@ -150,24 +150,6 @@ unsigned int Stats::getTotalCommunications() { return chist.size(); }
 
 double Stats::getCommunicationEnergy(int src_id, int dst_id) {
   // NOT YET IMPLEMENTED
-  // Assumptions: minimal path routing, constant packet size
-  /*
-    Coord src_coord = id2Coord(src_id);
-    Coord dst_coord = id2Coord(dst_id);
-
-    int hops =
-        abs(src_coord.x - dst_coord.x) + abs(src_coord.y - dst_coord.y);
-
-    double energy =
-        hops * (power.getPwrArbitration() + power.getPwrCrossbar() +
-                 power.getPwrBuffering() *
-                (GlobalParams::min_packet_size +
-                 GlobalParams::max_packet_size) / 2 +
-                power.getPwrRouting() + power.getPwrSelection()
-        );
-
-    return energy;
-  */
   return -1.0;
 }
 
