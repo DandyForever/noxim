@@ -37,12 +37,18 @@ n_virtual_channels: 4
 #   TABLE_BASED
 # Each of the above labels should match a corresponding
 # implementation in the routingAlgorithms source code directory
-routing_algorithm: MOD_DOR
+routing_algorithm: CUSTOM
 routing_table_filename: ""
 
 # Routing specific parameters
 #   dyad_threshold: double
 dyad_threshold: 0.6
+
+routing_by_vc:
+  0: YX
+  1: XY
+  2: XY
+  3: YX
 
 # Selection Strategies:
 #   RANDOM
@@ -175,3 +181,29 @@ buffer_mid: false
 pe_request_buffer_size: 100000
 message_size: 1
 log_file_name: "./results/results.csv"
+
+master_request_vc_rules:
+  # Vertical + angle
+  - select: { col: 0, y_range: [0, 9] }
+    vc: 1
+  - select: { col: 9, y_range: [0, 9] }
+    vc: 1
+
+  # Horizontal
+  - select: { row: 0, x_range: [0, 9] }
+    vc: 0
+  - select: { row: 9, x_range: [0, 9] }
+    vc: 0
+
+master_response_vc_rules:
+  # Vertical + angle
+  - select: { col: 0, y_range: [0, 9] }
+    vc: 3
+  - select: { col: 9, y_range: [0, 9] }
+    vc: 3
+
+  # Horizontal
+  - select: { row: 0, x_range: [0, 9] }
+    vc: 2
+  - select: { row: 9, x_range: [0, 9] }
+    vc: 2
