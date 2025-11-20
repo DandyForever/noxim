@@ -37,12 +37,18 @@ n_virtual_channels: 4
 #   TABLE_BASED
 # Each of the above labels should match a corresponding
 # implementation in the routingAlgorithms source code directory
-routing_algorithm: MOD_DOR
+routing_algorithm: CUSTOM
 routing_table_filename: ""
 
 # Routing specific parameters
 #   dyad_threshold: double
 dyad_threshold: 0.6
+
+routing_by_vc:
+  0: YX
+  1: XY
+  2: XY
+  3: YX
 
 # Selection Strategies:
 #   RANDOM
@@ -176,3 +182,69 @@ pe_request_buffer_size: 512
 message_size: 1
 log_file_name: "./results/results.csv"
 
+master_request_vc_rules:
+  # Vertical + angle
+  - select: { col: 0, y_range: [0, 9] }
+    vc: 1
+  - select: { col: 9, y_range: [0, 9] }
+    vc: 1
+
+  # Horizontal
+  - select: { row: 0, x_range: [0, 9] }
+    vc: 0
+  - select: { row: 9, x_range: [0, 9] }
+    vc: 0
+
+master_response_vc_rules:
+  # Vertical + angle
+  - select: { col: 0, y_range: [0, 9] }
+    vc: 3
+  - select: { col: 9, y_range: [0, 9] }
+    vc: 3
+
+  # Horizontal
+  - select: { row: 0, x_range: [0, 9] }
+    vc: 2
+  - select: { row: 9, x_range: [0, 9] }
+    vc: 2
+
+master_slave_rules:
+  # y = 1
+  - select:
+      masters: [[0,1],[9,1]]
+    slave_array: { top_left: [1,1], bot_right: [8,1] }
+
+  # y = 2
+  - select:
+      masters: [[0,2],[9,2]]
+    slave_array: { top_left: [1,2], bot_right: [8,2] }
+
+  # y = 3
+  - select:
+      masters: [[0,3],[9,3]]
+    slave_array: { top_left: [1,3], bot_right: [8,3] }
+
+  # y = 4
+  - select:
+      masters: [[0,4],[9,4]]
+    slave_array: { top_left: [1,4], bot_right: [8,4] }
+
+  # y = 5
+  - select:
+      masters: [[0,5],[9,5]]
+    slave_array: { top_left: [1,5], bot_right: [8,5] }
+
+  # y = 6
+  - select:
+      masters: [[0,6],[9,6]]
+    slave_array: { top_left: [1,6], bot_right: [8,6] }
+
+  # y = 7
+  - select:
+      masters: [[0,7],[9,7]]
+    slave_array: { top_left: [1,7], bot_right: [8,7] }
+
+  # y = 8
+  - select:
+      masters: [[0,8],[9,8]]
+    slave_array: { top_left: [1,8], bot_right: [8,8] }
