@@ -37,12 +37,16 @@ n_virtual_channels: 2
 #   TABLE_BASED
 # Each of the above labels should match a corresponding
 # implementation in the routingAlgorithms source code directory
-routing_algorithm: DOR
+routing_algorithm: CUSTOM
 routing_table_filename: ""
 
 # Routing specific parameters
 #   dyad_threshold: double
 dyad_threshold: 0.6
+
+routing_by_vc:
+  0: YX
+  1: XY
 
 # Selection Strategies:
 #   RANDOM
@@ -176,8 +180,42 @@ pe_request_buffer_size: 512
 message_size: 1
 log_file_name: "./results/results.csv"
 
+master_connections:
+- [1, 0]
+- [2, 0]
+- [3, 0]
+- [4, 0]
+- [5, 0]
+- [6, 0]
+- [7, 0]
+- [8, 0]
+- [0, 1]
+- [9, 1]
+- [0, 2]
+- [9, 2]
+- [0, 3]
+- [9, 3]
+- [0, 4]
+- [9, 4]
+- [0, 5]
+- [9, 5]
+- [0, 6]
+- [9, 6]
+- [0, 7]
+- [9, 7]
+- [0, 8]
+- [9, 8]
+- [1, 9]
+- [2, 9]
+- [3, 9]
+- [4, 9]
+- [5, 9]
+- [6, 9]
+- [7, 9]
+- [8, 9]
+
 master_slave_rules:
-  # Горизонтальные мастера — как в (1)
+  # Horizontal masters
   - select: { row: 0, x_range: [1, 4] }
     slave_array: { top_left: [1, 1], bot_right: [4, 4] }
   - select: { row: 0, x_range: [5, 8] }
@@ -187,13 +225,13 @@ master_slave_rules:
   - select: { row: 9, x_range: [5, 8] }
     slave_array: { top_left: [5, 5], bot_right: [8, 8] }
 
-  # Вертикальные мастера — свой квадрант + соседний по строке (вся половина строки)
-  # верхняя половина строки: объединение NW и NE
+  # Vertical masters
+  # NW and NE
   - select: { col: 0, y_range: [1, 4] }
     slave_array: { top_left: [1, 1], bot_right: [8, 4] }
   - select: { col: 9, y_range: [1, 4] }
     slave_array: { top_left: [1, 1], bot_right: [8, 4] }
-  # нижняя половина строки: объединение SW и SE
+  # SW and SE
   - select: { col: 0, y_range: [5, 8] }
     slave_array: { top_left: [1, 5], bot_right: [8, 8] }
   - select: { col: 9, y_range: [5, 8] }
