@@ -168,7 +168,14 @@ struct Rect {
   Coord bot_right;
 };
 
-enum class RoutingType : uint8_t { XY = 0, YX = 1 };
+enum class RoutingType : uint8_t {
+  XY = 0,
+  YX = 1,
+  NF = 2,
+  NL = 3,
+  OE = 4,
+  WF = 5
+};
 
 struct GlobalParams {
   static string verbose_mode;

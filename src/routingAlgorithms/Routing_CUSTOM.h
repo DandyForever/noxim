@@ -21,6 +21,10 @@ private:
   static RoutingAlgorithmsRegister routingAlgorithmsRegister;
   static RoutingAlgorithm *xy;
   static RoutingAlgorithm *yx;
+  static RoutingAlgorithm *nf;
+  static RoutingAlgorithm *nl;
+  static RoutingAlgorithm *oe;
+  static RoutingAlgorithm *wf;
 };
 
 #endif

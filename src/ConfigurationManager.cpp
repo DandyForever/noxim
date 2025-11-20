@@ -151,6 +151,14 @@ static RoutingType parse_routing_type(const std::string &s) {
     return RoutingType::XY;
   if (s == "YX")
     return RoutingType::YX;
+  if (s == "NF")
+    return RoutingType::NF;
+  if (s == "NL")
+    return RoutingType::NL;
+  if (s == "OE")
+    return RoutingType::OE;
+  if (s == "WF")
+    return RoutingType::WF;
   std::cerr << "unknown routing type: " << s << std::endl;
   std::exit(1);
 }
