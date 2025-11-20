@@ -37,12 +37,16 @@ n_virtual_channels: 2
 #   TABLE_BASED
 # Each of the above labels should match a corresponding
 # implementation in the routingAlgorithms source code directory
-routing_algorithm: DOR_XY
+routing_algorithm: CUSTOM
 routing_table_filename: ""
 
 # Routing specific parameters
 #   dyad_threshold: double
 dyad_threshold: 0.6
+
+routing_by_vc:
+  0: XY
+  1: YX
 
 # Selection Strategies:
 #   RANDOM
@@ -175,3 +179,13 @@ buffer_mid: false
 pe_request_buffer_size: 512
 message_size: 1
 log_file_name: "./results/results.csv"
+
+master_connections:
+- [0, 1]
+- [9, 1]
+- [0, 2]
+- [9, 2]
+- [0, 3]
+- [9, 3]
+- [0, 4]
+- [9, 4]
