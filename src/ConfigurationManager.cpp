@@ -505,14 +505,7 @@ void loadConfiguration() {
 
   for (int mid : GlobalParams::master_ids) {
     if (!GlobalParams::master_to_request_vc.count(mid)) {
-      Coord m = id2Coord(mid);
-      if (GlobalParams::routing_algorithm == "MOD_DOR" &&
-          ((m.x == 0) || // vertical master
-           (m.x == GlobalParams::mesh_dim_x - 1))) {
-        GlobalParams::master_to_request_vc.emplace(mid, 1);
-      } else {
-        GlobalParams::master_to_request_vc.emplace(mid, 0);
-      }
+      GlobalParams::master_to_request_vc.emplace(mid, 0);
     }
   }
 
