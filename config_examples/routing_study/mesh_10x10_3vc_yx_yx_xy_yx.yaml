@@ -183,26 +183,26 @@ routing_by_vc:
   2: YX
 
 master_request_vc_rules:
-  # Вертикальные (включая угловые)
+  # Vertical + Angle
   - select: { col: 0, y_range: [0, 9] }
     vc: 0
   - select: { col: 9, y_range: [0, 9] }
     vc: 0
 
-  # Горизонтальные
+  # Horizontal
   - select: { row: 0, x_range: [0, 9] }
     vc: 0
   - select: { row: 9, x_range: [0, 9] }
     vc: 0
 
 master_response_vc_rules:
-  # Вертикальные (включая угловые)
+  # Vertical + Angle
   - select: { col: 0, y_range: [0, 9] }
     vc: 1
   - select: { col: 9, y_range: [0, 9] }
     vc: 1
 
-  # Горизонтальные
+  # Horizontal
   - select: { row: 0, x_range: [0, 9] }
     vc: 2
   - select: { row: 9, x_range: [0, 9] }
