@@ -16,6 +16,7 @@
 #include <set>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -162,12 +163,6 @@ public:
   }
 };
 
-struct CoordHash {
-  size_t operator()(const Coord &c) const noexcept {
-    return (static_cast<size_t>(c.x) << 32) ^ static_cast<size_t>(c.y);
-  }
-};
-
 struct Rect {
   Coord top_left;
   Coord bot_right;
@@ -231,14 +226,13 @@ struct GlobalParams {
   static bool buffer_mid;
   static int pe_request_buffer_size;
   static unsigned long message_size;
-  static set<Coord> master_connections;
-  static std::vector<Rect> global_slave_areas; // 0+ прямоугольников
-  static std::unordered_map<Coord, std::vector<Rect>, CoordHash>
-      master_to_slave_areas;
+  static std::unordered_set<int> master_ids;
+  static std::vector<Rect> global_slave_areas; // 0+ rects
+  static std::unordered_map<int, std::vector<Rect>> master_to_slave_areas;
   static std::vector<RoutingType> vc_routing; // size = n_virtual_channels
-  static std::unordered_map<Coord, int, CoordHash> master_to_request_vc;
-  static std::unordered_map<Coord, int, CoordHash> master_to_response_vc;
-  static std::unordered_map<Coord, double, CoordHash> master_pir_factor;
+  static std::unordered_map<int, int> master_to_request_vc;
+  static std::unordered_map<int, int> master_to_response_vc;
+  static std::unordered_map<int, double> master_pir_factor;
 };
 
 #endif
