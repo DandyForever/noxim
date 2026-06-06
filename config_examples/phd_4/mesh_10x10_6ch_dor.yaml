@@ -154,7 +154,7 @@ trace_mode: false
 trace_filename: ""
 
 packet_size: 1
-packet_injection_rate: 1
+flit_injection_rate: 1
 probability_of_retransmission: 0.01
 
 # Traffic distribution:
@@ -203,8 +203,8 @@ master_slave_rules:
       - { top_left: [1, 6], bot_right: [8, 6] }
       - { top_left: [1, 8], bot_right: [8, 8] }
 
-master_pir_factor_rules:
+master_ir_factor_rules:
   - select: { col: 0, y_range: [1, 8] }
-    pir_factor: 0.5
+    ir_factor: 0.5
   - select: { col: 9, y_range: [1, 8] }
-    pir_factor: 0.5
+    ir_factor: 0.5
