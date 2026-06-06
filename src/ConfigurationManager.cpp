@@ -281,8 +281,10 @@ void loadConfiguration() {
       readParam<string>(config, "routing_table_filename");
   GlobalParams::selection_strategy =
       readParam<string>(config, "selection_strategy");
+  double flit_injection_rate =
+      readParam<double>(config, "flit_injection_rate");
   GlobalParams::packet_injection_rate =
-      readParam<double>(config, "packet_injection_rate");
+      flit_injection_rate / GlobalParams::packet_size;
   GlobalParams::probability_of_retransmission =
       readParam<double>(config, "probability_of_retransmission");
   GlobalParams::traffic_distribution =
@@ -559,47 +561,47 @@ void loadConfiguration() {
 
   GlobalParams::master_pir_factor.clear();
 
-  if (config["master_pir_factor"]) {
-    for (const auto &item : config["master_pir_factor"]) {
-      if (!item["master"] || !item["pir_factor"]) {
-        std::cerr << "master_pir_factor: need {master, pir_factor}\n";
+  if (config["master_ir_factor"]) {
+    for (const auto &item : config["master_ir_factor"]) {
+      if (!item["master"] || !item["ir_factor"]) {
+        std::cerr << "master_ir_factor: need {master, ir_factor}\n";
         std::exit(1);
       }
       Coord m = parse_coord_vec(item["master"]);
       auto mid = coord2Id(m);
       if (!GlobalParams::master_ids.count(mid)) {
-        std::cerr << "master_pir_factor: master not in master_connections: ("
+        std::cerr << "master_ir_factor: master not in master_connections: ("
                   << m.x << "," << m.y << ")\n";
         std::exit(1);
       }
-      double pir_factor = item["pir_factor"].as<double>();
-      if (is_pir_invalid(pir_factor)) {
-        std::cerr << "master_pir_factor: invalid pir_factor (" << pir_factor
+      double ir_factor = item["ir_factor"].as<double>();
+      if (is_pir_invalid(ir_factor)) {
+        std::cerr << "master_ir_factor: invalid ir_factor (" << ir_factor
                   << ") for master (" << m.x << "," << m.y << ")\n";
         std::exit(1);
       };
-      GlobalParams::master_pir_factor.emplace(mid, pir_factor);
+      GlobalParams::master_pir_factor.emplace(mid, ir_factor);
     }
   }
 
-  if (config["master_pir_factor_rules"]) {
-    for (const auto &rule : config["master_pir_factor_rules"]) {
-      if (!rule["select"] || !rule["pir_factor"]) {
-        std::cerr << "each master_pir_factor_rules item must have select and "
-                     "pir_factor\n";
+  if (config["master_ir_factor_rules"]) {
+    for (const auto &rule : config["master_ir_factor_rules"]) {
+      if (!rule["select"] || !rule["ir_factor"]) {
+        std::cerr << "each master_ir_factor_rules item must have select and "
+                     "ir_factor\n";
         std::exit(1);
       }
-      double pir_factor = rule["pir_factor"].as<double>();
-      if (is_pir_invalid(pir_factor)) {
-        std::cerr << "master_pir_factor_rules: invalid pir_factor ("
-                  << pir_factor << ")\n";
+      double ir_factor = rule["ir_factor"].as<double>();
+      if (is_pir_invalid(ir_factor)) {
+        std::cerr << "master_ir_factor_rules: invalid ir_factor ("
+                  << ir_factor << ")\n";
         std::exit(1);
       };
       auto targets = coords_to_ids(expand_select(rule["select"], groups_index));
       for (int mid : targets) {
         if (!GlobalParams::master_ids.count(mid))
           exit(1);
-        GlobalParams::master_pir_factor.emplace(mid, pir_factor);
+        GlobalParams::master_pir_factor.emplace(mid, ir_factor);
       }
     }
   }
@@ -751,7 +753,7 @@ void showHelp(char selfname[]) {
       << "\t\tRANDOM\t\tRandom selection strategy" << endl
       << "\t\tBUFFER_LEVEL\tBuffer-Level Based selection strategy" << endl
       << "\t\tNOP\t\tNeighbors-on-Path selection strategy" << endl
-      << "\t-pir R TYPE\t\tSet the packet injection rate R [0..1] and the time "
+      << "\t-ir R TYPE\t\tSet the flit injection rate R [0..1] and the time "
          "distribution TYPE where TYPE is one of the following:"
       << endl
       << "\t\tpoisson\t\tMemory-less Poisson distribution" << endl
@@ -828,7 +830,8 @@ void showConfig() {
        // << "- routing_table_filename = " <<
        // GlobalParams::routing_table_filename << endl
        << "- selection_strategy = " << GlobalParams::selection_strategy << endl
-       << "- packet_injection_rate = " << GlobalParams::packet_injection_rate
+       << "- flit_injection_rate = "
+       << GlobalParams::packet_injection_rate * GlobalParams::packet_size
        << endl
        << "- probability_of_retransmission = "
        << GlobalParams::probability_of_retransmission << endl
@@ -908,8 +911,9 @@ void checkConfiguration() {
     exit(1);
   }
 
-  if (is_pir_invalid(GlobalParams::packet_injection_rate)) {
-    cerr << "Error: packet injection rate must be in the interval ]0,1]"
+  if (is_pir_invalid(GlobalParams::packet_injection_rate *
+                     GlobalParams::packet_size)) {
+    cerr << "Error: flit injection rate must be in the interval ]0,1]"
          << endl;
     exit(1);
   }
@@ -1082,9 +1086,11 @@ void parseCmdLine(int arg_num, char *arg_vet[]) {
         GlobalParams::message_size = atoi(arg_vet[++i]);
       } else if (!strcmp(arg_vet[i], "-flit_dump")) {
         GlobalParams::flit_dump = atoi(arg_vet[++i]);
-      } else if (!strcmp(arg_vet[i], "-pir")) {
+      } else if (!strcmp(arg_vet[i], "-ir")) {
 
-        GlobalParams::packet_injection_rate = atof(arg_vet[++i]);
+        double flit_injection_rate = atof(arg_vet[++i]);
+        GlobalParams::packet_injection_rate =
+            flit_injection_rate / GlobalParams::packet_size;
         char *distribution = arg_vet[i + 1 < arg_num ? ++i : i];
 
         if (!strcmp(distribution, "poisson"))
@@ -1104,7 +1110,7 @@ void parseCmdLine(int arg_num, char *arg_vet[]) {
         } else if (!strcmp(distribution, "custom"))
           GlobalParams::probability_of_retransmission = atof(arg_vet[++i]);
         else
-          assert("Invalid pir format" && false);
+          assert("Invalid ir format" && false);
       } else if (!strcmp(arg_vet[i], "-traffic")) {
         char *traffic = arg_vet[++i];
         if (!strcmp(traffic, "random"))
