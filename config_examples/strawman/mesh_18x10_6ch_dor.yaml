@@ -14,7 +14,8 @@
 # topology: MESH
 # X and Y mesh sizes
 mesh_dim_x: 18
-mesh_dim_y: 18
+mesh_dim_y: 10
+n_links: 6
 # number of flits for each router input buffer
 in_buffer_depth: 2
 # number of flits for each router output buffer
@@ -213,61 +214,23 @@ master_connections:
 - [17, 7]
 - [0 , 8]
 - [17, 8]
-- [0 , 9]
-- [17, 9]
-- [0 , 10]
-- [17, 10]
-- [0 , 11]
-- [17, 11]
-- [0 , 12]
-- [17, 12]
-- [0 , 13]
-- [17, 13]
-- [0 , 14]
-- [17, 14]
-- [0 , 15]
-- [17, 15]
-- [0 , 16]
-- [17, 16]
-- [2 , 17]
-- [3 , 17]
-- [4 , 17]
-- [5 , 17]
-- [6 , 17]
-- [7 , 17]
-- [8 , 17]
-- [9 , 17]
-- [10, 17]
-- [11, 17]
-- [12, 17]
-- [13, 17]
-- [14, 17]
-- [15, 17]
-
-master_slave_rules:
-  - select: { row: 0, x_range: [2, 15] }
-    slave_areas:
-      - { top_left: [1,  1], bot_right: [16,  1] }
-      - { top_left: [1,  3], bot_right: [16,  3] }
-      - { top_left: [1,  5], bot_right: [16,  5] }
-      - { top_left: [1,  7], bot_right: [16,  7] }
-      - { top_left: [1,  9], bot_right: [16,  9] }
-      - { top_left: [1, 11], bot_right: [16, 11] }
-      - { top_left: [1, 13], bot_right: [16, 13] }
-      - { top_left: [1, 15], bot_right: [16, 15] }
-  - select: { row: 17, x_range: [2, 15] }
-    slave_areas:
-      - { top_left: [1,  2], bot_right: [16,  2] }
-      - { top_left: [1,  4], bot_right: [16,  4] }
-      - { top_left: [1,  6], bot_right: [16,  6] }
-      - { top_left: [1,  8], bot_right: [16,  8] }
-      - { top_left: [1, 10], bot_right: [16, 10] }
-      - { top_left: [1, 12], bot_right: [16, 12] }
-      - { top_left: [1, 14], bot_right: [16, 14] }
-      - { top_left: [1, 16], bot_right: [16, 16] }
+- [2 , 9]
+- [3 , 9]
+- [4 , 9]
+- [5 , 9]
+- [6 , 9]
+- [7 , 9]
+- [8 , 9]
+- [9 , 9]
+- [10, 9]
+- [11, 9]
+- [12, 9]
+- [13, 9]
+- [14, 9]
+- [15, 9]
 
 master_ir_factor_rules:
-  - select: { col: 0, y_range: [1, 16] }
+  - select: { col: 0, y_range: [1, 8] }
     ir_factor: 0.5
-  - select: { col: 17, y_range: [1, 16] }
+  - select: { col: 17, y_range: [1, 8] }
     ir_factor: 0.5

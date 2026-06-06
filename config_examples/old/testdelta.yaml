@@ -2,6 +2,7 @@
 # 2 radiohubs are connected to the code node 0 and 7
 
 topology: BUTTERFLY
+n_links: 4
 #
 n_delta_tiles: 8
 # number of flits for each router input buffer

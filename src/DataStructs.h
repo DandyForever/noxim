@@ -40,6 +40,7 @@ struct Packet
   int dst_id;
   int id;
   int local_direction_id;
+  int src_local_direction_id;
   int phys_channel_id;
   int vc_id;
   bool is_head;
@@ -69,6 +70,7 @@ struct Packet
     id = pid;
     vc_id = vc;
     local_direction_id = ldi;
+    src_local_direction_id = ldi;
     phys_channel_id = pci;
     timestamp = ts;
     size = sz;
@@ -87,6 +89,7 @@ struct RouteData
   int src_id;
   int dst_id;
   int local_direction_id;
+  int src_local_direction_id;
   int phys_channel_id;
   int dir_in; // direction from which the packet comes from
   int vc_id;
@@ -110,11 +113,13 @@ struct NoP_data
 
   inline bool operator==(const NoP_data &nop_data) const
   {
-    return (sender_id == nop_data.sender_id &&
-            nop_data.channel_status_neighbor[0] == channel_status_neighbor[0] &&
-            nop_data.channel_status_neighbor[1] == channel_status_neighbor[1] &&
-            nop_data.channel_status_neighbor[2] == channel_status_neighbor[2] &&
-            nop_data.channel_status_neighbor[3] == channel_status_neighbor[3]);
+    if (sender_id != nop_data.sender_id)
+      return false;
+    for (int i = 0; i < DIRECTIONS; i++)
+      if (!(nop_data.channel_status_neighbor[i] ==
+            channel_status_neighbor[i]))
+        return false;
+    return true;
   };
 };
 
@@ -143,6 +148,7 @@ struct Flit
   int src_id;
   int dst_id;
   int local_direction_id;
+  int src_local_direction_id;
   int phys_channel_id;
   int vc_id; // Virtual Channel
   int id;
@@ -168,6 +174,7 @@ struct Flit
             flit.id == id
             // && flit.flit_type == flit_type
             && local_direction_id == flit.local_direction_id &&
+            src_local_direction_id == flit.src_local_direction_id &&
             phys_channel_id == flit.phys_channel_id &&
             is_head == flit.is_head && is_tail == flit.is_tail &&
             flit.vc_id == vc_id && flit.sequence_no == sequence_no &&

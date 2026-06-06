@@ -13,8 +13,9 @@
 #   BUTTERFLY, BASELINE, and OMEGA are Delta Network topologies
 # topology: MESH
 # X and Y mesh sizes
-mesh_dim_x: 18
-mesh_dim_y: 18
+mesh_dim_x: 10
+mesh_dim_y: 6
+n_links: 6
 # number of flits for each router input buffer
 in_buffer_depth: 2
 # number of flits for each router output buffer
@@ -175,7 +176,7 @@ traffic_table_filename: "t.txt"
 
 req_ack_mode: true
 both_phys_req_mode: true
-mem_ports: 1
+mem_ports: 2
 buffer_verbose: false
 traffic_verbose: false
 flit_dump: false
@@ -185,113 +186,69 @@ message_size: 1
 log_file_name: "./results/results.csv"
 
 master_connections:
-- [2 , 0]
-- [3 , 0]
-- [4 , 0]
-- [5 , 0]
-- [6 , 0]
-- [7 , 0]
-- [8 , 0]
-- [9 , 0]
-- [10, 0]
-- [11, 0]
-- [12, 0]
-- [13, 0]
-- [14, 0]
-- [15, 0]
-- [0 , 1]
-- [17, 1]
-- [0 , 2]
-- [17, 2]
-- [0 , 3]
-- [17, 3]
-- [0 , 4]
-- [17, 4]
-- [0 , 5]
-- [17, 5]
-- [0 , 6]
-- [17, 6]
-- [0 , 7]
-- [17, 7]
-- [0 , 8]
-- [17, 8]
-- [0 , 9]
-- [17, 9]
-- [0 , 10]
-- [17, 10]
-- [0 , 11]
-- [17, 11]
-- [0 , 12]
-- [17, 12]
-- [0 , 13]
-- [17, 13]
-- [0 , 14]
-- [17, 14]
-- [0 , 15]
-- [17, 15]
-- [0 , 16]
-- [17, 16]
-- [2 , 17]
-- [3 , 17]
-- [4 , 17]
-- [5 , 17]
-- [6 , 17]
-- [7 , 17]
-- [8 , 17]
-- [9 , 17]
-- [10, 17]
-- [11, 17]
-- [12, 17]
-- [13, 17]
-- [14, 17]
-- [15, 17]
+- [1, 0]
+- [2, 0]
+- [3, 0]
+- [4, 0]
+- [5, 0]
+- [6, 0]
+- [7, 0]
+- [8, 0]
+- [0, 1]
+- [9, 1]
+- [0, 2]
+- [9, 2]
+- [0, 3]
+- [9, 3]
+- [0, 4]
+- [9, 4]
+- [1, 5]
+- [2, 5]
+- [3, 5]
+- [4, 5]
+- [5, 5]
+- [6, 5]
+- [7, 5]
+- [8, 5]
 
 master_slave_rules:
-  - select: { row: 0, x_range: [2, 15] }
+  - select: { row: 0, x_range: [1, 8] }
     slave_areas:
-      - { top_left: [1,  1], bot_right: [16,  1] }
-      - { top_left: [1,  3], bot_right: [16,  3] }
-      - { top_left: [1,  5], bot_right: [16,  5] }
-      - { top_left: [1,  7], bot_right: [16,  7] }
-      - { top_left: [1,  9], bot_right: [16,  9] }
-      - { top_left: [1, 11], bot_right: [16, 11] }
-      - { top_left: [1, 13], bot_right: [16, 13] }
-      - { top_left: [1, 15], bot_right: [16, 15] }
-  - select: { row: 17, x_range: [2, 15] }
+      - { top_left: [1, 1], bot_right: [8, 1] }
+      - { top_left: [1, 2], bot_right: [8, 2] }
+      - { top_left: [1, 3], bot_right: [8, 3] }
+      - { top_left: [1, 4], bot_right: [8, 4] }
+  - select: { row: 5, x_range: [1, 8] }
     slave_areas:
-      - { top_left: [1,  2], bot_right: [16,  2] }
-      - { top_left: [1,  4], bot_right: [16,  4] }
-      - { top_left: [1,  6], bot_right: [16,  6] }
-      - { top_left: [1,  8], bot_right: [16,  8] }
-      - { top_left: [1, 10], bot_right: [16, 10] }
-      - { top_left: [1, 12], bot_right: [16, 12] }
-      - { top_left: [1, 14], bot_right: [16, 14] }
-      - { top_left: [1, 16], bot_right: [16, 16] }
+      - { top_left: [1, 1], bot_right: [8, 1] }
+      - { top_left: [1, 2], bot_right: [8, 2] }
+      - { top_left: [1, 3], bot_right: [8, 3] }
+      - { top_left: [1, 4], bot_right: [8, 4] }
 
 master_ir_factor_rules:
-  - select: { col: 0, y_range: [1, 16] }
+  - select: { col: 0, y_range: [1, 4] }
     ir_factor: 0.5
-  - select: { col: 17, y_range: [1, 16] }
+  - select: { col: 9, y_range: [1, 4] }
     ir_factor: 0.5
 
 master_request_vc_rules:
-  - select: { col: 0, y_range: [1, 16] }
+  - select: { col: 0, y_range: [1, 4] }
     vc: 1
-  - select: { col: 17, y_range: [1, 16] }
+  - select: { col: 9, y_range: [1, 4] }
     vc: 1
 
-  - select: { row: 0, x_range: [2, 15] }
+  - select: { row: 0, x_range: [1, 8] }
     vc: 0
-  - select: { row: 17, x_range: [2, 15] }
+  - select: { row: 5, x_range: [1, 8] }
     vc: 0
 
 master_response_vc_rules:
-  - select: { col: 0, y_range: [1, 16] }
+  - select: { col: 0, y_range: [1, 4] }
     vc: 3
-  - select: { col: 17, y_range: [1, 16] }
+  - select: { col: 9, y_range: [1, 4] }
     vc: 3
 
-  - select: { row: 0, x_range: [2, 15] }
+  - select: { row: 0, x_range: [1, 8] }
     vc: 2
-  - select: { row: 17, x_range: [2, 15] }
+  - select: { row: 5, x_range: [1, 8] }
     vc: 2

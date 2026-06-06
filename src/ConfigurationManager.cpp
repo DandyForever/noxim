@@ -260,6 +260,7 @@ void loadConfiguration() {
     GlobalParams::mesh_dim_x = readParam<int>(config, "mesh_dim_x");
     GlobalParams::mesh_dim_y = readParam<int>(config, "mesh_dim_y");
   }
+  GlobalParams::n_links = readParam<int>(config, "n_links", 4);
   // Delta network params
   if (GlobalParams::topology == TOPOLOGY_BASELINE ||
       GlobalParams::topology == TOPOLOGY_BUTTERFLY ||
@@ -710,6 +711,7 @@ void showHelp(char selfname[]) {
       << endl
       << "\t-dimx N\t\t\tSet the mesh X dimension" << endl
       << "\t-dimy N\t\t\tSet the mesh Y dimension" << endl
+      << "\t-n_links N\t\tSet mesh router links count: 4 or 6" << endl
       << "\t-in_buffer N\t\tSet the depth of router input buffers [flits]"
       << endl
       << "\t-out_buffer N\t\tSet the depth of router output buffers [flits]"
@@ -821,6 +823,7 @@ void showConfig() {
        // << "- trace_filename = " << GlobalParams::trace_filename << endl
        << "- mesh_dim_x = " << GlobalParams::mesh_dim_x << endl
        << "- mesh_dim_y = " << GlobalParams::mesh_dim_y << endl
+       << "- n_links = " << GlobalParams::n_links << endl
        << "- in_buffer_depth = " << GlobalParams::in_buffer_depth << endl
        << "- out_buffer_depth = " << GlobalParams::out_buffer_depth << endl
        << "- n_virtual_channels = " << GlobalParams::n_virtual_channels << endl
@@ -844,6 +847,45 @@ void showConfig() {
 }
 
 void checkConfiguration() {
+  if (GlobalParams::n_links != 4 && GlobalParams::n_links != 6) {
+    cerr << "Error: n_links must be either 4 or 6" << endl;
+    exit(1);
+  }
+
+  if (GlobalParams::n_links == 6 &&
+      GlobalParams::topology != TOPOLOGY_MESH) {
+    cerr << "Error: n_links=6 is supported only for MESH topology" << endl;
+    exit(1);
+  }
+
+  if (GlobalParams::n_links == 6 &&
+      GlobalParams::routing_algorithm != "XY" &&
+      GlobalParams::routing_algorithm != "YX" &&
+      GlobalParams::routing_algorithm != "CUSTOM") {
+    cerr << "Error: n_links=6 supports only XY, YX, or CUSTOM routing"
+         << endl;
+    exit(1);
+  }
+
+  if (GlobalParams::n_links == 6 &&
+      GlobalParams::routing_algorithm == "CUSTOM") {
+    for (RoutingType routing_type : GlobalParams::vc_routing) {
+      if (routing_type != RoutingType::XY && routing_type != RoutingType::YX) {
+        cerr << "Error: CUSTOM with n_links=6 supports only XY/YX "
+                "routing_by_vc entries"
+             << endl;
+        exit(1);
+      }
+    }
+  }
+
+  if (GlobalParams::mem_ports < 1 ||
+      GlobalParams::mem_ports > LOCAL_DIRECTIONS) {
+    cerr << "Error: mem_ports must be in the range [1," << LOCAL_DIRECTIONS
+         << "]" << endl;
+    exit(1);
+  }
+
   if (GlobalParams::topology == TOPOLOGY_MESH) {
     if (GlobalParams::mesh_dim_x <= 1) {
       cerr << "Error: dimx must be greater than 1" << endl;
@@ -1070,6 +1112,8 @@ void parseCmdLine(int arg_num, char *arg_vet[]) {
         GlobalParams::log_file_name = arg_vet[++i];
       } else if (!strcmp(arg_vet[i], "-mem_ports")) {
         GlobalParams::mem_ports = atoi(arg_vet[++i]);
+      } else if (!strcmp(arg_vet[i], "-n_links")) {
+        GlobalParams::n_links = atoi(arg_vet[++i]);
       } else if (!strcmp(arg_vet[i], "-req_ack_mode")) {
         GlobalParams::req_ack_mode = atoi(arg_vet[++i]);
       } else if (!strcmp(arg_vet[i], "-both_phys_req_mode")) {

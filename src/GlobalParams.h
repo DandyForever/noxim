@@ -26,16 +26,20 @@ using namespace std;
 #define POWER_CONFIG_FILENAME "power.yaml"
 
 // Define the directions as numbers
-#define DIRECTIONS 4
+#define DIRECTIONS 6
+#define LOCAL_DIRECTIONS 4
+#define ROUTER_PORTS (DIRECTIONS + LOCAL_DIRECTIONS + 1)
 #define DIRECTION_NORTH 0
 #define DIRECTION_EAST 1
 #define DIRECTION_SOUTH 2
 #define DIRECTION_WEST 3
-#define DIRECTION_LOCAL_NORTH 4
-#define DIRECTION_LOCAL_EAST 5
-#define DIRECTION_LOCAL_SOUTH 6
-#define DIRECTION_LOCAL_WEST 7
-#define DIRECTION_HUB 8
+#define DIRECTION_EAST_EXTRA 4
+#define DIRECTION_WEST_EXTRA 5
+#define DIRECTION_LOCAL_NORTH 6
+#define DIRECTION_LOCAL_EAST 7
+#define DIRECTION_LOCAL_SOUTH 8
+#define DIRECTION_LOCAL_WEST 9
+#define DIRECTION_HUB 10
 #define DIRECTION_HUB_RELAY 5000
 #define DIRECTION_WIRELESS 747
 
@@ -184,6 +188,7 @@ struct GlobalParams {
   static string topology;
   static int mesh_dim_x;
   static int mesh_dim_y;
+  static int n_links;
   static int n_delta_tiles;
   static double r2r_link_length;
   static double r2h_link_length;

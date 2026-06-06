@@ -105,8 +105,8 @@ SC_MODULE(Tile)
   sc_out<NoP_data> NoP_data_out[DIRECTIONS];
   sc_in<NoP_data> NoP_data_in[DIRECTIONS];
 
-  sc_signal<int> free_slots_local[DIRECTIONS];
-  sc_signal<int> free_slots_neighbor_local[DIRECTIONS];
+  sc_signal<int> free_slots_local[LOCAL_DIRECTIONS];
+  sc_signal<int> free_slots_neighbor_local[LOCAL_DIRECTIONS];
   //-------------------------------------------------------------------------
 
   //-------------------------------------------------------------------------
@@ -118,44 +118,44 @@ SC_MODULE(Tile)
   sc_out<NoP_data> NoP_data_out_y[DIRECTIONS];
   sc_in<NoP_data> NoP_data_in_y[DIRECTIONS];
 
-  sc_signal<int> free_slots_local_y[DIRECTIONS];
-  sc_signal<int> free_slots_neighbor_local_y[DIRECTIONS];
+  sc_signal<int> free_slots_local_y[LOCAL_DIRECTIONS];
+  sc_signal<int> free_slots_neighbor_local_y[LOCAL_DIRECTIONS];
   //-------------------------------------------------------------------------
 
   //-------------------------------------------------------------------------
   // X channel
   //-------------------------------------------------------------------------
   // Signals required for Router-PE connection
-  sc_signal<Flit> flit_rx_local[DIRECTIONS];
-  sc_signal<bool> req_rx_local[DIRECTIONS];
-  sc_signal<bool> ack_rx_local[DIRECTIONS];
-  sc_signal<TBufferFullStatus> buffer_full_status_rx_local[DIRECTIONS];
+  sc_signal<Flit> flit_rx_local[LOCAL_DIRECTIONS];
+  sc_signal<bool> req_rx_local[LOCAL_DIRECTIONS];
+  sc_signal<bool> ack_rx_local[LOCAL_DIRECTIONS];
+  sc_signal<TBufferFullStatus> buffer_full_status_rx_local[LOCAL_DIRECTIONS];
 
-  sc_signal<Flit> flit_tx_local[DIRECTIONS];
-  sc_signal<bool> req_tx_local[DIRECTIONS];
-  sc_signal<bool> ack_tx_local[DIRECTIONS];
-  sc_signal<TBufferFullStatus> buffer_full_status_tx_local[DIRECTIONS];
+  sc_signal<Flit> flit_tx_local[LOCAL_DIRECTIONS];
+  sc_signal<bool> req_tx_local[LOCAL_DIRECTIONS];
+  sc_signal<bool> ack_tx_local[LOCAL_DIRECTIONS];
+  sc_signal<TBufferFullStatus> buffer_full_status_tx_local[LOCAL_DIRECTIONS];
   //-------------------------------------------------------------------------
 
   //-------------------------------------------------------------------------
   // Y channel
   //-------------------------------------------------------------------------
   // Signals required for Router-PE connection
-  sc_signal<Flit> flit_ry_local[DIRECTIONS];
-  sc_signal<bool> req_ry_local[DIRECTIONS];
-  sc_signal<bool> ack_ry_local[DIRECTIONS];
-  sc_signal<TBufferFullStatus> buffer_full_status_ry_local[DIRECTIONS];
+  sc_signal<Flit> flit_ry_local[LOCAL_DIRECTIONS];
+  sc_signal<bool> req_ry_local[LOCAL_DIRECTIONS];
+  sc_signal<bool> ack_ry_local[LOCAL_DIRECTIONS];
+  sc_signal<TBufferFullStatus> buffer_full_status_ry_local[LOCAL_DIRECTIONS];
 
-  sc_signal<Flit> flit_ty_local[DIRECTIONS];
-  sc_signal<bool> req_ty_local[DIRECTIONS];
-  sc_signal<bool> ack_ty_local[DIRECTIONS];
-  sc_signal<TBufferFullStatus> buffer_full_status_ty_local[DIRECTIONS];
+  sc_signal<Flit> flit_ty_local[LOCAL_DIRECTIONS];
+  sc_signal<bool> req_ty_local[LOCAL_DIRECTIONS];
+  sc_signal<bool> ack_ty_local[LOCAL_DIRECTIONS];
+  sc_signal<TBufferFullStatus> buffer_full_status_ty_local[LOCAL_DIRECTIONS];
   //-------------------------------------------------------------------------
 
   // Instances
   Router *r;                         // Router instance
   Router *r_req;                     // Router for requests
-  ProcessingElement *pe[DIRECTIONS]; // Processing Element instance
+  ProcessingElement *pe[LOCAL_DIRECTIONS]; // Processing Element instance
 
   // Constructor
 
@@ -193,20 +193,21 @@ SC_MODULE(Tile)
     }
 
     // local
-    for (int i = 0; i < DIRECTIONS; i++)
+    for (int i = 0; i < LOCAL_DIRECTIONS; i++)
     {
-      r->flit_rx[DIRECTIONS + i](flit_tx_local[i]);
-      r->req_rx[DIRECTIONS + i](req_tx_local[i]);
-      r->ack_rx[DIRECTIONS + i](ack_tx_local[i]);
-      r->buffer_full_status_rx[DIRECTIONS + i](buffer_full_status_tx_local[i]);
+      int local_direction = pe_id_to_local_direction(i);
+      r->flit_rx[local_direction](flit_tx_local[i]);
+      r->req_rx[local_direction](req_tx_local[i]);
+      r->ack_rx[local_direction](ack_tx_local[i]);
+      r->buffer_full_status_rx[local_direction](buffer_full_status_tx_local[i]);
 
-      r->flit_tx[DIRECTIONS + i](flit_rx_local[i]);
-      r->req_tx[DIRECTIONS + i](req_rx_local[i]);
-      r->ack_tx[DIRECTIONS + i](ack_rx_local[i]);
-      r->buffer_full_status_tx[DIRECTIONS + i](buffer_full_status_rx_local[i]);
+      r->flit_tx[local_direction](flit_rx_local[i]);
+      r->req_tx[local_direction](req_rx_local[i]);
+      r->ack_tx[local_direction](ack_rx_local[i]);
+      r->buffer_full_status_tx[local_direction](buffer_full_status_rx_local[i]);
 
-      r->free_slots[DIRECTIONS + i](free_slots_local[i]);
-      r->free_slots_neighbor[DIRECTIONS + i](free_slots_neighbor_local[i]);
+      r->free_slots[local_direction](free_slots_local[i]);
+      r->free_slots_neighbor[local_direction](free_slots_neighbor_local[i]);
     }
 
     // hub related
@@ -251,22 +252,23 @@ SC_MODULE(Tile)
     }
 
     // local
-    for (int i = 0; i < DIRECTIONS; i++)
+    for (int i = 0; i < LOCAL_DIRECTIONS; i++)
     {
-      r_req->flit_rx[DIRECTIONS + i](flit_ty_local[i]);
-      r_req->req_rx[DIRECTIONS + i](req_ty_local[i]);
-      r_req->ack_rx[DIRECTIONS + i](ack_ty_local[i]);
-      r_req->buffer_full_status_rx[DIRECTIONS + i](
+      int local_direction = pe_id_to_local_direction(i);
+      r_req->flit_rx[local_direction](flit_ty_local[i]);
+      r_req->req_rx[local_direction](req_ty_local[i]);
+      r_req->ack_rx[local_direction](ack_ty_local[i]);
+      r_req->buffer_full_status_rx[local_direction](
           buffer_full_status_ty_local[i]);
 
-      r_req->flit_tx[DIRECTIONS + i](flit_ry_local[i]);
-      r_req->req_tx[DIRECTIONS + i](req_ry_local[i]);
-      r_req->ack_tx[DIRECTIONS + i](ack_ry_local[i]);
-      r_req->buffer_full_status_tx[DIRECTIONS + i](
+      r_req->flit_tx[local_direction](flit_ry_local[i]);
+      r_req->req_tx[local_direction](req_ry_local[i]);
+      r_req->ack_tx[local_direction](ack_ry_local[i]);
+      r_req->buffer_full_status_tx[local_direction](
           buffer_full_status_ry_local[i]);
 
-      r_req->free_slots[DIRECTIONS + i](free_slots_local_y[i]);
-      r_req->free_slots_neighbor[DIRECTIONS + i](
+      r_req->free_slots[local_direction](free_slots_local_y[i]);
+      r_req->free_slots_neighbor[local_direction](
           free_slots_neighbor_local_y[i]);
     }
 
@@ -290,11 +292,11 @@ SC_MODULE(Tile)
     pe[DIRECTION_EAST] = new ProcessingElement("ProcessingElementEast");
     pe[DIRECTION_SOUTH] = new ProcessingElement("ProcessingElementSouth");
     pe[DIRECTION_WEST] = new ProcessingElement("ProcessingElementWest");
-    for (int i = 0; i < DIRECTIONS; i++)
+    for (int i = 0; i < LOCAL_DIRECTIONS; i++)
     {
       pe[i]->local_id = local_id;
       pe[i]->is_memory_pe = is_memory_node(local_id);
-      pe[i]->is_master = is_master_node(local_id) && (i == 0);
+      pe[i]->is_master = master_pe_enabled(local_id, i);
       pe[i]->clock(clock);
       pe[i]->reset(reset);
 

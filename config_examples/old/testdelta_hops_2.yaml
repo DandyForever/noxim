@@ -10,6 +10,7 @@
 # 4/5->2/3: wired until sw 10, then wireless hub0-hub1 with relay 17 to reach 2/3
 
 topology: BUTTERFLY
+n_links: 4
 #
 n_delta_tiles: 8
 # number of flits for each router input buffer

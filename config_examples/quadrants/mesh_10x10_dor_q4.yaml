@@ -15,6 +15,7 @@
 # X and Y mesh sizes
 mesh_dim_x: 10
 mesh_dim_y: 10
+n_links: 4
 # number of flits for each router input buffer
 in_buffer_depth: 2
 # number of flits for each router output buffer

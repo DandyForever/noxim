@@ -19,42 +19,50 @@ Routing_CUSTOM *Routing_CUSTOM::getInstance() {
 }
 
 vector<int> Routing_CUSTOM::route(Router *router, const RouteData &routeData) {
-  if (get_routing_for_vc(routeData.vc_id) == RoutingType::XY) {
+  RoutingType routing_type = get_routing_for_vc(routeData.vc_id);
+  if (GlobalParams::n_links == 6 && routing_type != RoutingType::XY &&
+      routing_type != RoutingType::YX) {
+    cerr << "CUSTOM with n_links=6 supports only XY/YX per-VC routing"
+         << endl;
+    exit(1);
+  }
+
+  if (routing_type == RoutingType::XY) {
     if (!xy) {
       xy = RoutingAlgorithms::get("XY");
 
       assert(xy);
     }
     return xy->route(router, routeData);
-  } else if (get_routing_for_vc(routeData.vc_id) == RoutingType::YX) {
+  } else if (routing_type == RoutingType::YX) {
     if (!yx) {
       yx = RoutingAlgorithms::get("YX");
 
       assert(yx);
     }
     return yx->route(router, routeData);
-  } else if (get_routing_for_vc(routeData.vc_id) == RoutingType::NF) {
+  } else if (routing_type == RoutingType::NF) {
     if (!nf) {
       nf = RoutingAlgorithms::get("NEGATIVE_FIRST");
 
       assert(nf);
     }
     return nf->route(router, routeData);
-  } else if (get_routing_for_vc(routeData.vc_id) == RoutingType::NL) {
+  } else if (routing_type == RoutingType::NL) {
     if (!nl) {
       nl = RoutingAlgorithms::get("NORTH_LAST");
 
       assert(nl);
     }
     return nl->route(router, routeData);
-  } else if (get_routing_for_vc(routeData.vc_id) == RoutingType::OE) {
+  } else if (routing_type == RoutingType::OE) {
     if (!oe) {
       oe = RoutingAlgorithms::get("ODD_EVEN");
 
       assert(oe);
     }
     return oe->route(router, routeData);
-  } else if (get_routing_for_vc(routeData.vc_id) == RoutingType::WF) {
+  } else if (routing_type == RoutingType::WF) {
     if (!wf) {
       wf = RoutingAlgorithms::get("WEST_FIRST");
 

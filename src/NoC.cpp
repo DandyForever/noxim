@@ -194,9 +194,9 @@ void NoC::buildButterfly() {
           "default");
 
       // Tell to the PE its coordinates
-      for (int pe_id = 0; pe_id < DIRECTIONS; pe_id++) {
+      for (int pe_id = 0; pe_id < LOCAL_DIRECTIONS; pe_id++) {
         t[i][j]->pe[pe_id]->local_id = tile_id;
-        t[i][j]->pe[pe_id]->local_direction_id = DIRECTIONS + pe_id;
+        t[i][j]->pe[pe_id]->local_direction_id = pe_id_to_local_direction(pe_id);
         t[i][j]->pe[pe_id]->traffic_table =
             &gttable; // Needed to choose destination
         t[i][j]->pe[pe_id]->never_transmit = true;
@@ -521,9 +521,9 @@ t[0][2]->flit_tx[0](flit[0][2].north);
         "default");
 
     // Tell to the PE its coordinates
-    for (int pe_id = 0; pe_id < DIRECTIONS; pe_id++) {
+    for (int pe_id = 0; pe_id < LOCAL_DIRECTIONS; pe_id++) {
       core[i]->pe[pe_id]->local_id = core_id;
-      core[i]->pe[pe_id]->local_direction_id = DIRECTIONS + pe_id;
+      core[i]->pe[pe_id]->local_direction_id = pe_id_to_local_direction(pe_id);
       // Check for traffic table availability
       if (GlobalParams::traffic_distribution == TRAFFIC_TABLE_BASED) {
         core[i]->pe[pe_id]->traffic_table =
@@ -831,9 +831,9 @@ void NoC::buildBaseline() {
           "default");
 
       // Tell to the PE its coordinates
-      for (int pe_id = 0; pe_id < DIRECTIONS; pe_id++) {
+      for (int pe_id = 0; pe_id < LOCAL_DIRECTIONS; pe_id++) {
         t[i][j]->pe[pe_id]->local_id = tile_id;
-        t[i][j]->pe[pe_id]->local_direction_id = DIRECTIONS + pe_id;
+        t[i][j]->pe[pe_id]->local_direction_id = pe_id_to_local_direction(pe_id);
         t[i][j]->pe[pe_id]->traffic_table =
             &gttable; // Needed to choose destination
         t[i][j]->pe[pe_id]->never_transmit = true;
@@ -1275,9 +1275,9 @@ void NoC::buildBaseline() {
         "default");
 
     // Tell to the PE its coordinates
-    for (int pe_id = 0; pe_id < DIRECTIONS; pe_id++) {
+    for (int pe_id = 0; pe_id < LOCAL_DIRECTIONS; pe_id++) {
       core[i]->pe[pe_id]->local_id = core_id;
-      core[i]->pe[pe_id]->local_direction_id = DIRECTIONS + pe_id;
+      core[i]->pe[pe_id]->local_direction_id = pe_id_to_local_direction(pe_id);
       // Check for traffic table availability
       if (GlobalParams::traffic_distribution == TRAFFIC_TABLE_BASED) {
         core[i]->pe[pe_id]->traffic_table =
@@ -1560,9 +1560,9 @@ void NoC::buildOmega() {
           "default");
 
       // Tell to the PE its coordinates
-      for (int pe_id = 0; pe_id < DIRECTIONS; pe_id++) {
+      for (int pe_id = 0; pe_id < LOCAL_DIRECTIONS; pe_id++) {
         t[i][j]->pe[pe_id]->local_id = tile_id;
-        t[i][j]->pe[pe_id]->local_direction_id = DIRECTIONS + pe_id;
+        t[i][j]->pe[pe_id]->local_direction_id = pe_id_to_local_direction(pe_id);
         t[i][j]->pe[pe_id]->traffic_table =
             &gttable; // Needed to choose destination
         t[i][j]->pe[pe_id]->never_transmit = true;
@@ -1910,9 +1910,9 @@ t[1][5]->flit_tx[0](flit[2][2].south);
         "default");
 
     // Tell to the PE its coordinates
-    for (int pe_id = 0; pe_id < DIRECTIONS; pe_id++) {
+    for (int pe_id = 0; pe_id < LOCAL_DIRECTIONS; pe_id++) {
       core[i]->pe[pe_id]->local_id = core_id;
-      core[i]->pe[pe_id]->local_direction_id = DIRECTIONS + pe_id;
+      core[i]->pe[pe_id]->local_direction_id = pe_id_to_local_direction(pe_id);
       // Check for traffic table availability
       if (GlobalParams::traffic_distribution == TRAFFIC_TABLE_BASED) {
         core[i]->pe[pe_id]->traffic_table =
@@ -2215,9 +2215,9 @@ void NoC::buildMesh() {
           "default");
 
       // Tell to the PE its coordinates
-      for (int pe_id = 0; pe_id < DIRECTIONS; pe_id++) {
+      for (int pe_id = 0; pe_id < LOCAL_DIRECTIONS; pe_id++) {
         t[i][j]->pe[pe_id]->local_id = j * GlobalParams::mesh_dim_x + i;
-        t[i][j]->pe[pe_id]->local_direction_id = DIRECTIONS + pe_id;
+        t[i][j]->pe[pe_id]->local_direction_id = pe_id_to_local_direction(pe_id);
         // Check for traffic table availability
         if (GlobalParams::traffic_distribution == TRAFFIC_TABLE_BASED) {
           t[i][j]->pe[pe_id]->traffic_table =
@@ -2248,6 +2248,12 @@ void NoC::buildMesh() {
       t[i][j]->buffer_full_status_rx[DIRECTION_EAST](
           buffer_full_status[i + 1][j].east);
 
+      t[i][j]->req_rx[DIRECTION_EAST_EXTRA](req[i + 1][j].west_extra);
+      t[i][j]->flit_rx[DIRECTION_EAST_EXTRA](flit[i + 1][j].west_extra);
+      t[i][j]->ack_rx[DIRECTION_EAST_EXTRA](ack[i + 1][j].east_extra);
+      t[i][j]->buffer_full_status_rx[DIRECTION_EAST_EXTRA](
+          buffer_full_status[i + 1][j].east_extra);
+
       t[i][j]->req_rx[DIRECTION_SOUTH](req[i][j + 1].north);
       t[i][j]->flit_rx[DIRECTION_SOUTH](flit[i][j + 1].north);
       t[i][j]->ack_rx[DIRECTION_SOUTH](ack[i][j + 1].south);
@@ -2259,6 +2265,12 @@ void NoC::buildMesh() {
       t[i][j]->ack_rx[DIRECTION_WEST](ack[i][j].west);
       t[i][j]->buffer_full_status_rx[DIRECTION_WEST](
           buffer_full_status[i][j].west);
+
+      t[i][j]->req_rx[DIRECTION_WEST_EXTRA](req[i][j].east_extra);
+      t[i][j]->flit_rx[DIRECTION_WEST_EXTRA](flit[i][j].east_extra);
+      t[i][j]->ack_rx[DIRECTION_WEST_EXTRA](ack[i][j].west_extra);
+      t[i][j]->buffer_full_status_rx[DIRECTION_WEST_EXTRA](
+          buffer_full_status[i][j].west_extra);
 
       // Map Tx signals
       t[i][j]->req_tx[DIRECTION_NORTH](req[i][j].north);
@@ -2273,6 +2285,12 @@ void NoC::buildMesh() {
       t[i][j]->buffer_full_status_tx[DIRECTION_EAST](
           buffer_full_status[i + 1][j].west);
 
+      t[i][j]->req_tx[DIRECTION_EAST_EXTRA](req[i + 1][j].east_extra);
+      t[i][j]->flit_tx[DIRECTION_EAST_EXTRA](flit[i + 1][j].east_extra);
+      t[i][j]->ack_tx[DIRECTION_EAST_EXTRA](ack[i + 1][j].west_extra);
+      t[i][j]->buffer_full_status_tx[DIRECTION_EAST_EXTRA](
+          buffer_full_status[i + 1][j].west_extra);
+
       t[i][j]->req_tx[DIRECTION_SOUTH](req[i][j + 1].south);
       t[i][j]->flit_tx[DIRECTION_SOUTH](flit[i][j + 1].south);
       t[i][j]->ack_tx[DIRECTION_SOUTH](ack[i][j + 1].north);
@@ -2284,6 +2302,12 @@ void NoC::buildMesh() {
       t[i][j]->ack_tx[DIRECTION_WEST](ack[i][j].east);
       t[i][j]->buffer_full_status_tx[DIRECTION_WEST](
           buffer_full_status[i][j].east);
+
+      t[i][j]->req_tx[DIRECTION_WEST_EXTRA](req[i][j].west_extra);
+      t[i][j]->flit_tx[DIRECTION_WEST_EXTRA](flit[i][j].west_extra);
+      t[i][j]->ack_tx[DIRECTION_WEST_EXTRA](ack[i][j].east_extra);
+      t[i][j]->buffer_full_status_tx[DIRECTION_WEST_EXTRA](
+          buffer_full_status[i][j].east_extra);
       //-------------------------------------------------------------------------
 
       //-------------------------------------------------------------------------
@@ -2302,6 +2326,12 @@ void NoC::buildMesh() {
       t[i][j]->buffer_full_status_ry[DIRECTION_EAST](
           buffer_full_status_y[i + 1][j].east);
 
+      t[i][j]->req_ry[DIRECTION_EAST_EXTRA](req_y[i + 1][j].west_extra);
+      t[i][j]->flit_ry[DIRECTION_EAST_EXTRA](flit_y[i + 1][j].west_extra);
+      t[i][j]->ack_ry[DIRECTION_EAST_EXTRA](ack_y[i + 1][j].east_extra);
+      t[i][j]->buffer_full_status_ry[DIRECTION_EAST_EXTRA](
+          buffer_full_status_y[i + 1][j].east_extra);
+
       t[i][j]->req_ry[DIRECTION_SOUTH](req_y[i][j + 1].north);
       t[i][j]->flit_ry[DIRECTION_SOUTH](flit_y[i][j + 1].north);
       t[i][j]->ack_ry[DIRECTION_SOUTH](ack_y[i][j + 1].south);
@@ -2313,6 +2343,12 @@ void NoC::buildMesh() {
       t[i][j]->ack_ry[DIRECTION_WEST](ack_y[i][j].west);
       t[i][j]->buffer_full_status_ry[DIRECTION_WEST](
           buffer_full_status_y[i][j].west);
+
+      t[i][j]->req_ry[DIRECTION_WEST_EXTRA](req_y[i][j].east_extra);
+      t[i][j]->flit_ry[DIRECTION_WEST_EXTRA](flit_y[i][j].east_extra);
+      t[i][j]->ack_ry[DIRECTION_WEST_EXTRA](ack_y[i][j].west_extra);
+      t[i][j]->buffer_full_status_ry[DIRECTION_WEST_EXTRA](
+          buffer_full_status_y[i][j].west_extra);
 
       // Map Ty signals
       t[i][j]->req_ty[DIRECTION_NORTH](req_y[i][j].north);
@@ -2327,6 +2363,12 @@ void NoC::buildMesh() {
       t[i][j]->buffer_full_status_ty[DIRECTION_EAST](
           buffer_full_status_y[i + 1][j].west);
 
+      t[i][j]->req_ty[DIRECTION_EAST_EXTRA](req_y[i + 1][j].east_extra);
+      t[i][j]->flit_ty[DIRECTION_EAST_EXTRA](flit_y[i + 1][j].east_extra);
+      t[i][j]->ack_ty[DIRECTION_EAST_EXTRA](ack_y[i + 1][j].west_extra);
+      t[i][j]->buffer_full_status_ty[DIRECTION_EAST_EXTRA](
+          buffer_full_status_y[i + 1][j].west_extra);
+
       t[i][j]->req_ty[DIRECTION_SOUTH](req_y[i][j + 1].south);
       t[i][j]->flit_ty[DIRECTION_SOUTH](flit_y[i][j + 1].south);
       t[i][j]->ack_ty[DIRECTION_SOUTH](ack_y[i][j + 1].north);
@@ -2338,6 +2380,12 @@ void NoC::buildMesh() {
       t[i][j]->ack_ty[DIRECTION_WEST](ack_y[i][j].east);
       t[i][j]->buffer_full_status_ty[DIRECTION_WEST](
           buffer_full_status_y[i][j].east);
+
+      t[i][j]->req_ty[DIRECTION_WEST_EXTRA](req_y[i][j].west_extra);
+      t[i][j]->flit_ty[DIRECTION_WEST_EXTRA](flit_y[i][j].west_extra);
+      t[i][j]->ack_ty[DIRECTION_WEST_EXTRA](ack_y[i][j].east_extra);
+      t[i][j]->buffer_full_status_ty[DIRECTION_WEST_EXTRA](
+          buffer_full_status_y[i][j].east_extra);
       //-------------------------------------------------------------------------
 
       //-------------------------------------------------------------------------
@@ -2404,24 +2452,38 @@ void NoC::buildMesh() {
       // Map buffer level signals (analogy with req_tx/rx port mapping)
       t[i][j]->free_slots[DIRECTION_NORTH](free_slots[i][j].north);
       t[i][j]->free_slots[DIRECTION_EAST](free_slots[i + 1][j].east);
+      t[i][j]->free_slots[DIRECTION_EAST_EXTRA](
+          free_slots[i + 1][j].east_extra);
       t[i][j]->free_slots[DIRECTION_SOUTH](free_slots[i][j + 1].south);
       t[i][j]->free_slots[DIRECTION_WEST](free_slots[i][j].west);
+      t[i][j]->free_slots[DIRECTION_WEST_EXTRA](free_slots[i][j].west_extra);
 
       t[i][j]->free_slots_neighbor[DIRECTION_NORTH](free_slots[i][j].south);
       t[i][j]->free_slots_neighbor[DIRECTION_EAST](free_slots[i + 1][j].west);
+      t[i][j]->free_slots_neighbor[DIRECTION_EAST_EXTRA](
+          free_slots[i + 1][j].west_extra);
       t[i][j]->free_slots_neighbor[DIRECTION_SOUTH](free_slots[i][j + 1].north);
       t[i][j]->free_slots_neighbor[DIRECTION_WEST](free_slots[i][j].east);
+      t[i][j]->free_slots_neighbor[DIRECTION_WEST_EXTRA](
+          free_slots[i][j].east_extra);
 
       // NoP
       t[i][j]->NoP_data_out[DIRECTION_NORTH](nop_data[i][j].north);
       t[i][j]->NoP_data_out[DIRECTION_EAST](nop_data[i + 1][j].east);
+      t[i][j]->NoP_data_out[DIRECTION_EAST_EXTRA](
+          nop_data[i + 1][j].east_extra);
       t[i][j]->NoP_data_out[DIRECTION_SOUTH](nop_data[i][j + 1].south);
       t[i][j]->NoP_data_out[DIRECTION_WEST](nop_data[i][j].west);
+      t[i][j]->NoP_data_out[DIRECTION_WEST_EXTRA](
+          nop_data[i][j].west_extra);
 
       t[i][j]->NoP_data_in[DIRECTION_NORTH](nop_data[i][j].south);
       t[i][j]->NoP_data_in[DIRECTION_EAST](nop_data[i + 1][j].west);
+      t[i][j]->NoP_data_in[DIRECTION_EAST_EXTRA](
+          nop_data[i + 1][j].west_extra);
       t[i][j]->NoP_data_in[DIRECTION_SOUTH](nop_data[i][j + 1].north);
       t[i][j]->NoP_data_in[DIRECTION_WEST](nop_data[i][j].east);
+      t[i][j]->NoP_data_in[DIRECTION_WEST_EXTRA](nop_data[i][j].east_extra);
       //-------------------------------------------------------------------------
 
       //-------------------------------------------------------------------------
@@ -2430,26 +2492,42 @@ void NoC::buildMesh() {
       // Map buffer level signals (analogy with req_tx/rx port mapping)
       t[i][j]->free_slots_y[DIRECTION_NORTH](free_slots_y[i][j].north);
       t[i][j]->free_slots_y[DIRECTION_EAST](free_slots_y[i + 1][j].east);
+      t[i][j]->free_slots_y[DIRECTION_EAST_EXTRA](
+          free_slots_y[i + 1][j].east_extra);
       t[i][j]->free_slots_y[DIRECTION_SOUTH](free_slots_y[i][j + 1].south);
       t[i][j]->free_slots_y[DIRECTION_WEST](free_slots_y[i][j].west);
+      t[i][j]->free_slots_y[DIRECTION_WEST_EXTRA](
+          free_slots_y[i][j].west_extra);
 
       t[i][j]->free_slots_neighbor_y[DIRECTION_NORTH](free_slots_y[i][j].south);
       t[i][j]->free_slots_neighbor_y[DIRECTION_EAST](
           free_slots_y[i + 1][j].west);
+      t[i][j]->free_slots_neighbor_y[DIRECTION_EAST_EXTRA](
+          free_slots_y[i + 1][j].west_extra);
       t[i][j]->free_slots_neighbor_y[DIRECTION_SOUTH](
           free_slots_y[i][j + 1].north);
       t[i][j]->free_slots_neighbor_y[DIRECTION_WEST](free_slots_y[i][j].east);
+      t[i][j]->free_slots_neighbor_y[DIRECTION_WEST_EXTRA](
+          free_slots_y[i][j].east_extra);
 
       // NoP
       t[i][j]->NoP_data_out_y[DIRECTION_NORTH](nop_data_y[i][j].north);
       t[i][j]->NoP_data_out_y[DIRECTION_EAST](nop_data_y[i + 1][j].east);
+      t[i][j]->NoP_data_out_y[DIRECTION_EAST_EXTRA](
+          nop_data_y[i + 1][j].east_extra);
       t[i][j]->NoP_data_out_y[DIRECTION_SOUTH](nop_data_y[i][j + 1].south);
       t[i][j]->NoP_data_out_y[DIRECTION_WEST](nop_data_y[i][j].west);
+      t[i][j]->NoP_data_out_y[DIRECTION_WEST_EXTRA](
+          nop_data_y[i][j].west_extra);
 
       t[i][j]->NoP_data_in_y[DIRECTION_NORTH](nop_data_y[i][j].south);
       t[i][j]->NoP_data_in_y[DIRECTION_EAST](nop_data_y[i + 1][j].west);
+      t[i][j]->NoP_data_in_y[DIRECTION_EAST_EXTRA](
+          nop_data_y[i + 1][j].west_extra);
       t[i][j]->NoP_data_in_y[DIRECTION_SOUTH](nop_data_y[i][j + 1].north);
       t[i][j]->NoP_data_in_y[DIRECTION_WEST](nop_data_y[i][j].east);
+      t[i][j]->NoP_data_in_y[DIRECTION_WEST_EXTRA](
+          nop_data_y[i][j].east_extra);
       //-------------------------------------------------------------------------
     }
   }
@@ -2503,30 +2581,46 @@ void NoC::buildMesh() {
     // X channel
     //-------------------------------------------------------------------------
     req[0][j].east = 0;
+    req[0][j].east_extra = 0;
     ack[0][j].west = 0;
+    ack[0][j].west_extra = 0;
     req[GlobalParams::mesh_dim_x][j].west = 0;
+    req[GlobalParams::mesh_dim_x][j].west_extra = 0;
     ack[GlobalParams::mesh_dim_x][j].east = 0;
+    ack[GlobalParams::mesh_dim_x][j].east_extra = 0;
 
     free_slots[0][j].east.write(NOT_VALID);
+    free_slots[0][j].east_extra.write(NOT_VALID);
     free_slots[GlobalParams::mesh_dim_x][j].west.write(NOT_VALID);
+    free_slots[GlobalParams::mesh_dim_x][j].west_extra.write(NOT_VALID);
 
     nop_data[0][j].east.write(tmp_NoP);
+    nop_data[0][j].east_extra.write(tmp_NoP);
     nop_data[GlobalParams::mesh_dim_x][j].west.write(tmp_NoP);
+    nop_data[GlobalParams::mesh_dim_x][j].west_extra.write(tmp_NoP);
     //-------------------------------------------------------------------------
 
     //-------------------------------------------------------------------------
     // Y channel
     //-------------------------------------------------------------------------
     req_y[0][j].east = 0;
+    req_y[0][j].east_extra = 0;
     ack_y[0][j].west = 0;
+    ack_y[0][j].west_extra = 0;
     req_y[GlobalParams::mesh_dim_x][j].west = 0;
+    req_y[GlobalParams::mesh_dim_x][j].west_extra = 0;
     ack_y[GlobalParams::mesh_dim_x][j].east = 0;
+    ack_y[GlobalParams::mesh_dim_x][j].east_extra = 0;
 
     free_slots_y[0][j].east.write(NOT_VALID);
+    free_slots_y[0][j].east_extra.write(NOT_VALID);
     free_slots_y[GlobalParams::mesh_dim_x][j].west.write(NOT_VALID);
+    free_slots_y[GlobalParams::mesh_dim_x][j].west_extra.write(NOT_VALID);
 
     nop_data_y[0][j].east.write(tmp_NoP);
+    nop_data_y[0][j].east_extra.write(tmp_NoP);
     nop_data_y[GlobalParams::mesh_dim_x][j].west.write(tmp_NoP);
+    nop_data_y[GlobalParams::mesh_dim_x][j].west_extra.write(tmp_NoP);
     //-------------------------------------------------------------------------
   }
 }

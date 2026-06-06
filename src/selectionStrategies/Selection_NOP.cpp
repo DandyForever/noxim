@@ -29,6 +29,10 @@ int Selection_NOP::apply(Router *router, const vector<int> &directions,
     tmp_route_data.current_id = candidate_id;
     tmp_route_data.src_id = route_data.src_id;
     tmp_route_data.dst_id = route_data.dst_id;
+    tmp_route_data.local_direction_id = route_data.local_direction_id;
+    tmp_route_data.src_local_direction_id = route_data.src_local_direction_id;
+    tmp_route_data.phys_channel_id = route_data.phys_channel_id;
+    tmp_route_data.vc_id = route_data.vc_id;
     tmp_route_data.dir_in = router->reflexDirection(directions[i]);
 
     vector<int> next_candidate_channels =
@@ -67,7 +71,11 @@ int Selection_NOP::apply(Router *router, const vector<int> &directions,
 
 void Selection_NOP::perCycleUpdate(Router *router) {
   // update current input buffers level to neighbors
-  for (int i = 0; i < DIRECTIONS + 1; i++)
+  for (int i = 0; i < DIRECTIONS; i++)
+    if (is_active_network_direction(i))
+      router->free_slots[i].write(
+          router->buffer[i][DEFAULT_VC].getCurrentFreeSlots());
+  for (int i = DIRECTION_LOCAL_NORTH; i <= DIRECTION_LOCAL_WEST; i++)
     router->free_slots[i].write(
         router->buffer[i][DEFAULT_VC].getCurrentFreeSlots());
 
@@ -75,5 +83,6 @@ void Selection_NOP::perCycleUpdate(Router *router) {
   NoP_data current_NoP_data = router->getCurrentNoPData();
 
   for (int i = 0; i < DIRECTIONS; i++)
-    router->NoP_data_out[i].write(current_NoP_data);
+    if (is_active_network_direction(i))
+      router->NoP_data_out[i].write(current_NoP_data);
 }

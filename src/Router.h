@@ -37,23 +37,23 @@ SC_MODULE(Router) {
   sc_in_clk clock;   // The input clock for the router
   sc_in<bool> reset; // The reset signal for the router
 
-  // number of ports: 4 mesh directions + 4xlocal + wireless
-  sc_in<Flit> flit_rx[2 * DIRECTIONS + 1]; // The input channels
-  sc_in<bool> req_rx[2 * DIRECTIONS +
-                     1]; // The requests associated with the input channels
-  sc_out<bool> ack_rx[2 * DIRECTIONS + 1]; // The outgoing ack signals
+  // number of ports: 6 mesh directions + 4xlocal + wireless
+  sc_in<Flit> flit_rx[ROUTER_PORTS]; // The input channels
+  sc_in<bool> req_rx[ROUTER_PORTS]; // The requests associated with the input
+                                    // channels
+  sc_out<bool> ack_rx[ROUTER_PORTS]; // The outgoing ack signals
                                            // associated with the input channels
-  sc_out<TBufferFullStatus> buffer_full_status_rx[2 * DIRECTIONS + 1];
+  sc_out<TBufferFullStatus> buffer_full_status_rx[ROUTER_PORTS];
 
-  sc_out<Flit> flit_tx[2 * DIRECTIONS + 1]; // The output channels
-  sc_out<bool> req_tx[2 * DIRECTIONS +
-                      1]; // The requests associated with the output channels
-  sc_in<bool> ack_tx[2 * DIRECTIONS + 1]; // The outgoing ack signals associated
-                                          // with the output channels
-  sc_in<TBufferFullStatus> buffer_full_status_tx[2 * DIRECTIONS + 1];
+  sc_out<Flit> flit_tx[ROUTER_PORTS]; // The output channels
+  sc_out<bool> req_tx[ROUTER_PORTS]; // The requests associated with the output
+                                     // channels
+  sc_in<bool> ack_tx[ROUTER_PORTS];  // The outgoing ack signals associated
+                                     // with the output channels
+  sc_in<TBufferFullStatus> buffer_full_status_tx[ROUTER_PORTS];
 
-  sc_out<int> free_slots[2 * DIRECTIONS];
-  sc_in<int> free_slots_neighbor[2 * DIRECTIONS];
+  sc_out<int> free_slots[DIRECTION_HUB];
+  sc_in<int> free_slots_neighbor[DIRECTION_HUB];
 
   // Neighbor-on-Path related I/O
   sc_out<NoP_data> NoP_data_out[DIRECTIONS];
@@ -65,13 +65,13 @@ SC_MODULE(Router) {
   bool is_memory_pe;
   int routing_type; // Type of routing algorithm
   int selection_type;
-  BufferBank buffer[2 * DIRECTIONS + 1]; // buffer[direction][virtual_channel]
-  BufferBank buffer_mid[2 * DIRECTIONS + 1];
-  BufferBank buffer_out[2 * DIRECTIONS + 1];
-  bool current_level_rx[2 * DIRECTIONS +
-                        1]; // Current level for Alternating Bit Protocol (ABP)
-  bool current_level_tx[2 * DIRECTIONS +
-                        1]; // Current level for Alternating Bit Protocol (ABP)
+  BufferBank buffer[ROUTER_PORTS]; // buffer[direction][virtual_channel]
+  BufferBank buffer_mid[ROUTER_PORTS];
+  BufferBank buffer_out[ROUTER_PORTS];
+  bool current_level_rx[ROUTER_PORTS]; // Current level for Alternating Bit
+                                       // Protocol (ABP)
+  bool current_level_tx[ROUTER_PORTS]; // Current level for Alternating Bit
+                                       // Protocol (ABP)
   Stats stats;              // Statistics
   Power power;
   LocalRoutingTable routing_table;    // Routing table
@@ -142,14 +142,14 @@ private:
   vector<int> getNextHops(int src, int dst);
   int start_from_port; // Port from which to start the reservation cycle
 
-  bool reservation_status[2 * DIRECTIONS + 1][MAX_VIRTUAL_CHANNELS];
+  bool reservation_status[ROUTER_PORTS][MAX_VIRTUAL_CHANNELS];
   vector<pair<int, int>> reservation_queue;
 
-  bool out_reservation_status[2 * DIRECTIONS + 1][MAX_VIRTUAL_CHANNELS];
-  queue<int> out_reservation_queue[2 * DIRECTIONS + 1];
-  int cur_out_vc[2 * DIRECTIONS + 1];
+  bool out_reservation_status[ROUTER_PORTS][MAX_VIRTUAL_CHANNELS];
+  queue<int> out_reservation_queue[ROUTER_PORTS];
+  int cur_out_vc[ROUTER_PORTS];
 
-  bool is_vc_set[2 * DIRECTIONS + 1];
+  bool is_vc_set[ROUTER_PORTS];
 
   vector<int> nextDeltaHops(RouteData rd);
 

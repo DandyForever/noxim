@@ -8,6 +8,7 @@
 #
 #   BUTTERFLY, BASELINE, and OMEGA are Delta Network topologies
 topology: BUTTERFLY
+n_links: 4
 #
 # X and Y mesh sizes
 #mesh_dim_x: 4

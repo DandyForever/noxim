@@ -26,7 +26,7 @@ void Router::rxProcess() {
   if (reset.read()) {
     TBufferFullStatus bfs;
     // Clear outputs and indexes of receiving protocol
-    for (int i = 0; i < 2 * DIRECTIONS + 1; i++) {
+    for (int i = 0; i < ROUTER_PORTS; i++) {
       // Ready to recieve packets on reset
       ack_rx[i].write(1);
       buffer_full_status_rx[i].write(bfs);
@@ -37,7 +37,7 @@ void Router::rxProcess() {
     return;
   }
 
-  for (int i = 0; i < 2 * DIRECTIONS + 1; i++) {
+  for (int i = 0; i < ROUTER_PORTS; i++) {
     if (req_rx[i].read() && ack_rx[i].read()) {
       Flit received_flit = flit_rx[i].read();
 
@@ -65,12 +65,15 @@ void Router::rxProcess() {
         LOG << " Flit " << received_flit << " buffer full Input[" << i << "]["
             << vc << "]" << endl;
         cout << "FAILED I'm router " << local_id << " neighbour " << i << " "
-             << free_slots_neighbor[i].read() << " " << received_flit << endl;
+             << (i == DIRECTION_HUB ? DEFAULT_VC : free_slots_neighbor[i].read())
+             << " " << received_flit << endl;
         assert(0);
       }
     }
     // Ready to recieve if buffer is not full
-    ack_rx[i].write(!buffer[i][free_slots_neighbor[i].read()].IsFull());
+    int incoming_vc =
+        (i == DIRECTION_HUB ? DEFAULT_VC : free_slots_neighbor[i].read());
+    ack_rx[i].write(!buffer[i][incoming_vc].IsFull());
 
     TBufferFullStatus bfs;
     for (int vc = 0; vc < GlobalParams::n_virtual_channels; vc++) {
@@ -84,7 +87,7 @@ void Router::rxProcess() {
 void Router::txProcess() {
   if (reset.read()) {
     // Clear outputs and indexes of transmitting protocol
-    for (int i = 0; i < 2 * DIRECTIONS + 1; i++) {
+    for (int i = 0; i < ROUTER_PORTS; i++) {
       // Not valid on reset
       req_tx[i].write(0);
     }
@@ -94,7 +97,7 @@ void Router::txProcess() {
 
   // 0 phase: Checking
   // Round robin for input buffers ordering
-  for (int i = 0; i < 2 * DIRECTIONS + 1; i++) {
+  for (int i = 0; i < ROUTER_PORTS; i++) {
     for (int vc = 0; vc < GlobalParams::n_virtual_channels; vc++) {
       if (buffer[i][vc].IsEmpty()) {
         reservation_status[i][vc] = false;
@@ -114,7 +117,7 @@ void Router::txProcess() {
   }
 
   // Updating out buffers
-  for (int o = 0; o < 2 * DIRECTIONS + 1; o++) {
+  for (int o = 0; o < ROUTER_PORTS; o++) {
     if (req_tx[o].read() && ack_tx[o].read()) {
       DEBUG assert(!buffer_out[o][cur_out_vc[o]].IsEmpty());
       buffer_out[o][cur_out_vc[o]].Pop();
@@ -123,7 +126,7 @@ void Router::txProcess() {
 
   if (GlobalParams::buffer_mid) {
     // Pipeline: middle buffers -> output buffers
-    for (int i = 0; i < 2 * DIRECTIONS + 1; i++) {
+    for (int i = 0; i < ROUTER_PORTS; i++) {
       for (int vc = 0; vc < GlobalParams::n_virtual_channels; vc++) {
         if (!buffer_mid[i][vc].IsEmpty() && !buffer_out[i][vc].IsFull()) {
           buffer_out[i][vc].Push(buffer_mid[i][vc].Pop());
@@ -156,6 +159,7 @@ void Router::txProcess() {
     route_data.src_id = flit.src_id;
     route_data.dst_id = flit.dst_id;
     route_data.local_direction_id = flit.local_direction_id;
+    route_data.src_local_direction_id = flit.src_local_direction_id;
     route_data.phys_channel_id = flit.phys_channel_id;
     route_data.dir_in = i;
     route_data.vc_id = flit.vc_id;
@@ -216,7 +220,7 @@ void Router::txProcess() {
   // 2nd phase: Forwarding
   // Move flits from input buffers to output buffers in accordance with
   // routing algorithm
-  for (int o = 0; o < 2 * DIRECTIONS + 1; o++) {
+  for (int o = 0; o < ROUTER_PORTS; o++) {
     for (int vc_o = 0; vc_o < GlobalParams::n_virtual_channels; vc_o++) {
       vector<TReservation> reservations =
           reservation_table.getOutReservations(o, vc_o);
@@ -279,7 +283,7 @@ void Router::txProcess() {
       power.bufferRouterPop();
       power.crossBar();
 
-      if (o >= DIRECTION_LOCAL_NORTH && o <= DIRECTION_LOCAL_WEST) {
+      if (is_local_direction(o)) {
         power.networkInterface();
 
         stats.receivedFlit(
@@ -292,8 +296,7 @@ void Router::txProcess() {
             local_drained++;
           }
         }
-      } else if (!(i >= DIRECTION_LOCAL_NORTH &&
-                   i <= DIRECTION_LOCAL_WEST)) // not generated locally
+      } else if (!is_local_direction(i)) // not generated locally
         routed_flits++;
       // End Power & Stats
       // -------------------------------------------------
@@ -303,7 +306,7 @@ void Router::txProcess() {
   reservation_table.updateIndex();
 
   // Step 3. Checking output buffers
-  for (int o = 0; o < 2 * DIRECTIONS + 1; o++) {
+  for (int o = 0; o < ROUTER_PORTS; o++) {
     for (int vc = 0; vc < GlobalParams::n_virtual_channels; vc++) {
       if (!buffer_out[o][vc].IsEmpty() && !out_reservation_status[o][vc]) {
         out_reservation_queue[o].push(vc);
@@ -313,11 +316,12 @@ void Router::txProcess() {
   }
 
   // Step 4. Managing output buffers
-  for (int o = 0; o < 2 * DIRECTIONS + 1; o++) {
+  for (int o = 0; o < ROUTER_PORTS; o++) {
     if (!is_vc_set[o]) {
       req_tx[o].write(0);
       if (!out_reservation_queue[o].empty()) {
-        free_slots[o].write(out_reservation_queue[o].front());
+        if (o != DIRECTION_HUB)
+          free_slots[o].write(out_reservation_queue[o].front());
         is_vc_set[o] = true;
       }
       continue;
@@ -331,7 +335,8 @@ void Router::txProcess() {
     out_reservation_queue[o].pop();
 
     if (!out_reservation_queue[o].empty()) {
-      free_slots[o].write(out_reservation_queue[o].front());
+      if (o != DIRECTION_HUB)
+        free_slots[o].write(out_reservation_queue[o].front());
       continue;
     }
 
@@ -340,7 +345,8 @@ void Router::txProcess() {
       continue;
     }
 
-    free_slots[o].write(vc);
+    if (o != DIRECTION_HUB)
+      free_slots[o].write(vc);
     out_reservation_queue[o].push(vc);
     out_reservation_status[o][vc] = true;
   }
@@ -350,6 +356,8 @@ NoP_data Router::getCurrentNoPData() {
   NoP_data NoP_data;
 
   for (int j = 0; j < DIRECTIONS; j++) {
+    if (!is_active_network_direction(j))
+      continue;
     try {
       NoP_data.channel_status_neighbor[j].free_slots =
           free_slots_neighbor[j].read();
@@ -369,7 +377,7 @@ NoP_data Router::getCurrentNoPData() {
 
 void Router::perCycleUpdate() {
   if (reset.read()) {
-    for (int i = 0; i < 2 * DIRECTIONS; i++) {
+    for (int i = 0; i < ROUTER_PORTS; i++) {
       // free_slots[i].write(buffer[i][DEFAULT_VC].GetMaxBufferSize());
       // free_slots[i].write(buffer_out[i][DEFAULT_VC].GetMaxBufferSize());
     }
@@ -377,7 +385,7 @@ void Router::perCycleUpdate() {
     selectionStrategy->perCycleUpdate(this);
 
     power.leakageRouter();
-    for (int i = 0; i < 2 * DIRECTIONS; i++) {
+    for (int i = 0; i < ROUTER_PORTS; i++) {
       for (int vc = 0; vc < GlobalParams::n_virtual_channels; vc++) {
         power.leakageBufferRouter();
         power.leakageLinkRouter2Router();
@@ -541,6 +549,8 @@ void Router::NoP_report() const {
   LOG << "NoP report: " << endl;
 
   for (int i = 0; i < DIRECTIONS; i++) {
+    if (!is_active_network_direction(i))
+      continue;
     NoP_tmp = NoP_data_in[i].read();
     if (NoP_tmp.sender_id != NOT_VALID)
       cout << NoP_tmp;
@@ -587,7 +597,7 @@ void Router::configure(const int _id, const double _warm_up_time,
   stats.configure(_id, _warm_up_time);
 
   start_from_port = DIRECTION_LOCAL_NORTH;
-  for (int i = 0; i < 2 * DIRECTIONS + 1; i++) {
+  for (int i = 0; i < ROUTER_PORTS; i++) {
     for (int vc = 0; vc < GlobalParams::n_virtual_channels; vc++) {
       reservation_status[i][vc] = false;
       out_reservation_status[i][vc] = false;
@@ -599,10 +609,10 @@ void Router::configure(const int _id, const double _warm_up_time,
   if (grt.isValid())
     routing_table.configure(grt, _id);
 
-  reservation_table.setSize(2 * DIRECTIONS + 1,
+  reservation_table.setSize(ROUTER_PORTS,
                             GlobalParams::n_virtual_channels);
 
-  for (int i = 0; i < 2 * DIRECTIONS + 1; i++) {
+  for (int i = 0; i < ROUTER_PORTS; i++) {
     for (int vc = 0; vc < GlobalParams::n_virtual_channels; vc++) {
       buffer[i][vc].SetMaxBufferSize(_max_input_buffer_size);
       buffer_mid[i][vc].SetMaxBufferSize(_max_output_buffer_size);
@@ -620,26 +630,30 @@ void Router::configure(const int _id, const double _warm_up_time,
     int row = _id / GlobalParams::mesh_dim_x;
     int col = _id % GlobalParams::mesh_dim_x;
 
+    auto disable_port = [&](int direction, int vc) {
+      buffer[direction][vc].Disable();
+      buffer_mid[direction][vc].Disable();
+      buffer_out[direction][vc].Disable();
+    };
+
     for (int vc = 0; vc < GlobalParams::n_virtual_channels; vc++) {
+      if (GlobalParams::n_links == 4) {
+        disable_port(DIRECTION_EAST_EXTRA, vc);
+        disable_port(DIRECTION_WEST_EXTRA, vc);
+      }
       if (row == 0) {
-        buffer[DIRECTION_NORTH][vc].Disable();
-        buffer_mid[DIRECTION_NORTH][vc].Disable();
-        buffer_out[DIRECTION_NORTH][vc].Disable();
+        disable_port(DIRECTION_NORTH, vc);
       }
       if (row == GlobalParams::mesh_dim_y - 1) {
-        buffer[DIRECTION_SOUTH][vc].Disable();
-        buffer_mid[DIRECTION_SOUTH][vc].Disable();
-        buffer_out[DIRECTION_SOUTH][vc].Disable();
+        disable_port(DIRECTION_SOUTH, vc);
       }
       if (col == 0) {
-        buffer[DIRECTION_WEST][vc].Disable();
-        buffer_mid[DIRECTION_WEST][vc].Disable();
-        buffer_out[DIRECTION_WEST][vc].Disable();
+        disable_port(DIRECTION_WEST, vc);
+        disable_port(DIRECTION_WEST_EXTRA, vc);
       }
       if (col == GlobalParams::mesh_dim_x - 1) {
-        buffer[DIRECTION_EAST][vc].Disable();
-        buffer_mid[DIRECTION_EAST][vc].Disable();
-        buffer_out[DIRECTION_EAST][vc].Disable();
+        disable_port(DIRECTION_EAST, vc);
+        disable_port(DIRECTION_EAST_EXTRA, vc);
       }
     }
   }
@@ -654,6 +668,10 @@ int Router::reflexDirection(int direction) const {
     return DIRECTION_WEST;
   if (direction == DIRECTION_WEST)
     return DIRECTION_EAST;
+  if (direction == DIRECTION_EAST_EXTRA)
+    return DIRECTION_WEST_EXTRA;
+  if (direction == DIRECTION_WEST_EXTRA)
+    return DIRECTION_EAST_EXTRA;
   if (direction == DIRECTION_SOUTH)
     return DIRECTION_NORTH;
 
@@ -679,11 +697,13 @@ int Router::getNeighborId(int _id, int direction) const {
     my_coord.y++;
     break;
   case DIRECTION_EAST:
+  case DIRECTION_EAST_EXTRA:
     if (my_coord.x == GlobalParams::mesh_dim_x - 1)
       return NOT_VALID;
     my_coord.x++;
     break;
   case DIRECTION_WEST:
+  case DIRECTION_WEST_EXTRA:
     if (my_coord.x == 0)
       return NOT_VALID;
     my_coord.x--;
@@ -700,11 +720,13 @@ int Router::getNeighborId(int _id, int direction) const {
 
 bool Router::inCongestion() {
   for (int i = 0; i < DIRECTIONS; i++) {
-
-    if (free_slots_neighbor[i] == NOT_VALID)
+    if (!is_active_network_direction(i))
       continue;
 
-    int flits = GlobalParams::in_buffer_depth - free_slots_neighbor[i];
+    if (free_slots_neighbor[i].read() == NOT_VALID)
+      continue;
+
+    int flits = GlobalParams::in_buffer_depth - free_slots_neighbor[i].read();
     if (flits >
         (int)(GlobalParams::in_buffer_depth * GlobalParams::dyad_threshold))
       return true;
@@ -714,7 +736,7 @@ bool Router::inCongestion() {
 }
 
 void Router::ShowBuffersStats(std::ostream &out) {
-  for (int i = 0; i < 2 * DIRECTIONS + 1; i++)
+  for (int i = 0; i < ROUTER_PORTS; i++)
     for (int vc = 0; vc < GlobalParams::n_virtual_channels; vc++)
       buffer[i][vc].ShowStats(out);
 }

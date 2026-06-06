@@ -567,6 +567,7 @@ Flit ProcessingElement::nextFlit(queue<Packet> &packet_queue, bool is_update) {
   flit.dst_id = packet.dst_id;
   flit.id = packet.id;
   flit.local_direction_id = packet.local_direction_id;
+  flit.src_local_direction_id = packet.src_local_direction_id;
   flit.phys_channel_id = packet.phys_channel_id;
   flit.vc_id = packet.vc_id;
   flit.timestamp = packet.timestamp;
@@ -657,6 +658,9 @@ bool ProcessingElement::canShot(Packet &packet, RequestType request_type) {
         exit(-1);
       }
     }
+
+    if (shot)
+      prepareRequestPacket(packet);
   } else { // Table based communication traffic
     if (never_transmit)
       return false;
@@ -679,9 +683,24 @@ bool ProcessingElement::canShot(Packet &packet, RequestType request_type) {
         }
       }
     }
+
+    if (shot)
+      prepareRequestPacket(packet);
   }
 
   return shot;
+}
+
+int ProcessingElement::randomMemoryLocalDirection() {
+  return randInt(DIRECTION_LOCAL_NORTH,
+                 DIRECTION_LOCAL_NORTH - 1 + GlobalParams::mem_ports);
+}
+
+void ProcessingElement::prepareRequestPacket(Packet &packet) {
+  packet.local_direction_id = randomMemoryLocalDirection();
+  packet.src_local_direction_id = local_direction_id;
+  packet.phys_channel_id = 0;
+  packet.vc_id = get_request_vc_for_master(local_id);
 }
 
 Packet ProcessingElement::trafficLocal() {
@@ -787,7 +806,8 @@ Packet ProcessingElement::generateResponse(Flit flit,
   p.is_head = flit.traffic_burst_is_head;
   p.is_tail = flit.traffic_burst_is_tail;
   p.traffic_burst_id = flit.traffic_burst_id;
-  p.local_direction_id = DIRECTION_LOCAL_NORTH;
+  p.local_direction_id = flit.src_local_direction_id;
+  p.src_local_direction_id = flit.src_local_direction_id;
   p.phys_channel_id = 1 - flit.phys_channel_id;
   p.timestamp = timestamp();
   switch (request_type) {

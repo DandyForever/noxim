@@ -9,6 +9,7 @@ topology: BUTTERFLY
 # X and Y mesh sizes
 mesh_dim_x: 4
 mesh_dim_y: 4
+n_links: 4
 n_delta_tiles: 8
 # number of flits for each router input buffer
 in_buffer_depth: 4

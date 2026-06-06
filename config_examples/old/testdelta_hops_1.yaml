@@ -8,6 +8,7 @@
 # Check: if winoc_dst_hops = 0 (or not set) wireless should never be used
 
 topology: BUTTERFLY
+n_links: 4
 #
 n_delta_tiles: 8
 # number of flits for each router input buffer

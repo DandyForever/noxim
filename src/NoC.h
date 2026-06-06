@@ -23,14 +23,18 @@ using namespace std;
 
 template <typename T> struct sc_signal_NSWE {
   sc_signal<T> east;
+  sc_signal<T> east_extra;
   sc_signal<T> west;
+  sc_signal<T> west_extra;
   sc_signal<T> south;
   sc_signal<T> north;
 };
 
 template <typename T> struct sc_signal_NSWEH {
   sc_signal<T> east;
+  sc_signal<T> east_extra;
   sc_signal<T> west;
+  sc_signal<T> west_extra;
   sc_signal<T> south;
   sc_signal<T> north;
   sc_signal<T> to_hub;

@@ -176,6 +176,49 @@ inline int coord2Id(const Coord &coord) {
   return id;
 }
 
+inline bool is_local_direction(int direction) {
+  return direction >= DIRECTION_LOCAL_NORTH &&
+         direction <= DIRECTION_LOCAL_WEST;
+}
+
+inline bool is_extra_network_direction(int direction) {
+  return direction == DIRECTION_EAST_EXTRA ||
+         direction == DIRECTION_WEST_EXTRA;
+}
+
+inline bool is_active_network_direction(int direction) {
+  if (direction < DIRECTION_NORTH || direction >= DIRECTIONS)
+    return false;
+  if (is_extra_network_direction(direction))
+    return GlobalParams::n_links == 6;
+  return true;
+}
+
+inline int local_direction_to_pe_id(int local_direction) {
+  assert(is_local_direction(local_direction));
+  return local_direction - DIRECTION_LOCAL_NORTH;
+}
+
+inline int pe_id_to_local_direction(int pe_id) {
+  assert(pe_id >= 0 && pe_id < LOCAL_DIRECTIONS);
+  return DIRECTION_LOCAL_NORTH + pe_id;
+}
+
+inline bool use_extra_horizontal_links(const RouteData &route_data) {
+  return GlobalParams::n_links == 6 &&
+         route_data.src_local_direction_id == DIRECTION_LOCAL_EAST;
+}
+
+inline int east_direction_for_route(const RouteData &route_data) {
+  return use_extra_horizontal_links(route_data) ? DIRECTION_EAST_EXTRA
+                                                : DIRECTION_EAST;
+}
+
+inline int west_direction_for_route(const RouteData &route_data) {
+  return use_extra_horizontal_links(route_data) ? DIRECTION_WEST_EXTRA
+                                                : DIRECTION_WEST;
+}
+
 // helpers
 static inline bool coord_in_rect(const Coord &c, const Rect &r) {
   return c.x >= r.top_left.x && c.x <= r.bot_right.x && c.y >= r.top_left.y &&
@@ -197,6 +240,25 @@ inline bool is_master_node(int id) {
 }
 
 inline bool is_memory_node(int id) { return !is_master_node(id); }
+
+inline bool master_pe_enabled(int local_id, int pe_id) {
+  if (!is_master_node(local_id))
+    return false;
+
+  if (GlobalParams::topology != TOPOLOGY_MESH || GlobalParams::n_links == 4)
+    return pe_id == 0;
+
+  Coord c = id2Coord(local_id);
+
+  if (c.y == 0)
+    return pe_id == 0;
+  if (c.y == GlobalParams::mesh_dim_y - 1)
+    return pe_id == 1;
+  if (c.x == 0 || c.x == GlobalParams::mesh_dim_x - 1)
+    return pe_id == 0 || pe_id == 1;
+
+  return pe_id == 0;
+}
 
 inline RoutingType get_routing_for_vc(int vc) {
   return GlobalParams::vc_routing[vc];

@@ -89,7 +89,11 @@ int Selection_BUFFER_LEVEL::apply(Router *router, const vector<int> &directions,
 
 void Selection_BUFFER_LEVEL::perCycleUpdate(Router *router) {
   // update current input buffers level to neighbors
-  for (int i = 0; i < DIRECTIONS + 1; i++)
+  for (int i = 0; i < DIRECTIONS; i++)
+    if (is_active_network_direction(i))
+      router->free_slots[i].write(
+          router->buffer[i][DEFAULT_VC].getCurrentFreeSlots());
+  for (int i = DIRECTION_LOCAL_NORTH; i <= DIRECTION_LOCAL_WEST; i++)
     router->free_slots[i].write(
         router->buffer[i][DEFAULT_VC].getCurrentFreeSlots());
 
@@ -97,5 +101,6 @@ void Selection_BUFFER_LEVEL::perCycleUpdate(Router *router) {
   NoP_data current_NoP_data = router->getCurrentNoPData();
 
   for (int i = 0; i < DIRECTIONS; i++)
-    router->NoP_data_out[i].write(current_NoP_data);
+    if (is_active_network_direction(i))
+      router->NoP_data_out[i].write(current_NoP_data);
 }

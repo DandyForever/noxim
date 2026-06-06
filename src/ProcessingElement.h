@@ -148,6 +148,8 @@ SC_MODULE(ProcessingElement) {
   Packet trafficULocal();            // Random with locality
 
   Packet generateResponse(Flit, RequestType);
+  int randomMemoryLocalDirection();
+  void prepareRequestPacket(Packet &packet);
 
   GlobalTrafficTable *traffic_table; // Reference to the Global traffic Table
   bool never_transmit; // true if the PE does not transmit any packet

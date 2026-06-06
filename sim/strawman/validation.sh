@@ -27,14 +27,14 @@
     -log_file_name ../results/strawman/validation_4 &
 
 ../../build/noxim \
-    -config ../../config_examples/strawman/mesh_18x18_6ch_dor.yaml \
+    -config ../../config_examples/strawman/mesh_18x10_6ch_dor.yaml \
     -ir 1.0 poisson \
     -sim 10000 \
     -detailed \
     -log_file_name ../results/strawman/validation_5 &
 
 ../../build/noxim \
-    -config ../../config_examples/strawman/mesh_18x18_6ch_mod_dor.yaml \
+    -config ../../config_examples/strawman/mesh_18x10_6ch_mod_dor.yaml \
     -ir 1.0 poisson \
     -sim 10000 \
     -detailed \
