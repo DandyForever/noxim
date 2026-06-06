@@ -69,11 +69,10 @@ bool GlobalParams::traffic_verbose;
 bool GlobalParams::buffer_mid;
 int GlobalParams::pe_request_buffer_size;
 unsigned long GlobalParams::message_size;
-std::set<Coord> GlobalParams::master_connections;
+std::unordered_set<int> GlobalParams::master_ids;
 std::vector<Rect> GlobalParams::global_slave_areas;
-std::unordered_map<Coord, std::vector<Rect>, CoordHash>
-    GlobalParams::master_to_slave_areas;
+std::unordered_map<int, std::vector<Rect>> GlobalParams::master_to_slave_areas;
 std::vector<RoutingType> GlobalParams::vc_routing; // size = n_virtual_channels
-std::unordered_map<Coord, int, CoordHash> GlobalParams::master_to_request_vc;
-std::unordered_map<Coord, int, CoordHash> GlobalParams::master_to_response_vc;
-std::unordered_map<Coord, double, CoordHash> GlobalParams::master_pir_factor;
+std::unordered_map<int, int> GlobalParams::master_to_request_vc;
+std::unordered_map<int, int> GlobalParams::master_to_response_vc;
+std::unordered_map<int, double> GlobalParams::master_pir_factor;

@@ -1,0 +1,93 @@
+# Размеры Mesh-сети
+mesh_dim_x: 10
+mesh_dim_y: 10
+# Число виртуальных каналов (ВК) в маршрутизаторах
+n_virtual_channels: 4
+# Глубина буферов в маршрутизаторах
+buffer_depth: 2
+# Число активных модулей памяти в узлах с модулями памяти
+mem_ports: 1
+# Алгоритм маршрутизации
+routing_algorithm: CUSTOM
+# Интенсивность формирования посылок данных в сети
+flit_injection_rate: 1.0
+# Размер пакетов данных, число посылок
+packet_size: 1
+# Размер сообщений данных, число посылок
+message_size: 1
+# Размер очередей запросов агентах, число посылок
+pe_request_buffer_size: 512
+# Продолжительность сброса, число тактов
+reset_time: 10
+# Продолжительность моделирования, число тактов
+simulation_time: 10000
+
+# Привязка алгоритма маршрутизации к каждому ВК
+routing_by_vc:
+  0: YX
+  1: XY
+  2: XY
+  3: YX
+
+# Подключение агентов ко всем узлам по периметру, кроме угловых
+master_connections: [
+  [1, 0],[2, 0],[3, 0],[4, 0],[5, 0],[6, 0],[7, 0],[8, 0],
+  [0, 1],[0, 2],[0, 3],[0, 4],[0, 5],[0, 6],[0, 7],[0, 8],
+  [9, 1],[9, 2],[9, 3],[9, 4],[9, 5],[9, 6],[9, 7],[9, 8],
+  [1, 9],[2, 9],[3, 9],[4, 9],[5, 9],[6, 9],[7, 9],[8, 9]
+]
+
+# Указание допустимых модулей памяти для формирования запросов агентами
+master_slave_rules:
+  # Горизонтальные агенты формируют запросы лишь в своей четверти
+  - select: { row: 0, x_range: [1, 4] }
+    slave_array: { top_left: [1, 1], bot_right: [4, 4] }
+  - select: { row: 0, x_range: [5, 8] }
+    slave_array: { top_left: [5, 1], bot_right: [8, 4] }
+  - select: { row: 9, x_range: [1, 4] }
+    slave_array: { top_left: [1, 5], bot_right: [4, 8] }
+  - select: { row: 9, x_range: [5, 8] }
+    slave_array: { top_left: [5, 5], bot_right: [8, 8] }
+  # Вертикальные агенты формируют запросы лишь в своей четверти
+  - select: { col: 0, y_range: [1, 4] }
+    slave_array: { top_left: [1, 1], bot_right: [4, 4] }
+  - select: { col: 0, y_range: [5, 8] }
+    slave_array: { top_left: [1, 5], bot_right: [4, 8] }
+  - select: { col: 9, y_range: [1, 4] }
+    slave_array: { top_left: [5, 1], bot_right: [8, 4] }
+  - select: { col: 9, y_range: [5, 8] }
+    slave_array: { top_left: [5, 5], bot_right: [8, 8] }
+
+# Интенсивность формирования посылок данных агентами
+master_ir_factor_rules:
+  # Множитель 0.5 к `flit_injection_rate` для вертикальных агентов
+  - select: { col: 0, y_range: [1, 8] }
+    ir_factor: 0.5
+  - select: { col: 9, y_range: [1, 8] }
+    ir_factor: 0.5
+
+# ВК для передачи запросов агентов
+master_request_vc_rules:
+  # Для вертикальных агентов используется ВК №1
+  - select: { col: 0, y_range: [1, 8] }
+    vc: 1
+  - select: { col: 9, y_range: [1, 8] }
+    vc: 1
+  # Для горизонтальных агентов используется ВК №0
+  - select: { row: 0, x_range: [1, 8] }
+    vc: 0
+  - select: { row: 9, x_range: [1, 8] }
+    vc: 0
+
+# ВК для передачи ответов агентам
+master_response_vc_rules:
+  # Для вертикальных агентов используется ВК №3
+  - select: { col: 0, y_range: [1, 8] }
+    vc: 3
+  - select: { col: 9, y_range: [1, 8] }
+    vc: 3
+  # Для горизонтальных агентов используется ВК №2
+  - select: { row: 0, x_range: [1, 8] }
+    vc: 2
+  - select: { row: 9, x_range: [1, 8] }
+    vc: 2

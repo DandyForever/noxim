@@ -17,17 +17,12 @@ mesh_dim_x: 10
 mesh_dim_y: 10
 # number of flits for each router buffer
 buffer_depth: 2
-# size of flits, in bits
-flit_size: 64
-# lenght in mm of router to hub connection
-r2h_link_length: 2.0
-# lenght in mm of router to router connection
-r2r_link_length: 1.0
-n_virtual_channels: 4
+n_virtual_channels: 2
 
 # Routing algorithms:
+#   CUSTOM
 #   XY
-#   DOR
+#   YX
 #   DELTA
 #   WEST_FIRST
 #   NORTH_LAST
@@ -37,12 +32,16 @@ n_virtual_channels: 4
 #   TABLE_BASED
 # Each of the above labels should match a corresponding
 # implementation in the routingAlgorithms source code directory
-routing_algorithm: DOR
+routing_algorithm: CUSTOM
 routing_table_filename: ""
 
 # Routing specific parameters
 #   dyad_threshold: double
 dyad_threshold: 0.6
+
+routing_by_vc:
+  0: YX
+  1: XY
 
 # Selection Strategies:
 #   RANDOM
@@ -51,6 +50,79 @@ dyad_threshold: 0.6
 # Each of the above labels should match a corresponding
 # implementation in the selectionStrategies source code directory
 selection_strategy: RANDOM
+
+# SIMULATION PARAMETERS
+#
+clock_period_ps: 1000
+# duration of reset signal assertion, expressed in cycles
+reset_time: 10
+# overal simulation lenght, expressed in cycles
+simulation_time: 10000
+# collect stats after a given number of cycles
+stats_warm_up_time: 3
+# power breakdown, nodes communication details
+detailed: false
+# stop after a given amount of load has been processed
+max_volume_to_be_drained: 0
+show_buffer_stats: false
+
+# Verbosity level:
+#   VERBOSE_OFF
+#   VERBOSE_LOW
+#   VERBOSE_MEDIUM
+#   VERBOSE_HIGH
+verbose_mode: VERBOSE_HIGH
+
+# Trace
+trace_mode: false
+trace_filename: ""
+
+packet_size: 1
+packet_injection_rate: 1
+probability_of_retransmission: 0.01
+
+# Traffic distribution:
+#   TRAFFIC_RANDOM
+#   TRAFFIC_TRANSPOSE1
+#   TRAFFIC_TRANSPOSE2
+#   TRAFFIC_HOTSPOT
+#   TRAFFIC_TABLE_BASED
+#   TRAFFIC_BIT_REVERSAL
+#   TRAFFIC_SHUFFLE
+#   TRAFFIC_BUTTERFLY
+traffic_distribution: TRAFFIC_RANDOM
+# when traffic table based is specified, use the following
+# configuration file
+traffic_table_filename: "t.txt"
+
+req_ack_mode: true
+both_phys_req_mode: true
+mem_ports: 1
+buffer_verbose: false
+traffic_verbose: false
+flit_dump: false
+buffer_mid: false
+pe_request_buffer_size: 256
+message_size: 1
+log_file_name: "./results/results.csv"
+
+###############################################################################
+#                           Legacy
+###############################################################################
+
+# size of flits, in bits
+flit_size: 64
+# lenght in mm of router to hub connection
+r2h_link_length: 2.0
+# lenght in mm of router to router connection
+r2r_link_length: 1.0
+
+# Winoc
+# enable wireless, when false, all wireless channel configuration is
+# ignored
+use_winoc: false
+# experimental power saving strategy
+use_wirxsleep: false
 
 #
 # WIRELESS CONFIGURATION
@@ -112,66 +184,3 @@ RadioChannels:
     # transmissions, until a max number of cycles is reached
         #[TOKEN_MAX_HOLD, max_hold_cycles]
         mac_policy: [TOKEN_PACKET]
-
-
-# SIMULATION PARAMETERS
-#
-clock_period_ps: 1000
-# duration of reset signal assertion, expressed in cycles
-reset_time: 10
-# overal simulation lenght, expressed in cycles
-simulation_time: 10000
-# collect stats after a given number of cycles
-stats_warm_up_time: 3
-# power breakdown, nodes communication details
-detailed: false
-# stop after a given amount of load has been processed
-max_volume_to_be_drained: 0
-show_buffer_stats: false
-
-# Winoc
-# enable wireless, when false, all wireless channel configuration is
-# ignored
-use_winoc: false
-# experimental power saving strategy
-use_wirxsleep: false
-
-# Verbosity level:
-#   VERBOSE_OFF
-#   VERBOSE_LOW
-#   VERBOSE_MEDIUM
-#   VERBOSE_HIGH
-verbose_mode: VERBOSE_HIGH
-
-# Trace
-trace_mode: false
-trace_filename: ""
-
-packet_size: 1
-packet_injection_rate: 1
-probability_of_retransmission: 0.01
-
-# Traffic distribution:
-#   TRAFFIC_RANDOM
-#   TRAFFIC_TRANSPOSE1
-#   TRAFFIC_TRANSPOSE2
-#   TRAFFIC_HOTSPOT
-#   TRAFFIC_TABLE_BASED
-#   TRAFFIC_BIT_REVERSAL
-#   TRAFFIC_SHUFFLE
-#   TRAFFIC_BUTTERFLY
-traffic_distribution: TRAFFIC_RANDOM
-# when traffic table based is specified, use the following
-# configuration file
-traffic_table_filename: "t.txt"
-
-req_ack_mode: true
-both_phys_req_mode: true
-mem_ports: 1
-buffer_verbose: false
-traffic_verbose: false
-flit_dump: false
-buffer_mid: false
-pe_request_buffer_size: 256
-message_size: 1
-log_file_name: "./results/results.csv"

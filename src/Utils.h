@@ -183,10 +183,9 @@ static inline bool coord_in_rect(const Coord &c, const Rect &r) {
 }
 
 inline bool can_master_send_to(int local_id, int dst_id) {
-  const Coord m = id2Coord(local_id);
   const Coord d = id2Coord(dst_id);
 
-  for (const auto &r : GlobalParams::master_to_slave_areas[m])
+  for (const auto &r : GlobalParams::master_to_slave_areas[local_id])
     if (coord_in_rect(d, r))
       return true;
 
@@ -194,7 +193,7 @@ inline bool can_master_send_to(int local_id, int dst_id) {
 }
 
 inline bool is_master_node(int id) {
-  return GlobalParams::master_connections.count(id2Coord(id));
+  return GlobalParams::master_ids.count(id);
 }
 
 inline bool is_memory_node(int id) { return !is_master_node(id); }
@@ -204,18 +203,15 @@ inline RoutingType get_routing_for_vc(int vc) {
 }
 
 inline int get_request_vc_for_master(int master_local_id) {
-  Coord m = id2Coord(master_local_id);
-  return GlobalParams::master_to_request_vc[m];
+  return GlobalParams::master_to_request_vc[master_local_id];
 }
 
 inline int get_response_vc_for_master_id(int master_local_id) {
-  Coord m = id2Coord(master_local_id);
-  return GlobalParams::master_to_response_vc[m];
+  return GlobalParams::master_to_response_vc[master_local_id];
 }
 
 inline double get_pir_for_master(int master_local_id) {
-  Coord m = id2Coord(master_local_id);
-  return GlobalParams::master_pir_factor[m] *
+  return GlobalParams::master_pir_factor[master_local_id] *
          GlobalParams::packet_injection_rate;
 }
 

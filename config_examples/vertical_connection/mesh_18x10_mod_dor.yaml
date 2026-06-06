@@ -13,7 +13,7 @@
 #   BUTTERFLY, BASELINE, and OMEGA are Delta Network topologies
 # topology: MESH
 # X and Y mesh sizes
-mesh_dim_x: 10
+mesh_dim_x: 18
 mesh_dim_y: 10
 # number of flits for each router buffer
 buffer_depth: 2
@@ -23,7 +23,7 @@ flit_size: 64
 r2h_link_length: 2.0
 # lenght in mm of router to router connection
 r2r_link_length: 1.0
-n_virtual_channels: 2
+n_virtual_channels: 4
 
 # Routing algorithms:
 #   XY
@@ -47,6 +47,8 @@ dyad_threshold: 0.6
 routing_by_vc:
   0: YX
   1: XY
+  2: XY
+  3: YX
 
 # Selection Strategies:
 #   RANDOM
@@ -176,7 +178,7 @@ buffer_verbose: false
 traffic_verbose: false
 flit_dump: false
 buffer_mid: false
-pe_request_buffer_size: 512
+pe_request_buffer_size: 256
 message_size: 1
 log_file_name: "./results/results.csv"
 
@@ -189,22 +191,14 @@ master_connections:
 - [6, 0]
 - [7, 0]
 - [8, 0]
-- [0, 1]
-- [9, 1]
-- [0, 2]
-- [9, 2]
-- [0, 3]
-- [9, 3]
-- [0, 4]
-- [9, 4]
-- [0, 5]
-- [9, 5]
-- [0, 6]
-- [9, 6]
-- [0, 7]
-- [9, 7]
-- [0, 8]
-- [9, 8]
+- [9, 0]
+- [10, 0]
+- [11, 0]
+- [12, 0]
+- [13, 0]
+- [14, 0]
+- [15, 0]
+- [16, 0]
 - [1, 9]
 - [2, 9]
 - [3, 9]
@@ -213,24 +207,53 @@ master_connections:
 - [6, 9]
 - [7, 9]
 - [8, 9]
+- [9, 9]
+- [10, 9]
+- [11, 9]
+- [12, 9]
+- [13, 9]
+- [14, 9]
+- [15, 9]
+- [16, 9]
+- [0, 1]
+- [0, 2]
+- [0, 3]
+- [0, 4]
+- [0, 5]
+- [0, 6]
+- [0, 7]
+- [0, 8]
+- [17, 1]
+- [17, 2]
+- [17, 3]
+- [17, 4]
+- [17, 5]
+- [17, 6]
+- [17, 7]
+- [17, 8]
 
-master_slave_rules:
-  # Horizontal masters
-  - select: { row: 0, x_range: [1, 4] }   # top-left → NW
-    slave_array: { top_left: [1, 1], bot_right: [4, 4] }
-  - select: { row: 0, x_range: [5, 8] }   # top-right → NE
-    slave_array: { top_left: [5, 1], bot_right: [8, 4] }
-  - select: { row: 9, x_range: [1, 4] }   # bottom-left → SW
-    slave_array: { top_left: [1, 5], bot_right: [4, 8] }
-  - select: { row: 9, x_range: [5, 8] }   # bottom-right → SE
-    slave_array: { top_left: [5, 5], bot_right: [8, 8] }
+slave_array:
+    top_left: [1, 1]
+    bot_right: [16, 8]
 
-  # Vertical masters
-  - select: { col: 0, y_range: [1, 4] }   # left, top-half → NW
-    slave_array: { top_left: [1, 1], bot_right: [4, 4] }
-  - select: { col: 0, y_range: [5, 8] }   # left, bottom-half → SW
-    slave_array: { top_left: [1, 5], bot_right: [4, 8] }
-  - select: { col: 9, y_range: [1, 4] }   # right, top-half → NE
-    slave_array: { top_left: [5, 1], bot_right: [8, 4] }
-  - select: { col: 9, y_range: [5, 8] }   # right, bottom-half → SE
-    slave_array: { top_left: [5, 5], bot_right: [8, 8] }
+master_request_vc_rules:
+  - select: { col: 0, y_range: [1, 8] }
+    vc: 1
+  - select: { col: 17, y_range: [1, 8] }
+    vc: 1
+
+  - select: { row: 0, x_range: [1, 16] }
+    vc: 0
+  - select: { row: 9, x_range: [1, 16] }
+    vc: 0
+
+master_response_vc_rules:
+  - select: { col: 0, y_range: [1, 8] }
+    vc: 3
+  - select: { col: 17, y_range: [1, 8] }
+    vc: 3
+
+  - select: { row: 0, x_range: [1, 16] }
+    vc: 2
+  - select: { row: 9, x_range: [1, 16] }
+    vc: 2

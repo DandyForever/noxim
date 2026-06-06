@@ -13,7 +13,7 @@
 #   BUTTERFLY, BASELINE, and OMEGA are Delta Network topologies
 # topology: MESH
 # X and Y mesh sizes
-mesh_dim_x: 18
+mesh_dim_x: 24
 mesh_dim_y: 10
 # number of flits for each router buffer
 buffer_depth: 2
@@ -37,12 +37,16 @@ n_virtual_channels: 2
 #   TABLE_BASED
 # Each of the above labels should match a corresponding
 # implementation in the routingAlgorithms source code directory
-routing_algorithm: DOR
+routing_algorithm: CUSTOM
 routing_table_filename: ""
 
 # Routing specific parameters
 #   dyad_threshold: double
 dyad_threshold: 0.6
+
+routing_by_vc:
+  0: YX
+  1: XY
 
 # Selection Strategies:
 #   RANDOM
@@ -177,9 +181,6 @@ message_size: 1
 log_file_name: "./results/results.csv"
 
 master_connections:
-- [1, 0]
-- [2, 0]
-- [3, 0]
 - [4, 0]
 - [5, 0]
 - [6, 0]
@@ -193,9 +194,9 @@ master_connections:
 - [14, 0]
 - [15, 0]
 - [16, 0]
-- [1, 9]
-- [2, 9]
-- [3, 9]
+- [17, 0]
+- [18, 0]
+- [19, 0]
 - [4, 9]
 - [5, 9]
 - [6, 9]
@@ -209,23 +210,26 @@ master_connections:
 - [14, 9]
 - [15, 9]
 - [16, 9]
+- [17, 9]
+- [18, 9]
+- [19, 9]
 - [0, 1]
-- [0, 2]
-- [0, 3]
-- [0, 4]
+- [1, 2]
+- [2, 3]
+- [3, 4]
 - [0, 5]
-- [0, 6]
-- [0, 7]
-- [0, 8]
-- [17, 1]
-- [17, 2]
-- [17, 3]
-- [17, 4]
-- [17, 5]
-- [17, 6]
-- [17, 7]
-- [17, 8]
+- [1, 6]
+- [2, 7]
+- [3, 8]
+- [23, 1]
+- [22, 2]
+- [21, 3]
+- [20, 4]
+- [23, 5]
+- [22, 6]
+- [21, 7]
+- [20, 8]
 
 slave_array:
-    top_left: [1, 1]
-    bot_right: [16, 8]
+    top_left: [4, 1]
+    bot_right: [19, 8]

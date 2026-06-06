@@ -88,7 +88,6 @@ double GlobalStats::getMaxDelay() {
         if (d > maxd)
           maxd = d;
       }
-
   } else // other delta topologies
   {
     for (int y = 0; y < GlobalParams::n_delta_tiles; y++) {

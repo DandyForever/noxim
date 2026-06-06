@@ -63,25 +63,11 @@ static std::vector<Rect> parse_rect_list_or_single(const YAML::Node &parent) {
   return rects;
 }
 
-static bool coord_in_any_slave_area(const Coord &c) {
-  for (const auto &r : GlobalParams::global_slave_areas)
-    if (coord_in_rect(c, r))
-      return true;
-
-  for (const auto &kv : GlobalParams::master_to_slave_areas) {
-    for (const auto &r : kv.second)
-      if (coord_in_rect(c, r))
-        return true;
-  }
-  return false;
-}
-
-// селектор мастеров из select-узла
 static std::vector<Coord>
 expand_select(const YAML::Node &select,
               const std::map<std::string, std::vector<Coord>> &groups_index) {
 
-  std::set<Coord> result; // чтобы уникализировать
+  std::set<Coord> result;
 
   if (select["masters"]) {
     for (const auto &n : select["masters"])
@@ -118,7 +104,6 @@ expand_select(const YAML::Node &select,
   bool has_xr = select["x_range"].IsDefined();
   bool has_yr = select["y_range"].IsDefined();
 
-  // сахар: row/col
   if (select["row"]) {
     y0 = y1 = select["row"].as<int>();
     has_yr = true;
@@ -142,7 +127,6 @@ expand_select(const YAML::Node &select,
       }
   }
 
-  // группы
   if (select["groups"]) {
     for (const auto &g : select["groups"]) {
       std::string name = g.as<std::string>();
@@ -159,11 +143,7 @@ expand_select(const YAML::Node &select,
 }
 
 static std::vector<Coord> expand_group_selector(const YAML::Node &sel) {
-  // поддерживаем те же поля, что и в select: row/col, x_range, y_range, x_set,
-  // y_set, masters можно переиспользовать expand_select, передав пустой
-  // groups_index и запрещая groups
-  return expand_select(
-      sel, {}); // но убедитесь, что внутри не обрабатываете "groups"
+  return expand_select(sel, {});
 }
 
 static RoutingType parse_routing_type(const std::string &s) {
@@ -171,6 +151,14 @@ static RoutingType parse_routing_type(const std::string &s) {
     return RoutingType::XY;
   if (s == "YX")
     return RoutingType::YX;
+  if (s == "NF")
+    return RoutingType::NF;
+  if (s == "NL")
+    return RoutingType::NL;
+  if (s == "OE")
+    return RoutingType::OE;
+  if (s == "WF")
+    return RoutingType::WF;
   std::cerr << "unknown routing type: " << s << std::endl;
   std::exit(1);
 }
@@ -184,28 +172,41 @@ static void ensure_vc_in_range(int vc) {
 
 inline bool is_pir_invalid(double pir) { return pir <= 0.0 || pir > 1.0; }
 
-static void check_master_slave_disjoint() {
-  std::vector<Coord> conflicts;
-  conflicts.reserve(GlobalParams::master_connections.size());
+static bool coord_in_any_slave_area_for_any_master(const Coord &c) {
+  for (const auto &r : GlobalParams::global_slave_areas)
+    if (coord_in_rect(c, r))
+      return true;
 
-  for (const auto &m : GlobalParams::master_connections) {
-    if (coord_in_any_slave_area(m)) {
-      conflicts.push_back(m);
-    }
+  for (const auto &kv : GlobalParams::master_to_slave_areas) {
+    for (const auto &r : kv.second)
+      if (coord_in_rect(c, r))
+        return true;
+  }
+  return false;
+}
+
+static void check_master_slave_disjoint() {
+  vector<int> conflicts;
+  conflicts.reserve(GlobalParams::master_ids.size());
+
+  for (int mid : GlobalParams::master_ids) {
+    Coord m = id2Coord(mid);
+    if (coord_in_any_slave_area_for_any_master(m))
+      conflicts.push_back(mid);
   }
 
   if (!conflicts.empty()) {
-    std::cerr << "Configuration error: master nodes overlap with memory areas. "
-              << "Found " << conflicts.size() << " conflict(s). Examples:\n";
-    const size_t show = std::min<size_t>(conflicts.size(), 10);
+    cerr << "Configuration error: master nodes overlap with memory areas. "
+         << "Found " << conflicts.size() << " conflict(s). Examples:\n";
+    size_t show = min<size_t>(conflicts.size(), 10);
     for (size_t i = 0; i < show; ++i) {
-      std::cerr << "  master at (" << conflicts[i].x << "," << conflicts[i].y
-                << ")\n";
+      auto c = id2Coord(conflicts[i]);
+      cerr << "  master at (" << c.x << "," << c.y << ") id=" << conflicts[i]
+           << "\n";
     }
-    if (conflicts.size() > show) {
-      std::cerr << "  ... and " << (conflicts.size() - show) << " more\n";
-    }
-    std::exit(1);
+    if (conflicts.size() > show)
+      cerr << "  ... and " << (conflicts.size() - show) << " more\n";
+    exit(1);
   }
 }
 
@@ -344,18 +345,18 @@ void loadConfiguration() {
             << y << endl;
         exit(1);
       }
-      GlobalParams::master_connections.insert(Coord{x, y});
+      GlobalParams::master_ids.insert(coord2Id(Coord{x, y}));
     }
   } else { // Perimeter nodes are masters by default
     for (int x = 0; x < GlobalParams::mesh_dim_x; x++) {
-      GlobalParams::master_connections.insert(Coord{x, 0});
-      GlobalParams::master_connections.insert(
-          Coord{x, GlobalParams::mesh_dim_y - 1});
+      GlobalParams::master_ids.insert(coord2Id(Coord{x, 0}));
+      GlobalParams::master_ids.insert(
+          coord2Id(Coord{x, GlobalParams::mesh_dim_y - 1}));
     }
     for (int y = 0; y < GlobalParams::mesh_dim_y; y++) {
-      GlobalParams::master_connections.insert(Coord{0, y});
-      GlobalParams::master_connections.insert(
-          Coord{GlobalParams::mesh_dim_x - 1, y});
+      GlobalParams::master_ids.insert(coord2Id(Coord{0, y}));
+      GlobalParams::master_ids.insert(
+          coord2Id(Coord{GlobalParams::mesh_dim_x - 1, y}));
     }
   }
 
@@ -387,12 +388,21 @@ void loadConfiguration() {
   // 2) master to area assignment
   GlobalParams::master_to_slave_areas.clear();
 
-  auto ensure_master_known = [&](const Coord &c) {
-    if (!GlobalParams::master_connections.count(c)) {
+  auto ensure_master_known = [&](int id) {
+    if (!GlobalParams::master_ids.count(id)) {
+      auto c = id2Coord(id);
       cerr << "master in rule not present in master_connections: (" << c.x
            << "," << c.y << ")\n";
       exit(1);
     }
+  };
+
+  auto coords_to_ids = [&](const vector<Coord> &v) {
+    vector<int> out;
+    out.reserve(v.size());
+    for (auto &c : v)
+      out.push_back(coord2Id(c));
+    return out;
   };
 
   if (config["master_slave_rules"]) {
@@ -407,26 +417,28 @@ void loadConfiguration() {
         std::exit(1);
       }
 
-      auto targets = expand_select(rule["select"], groups_index);
-      for (const auto &m : targets) {
-        ensure_master_known(m);
-        auto &vec = GlobalParams::master_to_slave_areas[m];
+      auto targets_coords = expand_select(rule["select"], groups_index);
+      auto targets = coords_to_ids(targets_coords);
+      for (int mid : targets) {
+        ensure_master_known(mid);
+        auto &vec = GlobalParams::master_to_slave_areas[mid];
         vec.insert(vec.end(), rects.begin(), rects.end());
       }
     }
   }
 
   // 3) global default for masters w/o areas
-  for (const auto &m : GlobalParams::master_connections) {
-    if (!GlobalParams::master_to_slave_areas.count(m)) {
-      GlobalParams::master_to_slave_areas[m] = GlobalParams::global_slave_areas;
+  for (int mid : GlobalParams::master_ids) {
+    if (!GlobalParams::master_to_slave_areas.count(mid)) {
+      GlobalParams::master_to_slave_areas[mid] =
+          GlobalParams::global_slave_areas;
     }
   }
 
   check_master_slave_disjoint();
 
   GlobalParams::vc_routing.assign(GlobalParams::n_virtual_channels,
-                                  RoutingType::XY); // дефолт: XY
+                                  RoutingType::XY); // default: XY
 
   if (config["routing_by_vc"]) {
     const auto node = config["routing_by_vc"];
@@ -455,7 +467,6 @@ void loadConfiguration() {
 
   GlobalParams::master_to_request_vc.clear();
 
-  // прямые точечные назначения
   if (config["master_request_vc"]) {
     for (const auto &item : config["master_request_vc"]) {
       if (!item["master"] || !item["vc"]) {
@@ -463,15 +474,15 @@ void loadConfiguration() {
         std::exit(1);
       }
       Coord m = parse_coord_vec(item["master"]);
-      if (!GlobalParams::master_connections.count(m)) {
+      int mid = coord2Id(m);
+      if (!GlobalParams::master_ids.count(mid)) {
         std::cerr << "master_request_vc: master not in master_connections: ("
                   << m.x << "," << m.y << ")\n";
         std::exit(1);
       }
       int vc = item["vc"].as<int>();
       ensure_vc_in_range(vc);
-      // первое назначение побеждает
-      GlobalParams::master_to_request_vc.emplace(m, vc);
+      GlobalParams::master_to_request_vc.emplace(mid, vc);
     }
   }
 
@@ -483,33 +494,23 @@ void loadConfiguration() {
       }
       int vc = rule["vc"].as<int>();
       ensure_vc_in_range(vc);
-      auto targets = expand_select(rule["select"], groups_index);
-      for (const auto &m : targets) {
-        if (!GlobalParams::master_connections.count(m))
+      auto targets = coords_to_ids(expand_select(rule["select"], groups_index));
+      for (int mid : targets) {
+        if (!GlobalParams::master_ids.count(mid))
           exit(1);
-        GlobalParams::master_to_request_vc.emplace(m, vc); // не перезаписываем
+        GlobalParams::master_to_request_vc.emplace(mid, vc);
       }
     }
   }
 
-  // дефолт для мастеров без назначения: можно выбрать VC=0, либо считать
-  // ошибкой
-  for (const auto &m : GlobalParams::master_connections) {
-    if (!GlobalParams::master_to_request_vc.count(m)) {
-      if (GlobalParams::routing_algorithm == "MOD_DOR" &&
-          ((m.x == 0) || // vertical master
-           (m.x == GlobalParams::mesh_dim_x - 1))) {
-        GlobalParams::master_to_request_vc.emplace(m, 1);
-      } else {
-        GlobalParams::master_to_request_vc.emplace(m, 0);
-      }
+  for (int mid : GlobalParams::master_ids) {
+    if (!GlobalParams::master_to_request_vc.count(mid)) {
+      GlobalParams::master_to_request_vc.emplace(mid, 0);
     }
   }
 
-  // очистка
   GlobalParams::master_to_response_vc.clear();
 
-  // точечные назначения
   if (config["master_response_vc"]) {
     for (const auto &item : config["master_response_vc"]) {
       if (!item["master"] || !item["vc"]) {
@@ -517,18 +518,18 @@ void loadConfiguration() {
         std::exit(1);
       }
       Coord m = parse_coord_vec(item["master"]);
-      if (!GlobalParams::master_connections.count(m)) {
+      int mid = coord2Id(m);
+      if (!GlobalParams::master_ids.count(mid)) {
         std::cerr << "master_response_vc: master not in master_connections: ("
                   << m.x << "," << m.y << ")\n";
         std::exit(1);
       }
       int vc = item["vc"].as<int>();
       ensure_vc_in_range(vc);
-      GlobalParams::master_to_response_vc.emplace(m, vc); // первое — победитель
+      GlobalParams::master_to_response_vc.emplace(mid, vc);
     }
   }
 
-  // групповые правила
   if (config["master_response_vc_rules"]) {
     for (const auto &rule : config["master_response_vc_rules"]) {
       if (!rule["select"] || !rule["vc"]) {
@@ -538,21 +539,20 @@ void loadConfiguration() {
       }
       int vc = rule["vc"].as<int>();
       ensure_vc_in_range(vc);
-      auto targets = expand_select(rule["select"], groups_index);
-      for (const auto &m : targets) {
-        if (!GlobalParams::master_connections.count(m))
+      auto targets = coords_to_ids(expand_select(rule["select"], groups_index));
+      for (int mid : targets) {
+        if (!GlobalParams::master_ids.count(mid))
           exit(1);
-        GlobalParams::master_to_response_vc.emplace(m, vc);
+        GlobalParams::master_to_response_vc.emplace(mid, vc);
       }
     }
   }
 
-  // дефолт для мастеров без назначения
-  for (const auto &m : GlobalParams::master_connections) {
-    if (!GlobalParams::master_to_response_vc.count(m)) {
+  for (int mid : GlobalParams::master_ids) {
+    if (!GlobalParams::master_to_response_vc.count(mid)) {
       GlobalParams::master_to_response_vc.emplace(
-          m, GlobalParams::n_virtual_channels - 1 -
-                 GlobalParams::master_to_request_vc[m]);
+          mid, GlobalParams::n_virtual_channels - 1 -
+                   GlobalParams::master_to_request_vc[mid]);
     }
   }
 
@@ -565,7 +565,8 @@ void loadConfiguration() {
         std::exit(1);
       }
       Coord m = parse_coord_vec(item["master"]);
-      if (!GlobalParams::master_connections.count(m)) {
+      auto mid = coord2Id(m);
+      if (!GlobalParams::master_ids.count(mid)) {
         std::cerr << "master_pir_factor: master not in master_connections: ("
                   << m.x << "," << m.y << ")\n";
         std::exit(1);
@@ -576,7 +577,7 @@ void loadConfiguration() {
                   << ") for master (" << m.x << "," << m.y << ")\n";
         std::exit(1);
       };
-      GlobalParams::master_pir_factor.emplace(m, pir_factor);
+      GlobalParams::master_pir_factor.emplace(mid, pir_factor);
     }
   }
 
@@ -593,18 +594,18 @@ void loadConfiguration() {
                   << pir_factor << ")\n";
         std::exit(1);
       };
-      auto targets = expand_select(rule["select"], groups_index);
-      for (const auto &m : targets) {
-        if (!GlobalParams::master_connections.count(m))
+      auto targets = coords_to_ids(expand_select(rule["select"], groups_index));
+      for (int mid : targets) {
+        if (!GlobalParams::master_ids.count(mid))
           exit(1);
-        GlobalParams::master_pir_factor.emplace(m, pir_factor);
+        GlobalParams::master_pir_factor.emplace(mid, pir_factor);
       }
     }
   }
 
-  for (const auto &m : GlobalParams::master_connections) {
-    if (!GlobalParams::master_pir_factor.count(m)) {
-      GlobalParams::master_pir_factor.emplace(m, 1.0);
+  for (int mid : GlobalParams::master_ids) {
+    if (!GlobalParams::master_pir_factor.count(mid)) {
+      GlobalParams::master_pir_factor.emplace(mid, 1.0);
     }
   }
 
