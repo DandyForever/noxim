@@ -113,7 +113,7 @@ void ProcessingElement::rxProcess() {
   //---------------------------------------------------------------------
   if (is_memory_pe) {
     ack_rx.write(in_packet_queue_x[free_slots_neighbor].size() <
-                 GlobalParams::buffer_depth);
+                 GlobalParams::out_buffer_depth);
   } else {
     // PE is always ready to recieve packets
     ack_rx.write(1);
@@ -385,7 +385,7 @@ void ProcessingElement::ryProcess() {
   //---------------------------------------------------------------------
   if (is_memory_pe) {
     ack_ry.write(in_packet_queue_y[free_slots_neighbor_y].size() <
-                 GlobalParams::buffer_depth);
+                 GlobalParams::out_buffer_depth);
   } else {
     // PE is always ready to recieve packets
     ack_ry.write(1);

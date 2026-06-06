@@ -24,8 +24,9 @@ class Power {
 public:
   Power();
 
-  void configureRouter(int link_width, int buffer_depth, int buffer_item_size,
-                       string routing_function, string selection_function);
+  void configureRouter(int link_width, int router_buffer_depth,
+                       int buffer_item_size, string routing_function,
+                       string selection_function);
 
   void configureHub(int link_width, int buffer_to_tile_depth,
                     int buffer_from_tile_depth, int buffer_item_size,

@@ -186,9 +186,10 @@ void NoC::buildButterfly() {
       // endl;
       //  Tell to the router its coordinates
       t[i][j]->r->configure(tile_id, GlobalParams::stats_warm_up_time,
-                            GlobalParams::buffer_depth, grtable);
+                            GlobalParams::in_buffer_depth,
+                            GlobalParams::out_buffer_depth, grtable);
       t[i][j]->r->power.configureRouter(
-          GlobalParams::flit_size, GlobalParams::buffer_depth,
+          GlobalParams::flit_size, GlobalParams::out_buffer_depth,
           GlobalParams::flit_size, string(GlobalParams::routing_algorithm),
           "default");
 
@@ -512,9 +513,10 @@ t[0][2]->flit_tx[0](flit[0][2].north);
 
     // Tell to the Core router its coordinates
     core[i]->r->configure(core_id, GlobalParams::stats_warm_up_time,
-                          GlobalParams::buffer_depth, grtable);
+                          GlobalParams::in_buffer_depth,
+                          GlobalParams::out_buffer_depth, grtable);
     core[i]->r->power.configureRouter(
-        GlobalParams::flit_size, GlobalParams::buffer_depth,
+        GlobalParams::flit_size, GlobalParams::out_buffer_depth,
         GlobalParams::flit_size, string(GlobalParams::routing_algorithm),
         "default");
 
@@ -821,9 +823,10 @@ void NoC::buildBaseline() {
 
       // Tell to the router its coordinates
       t[i][j]->r->configure(tile_id, GlobalParams::stats_warm_up_time,
-                            GlobalParams::buffer_depth, grtable);
+                            GlobalParams::in_buffer_depth,
+                            GlobalParams::out_buffer_depth, grtable);
       t[i][j]->r->power.configureRouter(
-          GlobalParams::flit_size, GlobalParams::buffer_depth,
+          GlobalParams::flit_size, GlobalParams::out_buffer_depth,
           GlobalParams::flit_size, string(GlobalParams::routing_algorithm),
           "default");
 
@@ -1264,9 +1267,10 @@ void NoC::buildBaseline() {
 
     // Tell to the Core router its coordinates
     core[i]->r->configure(core_id, GlobalParams::stats_warm_up_time,
-                          GlobalParams::buffer_depth, grtable);
+                          GlobalParams::in_buffer_depth,
+                          GlobalParams::out_buffer_depth, grtable);
     core[i]->r->power.configureRouter(
-        GlobalParams::flit_size, GlobalParams::buffer_depth,
+        GlobalParams::flit_size, GlobalParams::out_buffer_depth,
         GlobalParams::flit_size, string(GlobalParams::routing_algorithm),
         "default");
 
@@ -1548,9 +1552,10 @@ void NoC::buildOmega() {
       // endl;
       //  Tell to the router its coordinates
       t[i][j]->r->configure(tile_id, GlobalParams::stats_warm_up_time,
-                            GlobalParams::buffer_depth, grtable);
+                            GlobalParams::in_buffer_depth,
+                            GlobalParams::out_buffer_depth, grtable);
       t[i][j]->r->power.configureRouter(
-          GlobalParams::flit_size, GlobalParams::buffer_depth,
+          GlobalParams::flit_size, GlobalParams::out_buffer_depth,
           GlobalParams::flit_size, string(GlobalParams::routing_algorithm),
           "default");
 
@@ -1897,9 +1902,10 @@ t[1][5]->flit_tx[0](flit[2][2].south);
 
     // Tell to the Core router its coordinates
     core[i]->r->configure(core_id, GlobalParams::stats_warm_up_time,
-                          GlobalParams::buffer_depth, grtable);
+                          GlobalParams::in_buffer_depth,
+                          GlobalParams::out_buffer_depth, grtable);
     core[i]->r->power.configureRouter(
-        GlobalParams::flit_size, GlobalParams::buffer_depth,
+        GlobalParams::flit_size, GlobalParams::out_buffer_depth,
         GlobalParams::flit_size, string(GlobalParams::routing_algorithm),
         "default");
 
@@ -2192,17 +2198,19 @@ void NoC::buildMesh() {
       // Tell to the router its coordinates
       t[i][j]->r->configure(j * GlobalParams::mesh_dim_x + i,
                             GlobalParams::stats_warm_up_time,
-                            GlobalParams::buffer_depth, grtable);
+                            GlobalParams::in_buffer_depth,
+                            GlobalParams::out_buffer_depth, grtable);
       t[i][j]->r->power.configureRouter(
-          GlobalParams::flit_size, GlobalParams::buffer_depth,
+          GlobalParams::flit_size, GlobalParams::out_buffer_depth,
           GlobalParams::flit_size, string(GlobalParams::routing_algorithm),
           "default");
 
       t[i][j]->r_req->configure(j * GlobalParams::mesh_dim_x + i,
                                 GlobalParams::stats_warm_up_time,
-                                GlobalParams::buffer_depth, grtable);
+                                GlobalParams::in_buffer_depth,
+                                GlobalParams::out_buffer_depth, grtable);
       t[i][j]->r_req->power.configureRouter(
-          GlobalParams::flit_size, GlobalParams::buffer_depth,
+          GlobalParams::flit_size, GlobalParams::out_buffer_depth,
           GlobalParams::flit_size, string(GlobalParams::routing_algorithm),
           "default");
 

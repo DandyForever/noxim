@@ -187,7 +187,8 @@ struct GlobalParams {
   static int n_delta_tiles;
   static double r2r_link_length;
   static double r2h_link_length;
-  static unsigned int buffer_depth;
+  static unsigned int in_buffer_depth;
+  static unsigned int out_buffer_depth;
   static int flit_size;
   static int packet_size;
   static string routing_algorithm;

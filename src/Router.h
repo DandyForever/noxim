@@ -87,7 +87,9 @@ SC_MODULE(Router) {
   void txProcess(); // The transmitting process
   void perCycleUpdate();
   void configure(const int _id, const double _warm_up_time,
-                 const unsigned int _max_buffer_size, GlobalRoutingTable &grt);
+                 const unsigned int _max_input_buffer_size,
+                 const unsigned int _max_output_buffer_size,
+                 GlobalRoutingTable &grt);
 
   unsigned long getRoutedFlits(); // Returns the number of routed flits
 

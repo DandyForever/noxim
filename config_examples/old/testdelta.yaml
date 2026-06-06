@@ -4,8 +4,10 @@
 topology: BUTTERFLY
 #
 n_delta_tiles: 8
-# number of flits for each router buffer
-buffer_depth: 4
+# number of flits for each router input buffer
+in_buffer_depth: 4
+# number of flits for each router output buffer
+out_buffer_depth: 4
 # size of flits, in bits
 flit_size: 32
 # lenght in mm of router to hub connection

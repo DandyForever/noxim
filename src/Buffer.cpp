@@ -12,7 +12,7 @@
 #include "Utils.h"
 
 Buffer::Buffer() {
-  SetMaxBufferSize(GlobalParams::buffer_depth);
+  SetMaxBufferSize(GlobalParams::out_buffer_depth);
   max_occupancy = 0;
   hold_time = 0.0;
   last_event = 0.0;

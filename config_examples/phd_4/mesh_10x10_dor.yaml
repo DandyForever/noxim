@@ -15,8 +15,10 @@
 # X and Y mesh sizes
 mesh_dim_x: 10
 mesh_dim_y: 10
-# number of flits for each router buffer
-buffer_depth: 2
+# number of flits for each router input buffer
+in_buffer_depth: 2
+# number of flits for each router output buffer
+out_buffer_depth: 2
 # size of flits, in bits
 flit_size: 64
 # lenght in mm of router to hub connection

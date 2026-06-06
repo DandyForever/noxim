@@ -292,8 +292,10 @@ bufferRouterPush	Power.cpp	/^void Power::bufferRouterPush()$/;"	f	class:Power
 bufferToTileFront	Power.cpp	/^void Power::bufferToTileFront()$/;"	f	class:Power
 bufferToTilePop	Power.cpp	/^void Power::bufferToTilePop()$/;"	f	class:Power
 bufferToTilePush	Power.cpp	/^void Power::bufferToTilePush()$/;"	f	class:Power
-buffer_depth	GlobalParams.cpp	/^int GlobalParams::buffer_depth;$/;"	m	class:GlobalParams	file:
-buffer_depth	GlobalParams.h	/^    static int buffer_depth;$/;"	m	struct:GlobalParams
+in_buffer_depth	GlobalParams.cpp	/^unsigned int GlobalParams::in_buffer_depth;$/;"	m	class:GlobalParams	file:
+in_buffer_depth	GlobalParams.h	/^  static unsigned int in_buffer_depth;$/;"	m	struct:GlobalParams
+out_buffer_depth	GlobalParams.cpp	/^unsigned int GlobalParams::out_buffer_depth;$/;"	m	class:GlobalParams	file:
+out_buffer_depth	GlobalParams.h	/^  static unsigned int out_buffer_depth;$/;"	m	struct:GlobalParams
 buffer_from_tile_front_pwr_d	Power.h	/^    double buffer_from_tile_front_pwr_d;$/;"	m	class:Power
 buffer_from_tile_pop_pwr_d	Power.h	/^    double buffer_from_tile_pop_pwr_d;$/;"	m	class:Power
 buffer_from_tile_push_pwr_d	Power.h	/^    double buffer_from_tile_push_pwr_d;$/;"	m	class:Power

@@ -271,7 +271,8 @@ void loadConfiguration() {
 
   GlobalParams::r2r_link_length = readParam<double>(config, "r2r_link_length");
   GlobalParams::r2h_link_length = readParam<double>(config, "r2h_link_length");
-  GlobalParams::buffer_depth = readParam<int>(config, "buffer_depth");
+  GlobalParams::in_buffer_depth = readParam<int>(config, "in_buffer_depth");
+  GlobalParams::out_buffer_depth = readParam<int>(config, "out_buffer_depth");
   GlobalParams::flit_size = readParam<int>(config, "flit_size");
   GlobalParams::packet_size = readParam<int>(config, "packet_size");
   GlobalParams::routing_algorithm =
@@ -707,7 +708,12 @@ void showHelp(char selfname[]) {
       << endl
       << "\t-dimx N\t\t\tSet the mesh X dimension" << endl
       << "\t-dimy N\t\t\tSet the mesh Y dimension" << endl
-      << "\t-buffer N\t\tSet the depth of router input buffers [flits]" << endl
+      << "\t-in_buffer N\t\tSet the depth of router input buffers [flits]"
+      << endl
+      << "\t-out_buffer N\t\tSet the depth of router output buffers [flits]"
+      << endl
+      << "\t-buffer N\t\tSet both router input and output buffer depths [flits]"
+      << endl
       << "\t-buffer_tt N\t\tSet the depth of hub buffers to tile [flits]"
       << endl
       << "\t-buffer_ft N\t\tSet the depth of hub buffers to tile [flits]"
@@ -813,7 +819,8 @@ void showConfig() {
        // << "- trace_filename = " << GlobalParams::trace_filename << endl
        << "- mesh_dim_x = " << GlobalParams::mesh_dim_x << endl
        << "- mesh_dim_y = " << GlobalParams::mesh_dim_y << endl
-       << "- buffer_depth = " << GlobalParams::buffer_depth << endl
+       << "- in_buffer_depth = " << GlobalParams::in_buffer_depth << endl
+       << "- out_buffer_depth = " << GlobalParams::out_buffer_depth << endl
        << "- n_virtual_channels = " << GlobalParams::n_virtual_channels << endl
        << "- packet_size = " << GlobalParams::packet_size << endl
        << "- routing_algorithm = " << GlobalParams::routing_algorithm
@@ -883,8 +890,12 @@ void checkConfiguration() {
     }
   }
 
-  if (GlobalParams::buffer_depth < 1) {
-    cerr << "Error: buffer must be >= 1" << endl;
+  if (GlobalParams::in_buffer_depth < 1) {
+    cerr << "Error: in_buffer_depth must be >= 1" << endl;
+    exit(1);
+  }
+  if (GlobalParams::out_buffer_depth < 1) {
+    cerr << "Error: out_buffer_depth must be >= 1" << endl;
     exit(1);
   }
   if (GlobalParams::flit_size <= 0) {
@@ -1011,8 +1022,15 @@ void parseCmdLine(int arg_num, char *arg_vet[]) {
       else if (!strcmp(arg_vet[i], "-dtiles"))
         GlobalParams::n_delta_tiles = atoi(arg_vet[++i]);
 
-      else if (!strcmp(arg_vet[i], "-buffer"))
-        GlobalParams::buffer_depth = atoi(arg_vet[++i]);
+      else if (!strcmp(arg_vet[i], "-in_buffer"))
+        GlobalParams::in_buffer_depth = atoi(arg_vet[++i]);
+      else if (!strcmp(arg_vet[i], "-out_buffer"))
+        GlobalParams::out_buffer_depth = atoi(arg_vet[++i]);
+      else if (!strcmp(arg_vet[i], "-buffer")) {
+        int depth = atoi(arg_vet[++i]);
+        GlobalParams::in_buffer_depth = depth;
+        GlobalParams::out_buffer_depth = depth;
+      }
       else if (!strcmp(arg_vet[i], "-buffer_tt"))
         setBufferToTile(atoi(arg_vet[++i]));
       else if (!strcmp(arg_vet[i], "-buffer_ft"))

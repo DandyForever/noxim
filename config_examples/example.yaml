@@ -3,8 +3,10 @@ mesh_dim_x: 10
 mesh_dim_y: 10
 # Число виртуальных каналов (ВК) в маршрутизаторах
 n_virtual_channels: 4
-# Глубина буферов в маршрутизаторах
-buffer_depth: 2
+# number of flits for each router input buffer
+in_buffer_depth: 2
+# number of flits for each router output buffer
+out_buffer_depth: 2
 # Число активных модулей памяти в узлах с модулями памяти
 mem_ports: 1
 # Алгоритм маршрутизации

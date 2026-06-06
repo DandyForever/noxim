@@ -23,7 +23,8 @@ int GlobalParams::n_delta_tiles;
 
 double GlobalParams::r2r_link_length;
 double GlobalParams::r2h_link_length;
-unsigned int GlobalParams::buffer_depth;
+unsigned int GlobalParams::in_buffer_depth;
+unsigned int GlobalParams::out_buffer_depth;
 int GlobalParams::flit_size;
 int GlobalParams::packet_size;
 string GlobalParams::routing_algorithm;

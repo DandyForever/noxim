@@ -580,7 +580,8 @@ int Router::selectionFunction(const vector<int> &directions,
 }
 
 void Router::configure(const int _id, const double _warm_up_time,
-                       const unsigned int _max_buffer_size,
+                       const unsigned int _max_input_buffer_size,
+                       const unsigned int _max_output_buffer_size,
                        GlobalRoutingTable &grt) {
   local_id = _id;
   stats.configure(_id, _warm_up_time);
@@ -603,9 +604,9 @@ void Router::configure(const int _id, const double _warm_up_time,
 
   for (int i = 0; i < 2 * DIRECTIONS + 1; i++) {
     for (int vc = 0; vc < GlobalParams::n_virtual_channels; vc++) {
-      buffer[i][vc].SetMaxBufferSize(_max_buffer_size);
-      buffer_mid[i][vc].SetMaxBufferSize(_max_buffer_size);
-      buffer_out[i][vc].SetMaxBufferSize(_max_buffer_size);
+      buffer[i][vc].SetMaxBufferSize(_max_input_buffer_size);
+      buffer_mid[i][vc].SetMaxBufferSize(_max_output_buffer_size);
+      buffer_out[i][vc].SetMaxBufferSize(_max_output_buffer_size);
       buffer[i][vc].setLabel(string(name()) + "->buffer[" + i_to_string(i) +
                              "]");
       buffer_mid[i][vc].setLabel(string(name()) + "->buffer[" + i_to_string(i) +
@@ -703,9 +704,9 @@ bool Router::inCongestion() {
     if (free_slots_neighbor[i] == NOT_VALID)
       continue;
 
-    int flits = GlobalParams::buffer_depth - free_slots_neighbor[i];
+    int flits = GlobalParams::in_buffer_depth - free_slots_neighbor[i];
     if (flits >
-        (int)(GlobalParams::buffer_depth * GlobalParams::dyad_threshold))
+        (int)(GlobalParams::in_buffer_depth * GlobalParams::dyad_threshold))
       return true;
   }
 

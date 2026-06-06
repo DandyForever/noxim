@@ -71,13 +71,13 @@ Power::Power() {
   initPowerBreakdown();
 }
 
-void Power::configureRouter(int link_width, int buffer_depth,
+void Power::configureRouter(int link_width, int router_buffer_depth,
                             int buffer_item_size, string routing_function,
                             string selection_function) {
   // (s)tatic, (d)ynamic power
 
   // Buffer
-  pair<int, int> key = pair<int, int>(buffer_depth, buffer_item_size);
+  pair<int, int> key = pair<int, int>(router_buffer_depth, buffer_item_size);
 
   assert(
       GlobalParams::power_configuration.bufferPowerConfig.leakage.find(key) !=
